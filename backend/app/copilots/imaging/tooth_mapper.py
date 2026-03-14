@@ -64,14 +64,19 @@ def _normalize(x: float, y: float, width: int, height: int) -> tuple[float, floa
         return x, y
     return x / width, y / height
 
-
 def _map_panoramic(x: float, y: float, width: int, height: int) -> int:
     """Map click on panoramic X-ray to tooth number."""
     norm_x, norm_y = _normalize(x, y, width, height)
 
-    # Upper jaw: ~20-48% of image height. Lower jaw: ~52-82%.
-    # Split point at ~0.50
-    is_upper = norm_y < 0.50
+    # Determine upper vs lower jaw using anatomical bands
+    # Real panoramic X-rays: upper arch ~20-45% height, lower arch ~55-80%
+    if 0.20 <= norm_y <= 0.45:
+        is_upper = True
+    elif 0.55 <= norm_y <= 0.80:
+        is_upper = False
+    else:
+        # Click outside arch bands — snap to nearest
+        is_upper = norm_y < 0.5
 
     # Select the correct jaw's tooth map
     teeth = PANORAMIC_TEETH_UPPER if is_upper else PANORAMIC_TEETH_LOWER
