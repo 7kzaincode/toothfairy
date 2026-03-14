@@ -1,26 +1,125 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* Midnight Charcoal — matches Onco IDE */
+  --bg: #07090D;
+  --panel: #0B0F15;
+  --surface: #101725;
+  --hover: #0F1623;
+  --selected: #121B2B;
+
+  --border: #1A2232;
+  --hairline: #141B28;
+
+  --text: #E7ECF5;
+  --text-2: #AAB4C5;
+  --muted: #6E7A92;
+
+  --accent: #7A5CFF;
+  --link: #4C9AFF;
+
+  /* log severities */
+  --info: #4C9AFF;
+  --warn: #F4C152;
+  --success: #2BD4A7;
+  --fallback: #FF9F4A;
+  --error: #FF5C7A;
+
+  /* dental copilot colors */
+  --imaging: #a371f7;
+  --clinical-notes: #f778ba;
+  --treatment: #7ee787;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
+  --color-ide-bg: var(--bg);
+  --color-ide-panel: var(--panel);
+  --color-ide-surface: var(--surface);
+  --color-ide-hover: var(--hover);
+  --color-ide-selected: var(--selected);
+  --color-ide-border: var(--border);
+  --color-ide-hairline: var(--hairline);
+  --color-ide-text: var(--text);
+  --color-ide-text-2: var(--text-2);
+  --color-ide-muted: var(--muted);
+  --color-ide-accent: var(--accent);
+  --color-ide-link: var(--link);
+
+  --color-log-info: var(--info);
+  --color-log-warn: var(--warn);
+  --color-log-success: var(--success);
+  --color-log-fallback: var(--fallback);
+  --color-log-error: var(--error);
+
+  --color-cop-imaging: var(--imaging);
+  --color-cop-clinical: var(--clinical-notes);
+  --color-cop-treatment: var(--treatment);
+
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+* {
+  box-sizing: border-box;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-geist-sans), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  -webkit-font-smoothing: antialiased;
 }
+
+/* Scrollbar */
+.scrollbar-ide::-webkit-scrollbar { width: 8px; height: 8px; }
+.scrollbar-ide::-webkit-scrollbar-track { background: var(--bg); }
+.scrollbar-ide::-webkit-scrollbar-thumb { background: var(--surface); border-radius: 4px; }
+.scrollbar-ide::-webkit-scrollbar-thumb:hover { background: var(--border); }
+
+/* Terminal log lines */
+.log-line {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  padding: 0.25rem 0.75rem;
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  transition: background-color 0.15s;
+}
+.log-line:hover { background: var(--hover); }
+
+.log-badge {
+  font-size: 0.625rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  padding: 0.125rem 0;
+  width: 3rem;
+  text-align: center;
+  border-radius: 0.25rem;
+  display: inline-block;
+  flex-shrink: 0;
+  margin-top: 0.125rem;
+}
+
+.log-info .log-badge   { color: var(--info); background: rgba(76, 154, 255, 0.15); }
+.log-progress .log-badge { color: var(--warn); background: rgba(244, 193, 82, 0.15); }
+.log-success .log-badge { color: var(--success); background: rgba(43, 212, 167, 0.15); }
+.log-fallback .log-badge { color: var(--fallback); background: rgba(255, 159, 74, 0.15); }
+.log-error .log-badge   { color: var(--error); background: rgba(255, 92, 122, 0.2); }
+.log-error { background: rgba(255, 92, 122, 0.05); }
+
+.log-info .log-msg   { color: var(--info); }
+.log-progress .log-msg { color: var(--warn); }
+.log-success .log-msg { color: var(--success); }
+.log-fallback .log-msg { color: var(--fallback); }
+.log-error .log-msg   { color: var(--error); }
+
+/* Animations */
+@keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes slide-in { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes pulse-subtle { 0%, 100% { opacity: 1; } 50% { opacity: 0.6; } }
+
+.animate-fade-in { animation: fade-in 0.25s ease-out; }
+.animate-slide-in { animation: slide-in 0.3s cubic-bezier(0.16, 1, 0.3, 1); }
+.animate-pulse-subtle { animation: pulse-subtle 2s ease-in-out infinite; }
