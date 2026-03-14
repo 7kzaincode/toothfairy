@@ -5,6 +5,7 @@ import { usePatientState } from "@/hooks/usePatientState";
 import LeftPane from "@/components/layout/LeftPane";
 import CenterPane from "@/components/layout/CenterPane";
 import RightPane from "@/components/layout/RightPane";
+import LandingPopup from "@/components/layout/LandingPopup";
 import type { ViewerTab } from "@/components/layout/CenterPane";
 import type { LogEvent } from "@/types/logs";
 import type { PatientState } from "@/types/patient-state";
@@ -45,6 +46,7 @@ export default function Home() {
   const [logs] = useState<LogEvent[]>(DEMO_LOGS);
   const { sessionId, patientState, createSession, setPatientState } = usePatientState();
   const [hasUploaded, setHasUploaded] = useState(false);
+  const [showLanding, setShowLanding] = useState(true);
   const displayState = patientState || (hasUploaded ? DEMO_STATE : null);
 
   // Create session on mount
@@ -66,6 +68,7 @@ export default function Home() {
 
   return (
     <main className="flex h-screen w-screen overflow-hidden bg-ide-bg">
+      {showLanding && <LandingPopup onDismiss={() => setShowLanding(false)} />}
       <LeftPane
         patientState={displayState}
         onUploadImage={handleFileUpload}
