@@ -1,0 +1,73 @@
+{
+  "image_id": "demo-panoramic",
+  "patient_id": "patient-001",
+  "image_dimensions": [2041, 1024],
+  "teeth": {
+    "14": {
+      "findings": [
+        {
+          "condition": "cavity",
+          "severity": "moderate",
+          "confidence": 0.92,
+          "location": "MOD caries extending to dentin, visible radiolucency on distal surface"
+        }
+      ]
+    },
+    "18": {
+      "findings": [
+        {
+          "condition": "impacted",
+          "severity": "moderate",
+          "confidence": 0.95,
+          "location": "Partially erupted, mesioangular impaction"
+        }
+      ]
+    },
+    "28": {
+      "findings": [
+        {
+          "condition": "root_canal_needed",
+          "severity": "severe",
+          "confidence": 0.88,
+          "location": "Periapical radiolucency indicating pulp necrosis"
+        }
+      ]
+    },
+    "36": {
+      "findings": [
+        {
+          "condition": "periapical_lesion",
+          "severity": "moderate",
+          "confidence": 0.91,
+          "location": "Well-defined periapical radiolucency at mesial root apex"
+        },
+        {
+          "condition": "bone_loss",
+          "severity": "moderate",
+          "confidence": 0.85,
+          "location": "Horizontal bone loss along mesial and distal alveolar crest"
+        }
+      ]
+    },
+    "38": {
+      "findings": [
+        {
+          "condition": "impacted",
+          "severity": "severe",
+          "confidence": 0.97,
+          "location": "Horizontally impacted, pressing against #37 distal root"
+        }
+      ]
+    },
+    "47": {
+      "findings": [
+        {
+          "condition": "cavity",
+          "severity": "severe",
+          "confidence": 0.89,
+          "location": "Large occlusal-distal caries with possible pulp involvement"
+        }
+      ]
+    }
+  }
+}

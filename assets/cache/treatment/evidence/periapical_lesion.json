@@ -1,0 +1,20 @@
+{
+  "condition": "periapical_lesion",
+  "summary": "Periapical lesions are inflammatory responses at the tooth root apex, typically caused by pulp necrosis from deep caries or trauma. Root canal therapy is the primary treatment, with success rates of 86-98% depending on tooth type and preoperative status. Retreatment or apicoectomy may be necessary for persistent lesions. Healing is monitored radiographically over 6-12 months.",
+  "success_rate": 0.92,
+  "risk_factors": [
+    "Size of periapical radiolucency (>5mm associated with lower success)",
+    "Presence of sinus tract or fistula",
+    "Complex root canal anatomy (curved or calcified canals)",
+    "History of previous endodontic treatment",
+    "Compromised coronal seal or delayed permanent restoration"
+  ],
+  "alternatives": [
+    "Apicoectomy with retrograde filling (for persistent lesions post-RCT)",
+    "Intentional replantation (rare, for inaccessible surgical sites)",
+    "Extraction and implant placement (when tooth is non-restorable)",
+    "Extraction with bridge or removable partial denture"
+  ],
+  "referral_summary": "Refer to endodontist for complex cases: retreatment, calcified canals, teeth with posts, or lesions not responding to initial treatment. Refer to oral surgeon if apicoectomy or extraction with immediate implant is planned.",
+  "patient_education": "A periapical lesion is an infection at the tip of your tooth's root, usually caused by bacteria reaching the nerve through a deep cavity or crack. Root canal treatment removes the infected nerve tissue, cleans the canals, and seals them to prevent reinfection. The tooth is then restored with a crown for protection. Most teeth treated this way last many years. You may need a follow-up X-ray in 6-12 months to confirm healing."
+}

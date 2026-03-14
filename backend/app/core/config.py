@@ -7,13 +7,19 @@ import os
 from typing import Optional
 from pathlib import Path
 
+# Project root = backend/ directory (where uvicorn runs from)
+_BACKEND_DIR = Path(__file__).resolve().parent.parent.parent
+# Default assets at project root (one level above backend/)
+_PROJECT_ROOT = _BACKEND_DIR.parent
+
 
 class Settings:
     """Application settings loaded from environment variables."""
 
-    # Asset & Cache Paths
-    ASSETS_ROOT_DIR: Path = Path(os.getenv("ASSETS_ROOT_DIR", "./assets"))
-    CACHE_ROOT_DIR: Path = Path(os.getenv("CACHE_ROOT_DIR", "./assets/cache"))
+    # Asset & Cache Paths — resolve relative to project root
+    # Empty env vars fall back to project root defaults
+    ASSETS_ROOT_DIR: Path = Path(os.getenv("ASSETS_ROOT_DIR", "") or str(_PROJECT_ROOT / "assets")).resolve()
+    CACHE_ROOT_DIR: Path = Path(os.getenv("CACHE_ROOT_DIR", "") or str(_PROJECT_ROOT / "assets" / "cache")).resolve()
 
     # Google Gemini Configuration
     GOOGLE_API_KEY: str = os.getenv("GOOGLE_API_KEY", "")
