@@ -1,6 +1,7 @@
 "use client";
 
 import type { PatientState } from "@/types/patient-state";
+import Image from "next/image";
 
 export type ViewerTab = "xray" | "clinical-notes" | "treatment" | "tooth-chart";
 
@@ -18,26 +19,27 @@ interface CenterPaneProps {
   sessionId: string | null;
   onImagingClick?: (imageId: string, x: number, y: number) => void;
   onTextHighlight?: (text: string) => void;
+  onFileUpload?: (file: File) => void;
 }
 
 export default function CenterPane({
   activeTab,
   onTabChange,
   patientState,
+  onFileUpload,
 }: CenterPaneProps) {
   return (
     <div className="flex-1 min-w-0 flex flex-col bg-ide-panel">
       {/* Tab Bar */}
-      <div className="h-9 flex items-center border-b border-ide-border bg-ide-bg px-1">
+      <div className="h-9 flex items-end gap-1 border-b border-ide-border bg-ide-bg px-2">
         {TABS.map((tab) => (
           <button
             key={tab.key}
             onClick={() => onTabChange(tab.key)}
-            className={`px-3 h-full text-[11px] font-medium border-b-2 transition-colors duration-150 ${
-              activeTab === tab.key
-                ? "border-ide-accent text-ide-text"
-                : "border-transparent text-ide-muted hover:text-ide-text-2"
-            }`}
+            className={`flex-none h-8 px-3 text-[10px] font-medium rounded-t-md border border-b-0 transition-colors duration-150 ${activeTab === tab.key
+              ? "bg-ide-panel text-ide-text border-ide-border"
+              : "bg-transparent text-ide-muted border-transparent hover:bg-ide-surface hover:text-ide-text-2"
+              }`}
           >
             {tab.label}
           </button>
@@ -45,31 +47,72 @@ export default function CenterPane({
       </div>
 
       {/* Viewer Content */}
-      <div className="flex-1 min-h-0 overflow-auto scrollbar-ide">
-        {activeTab === "xray" && <XrayPlaceholder />}
+      <div className="flex-1 min-w-0 flex flex-col bg-ide-panel origin-top-left scale-[0.9]">
         {activeTab === "clinical-notes" && <ClinicalNotesPlaceholder patientState={patientState} />}
         {activeTab === "tooth-chart" && <ToothChartPlaceholder patientState={patientState} />}
         {activeTab === "treatment" && <TreatmentPlaceholder patientState={patientState} />}
+        {activeTab === "xray" && (
+          <div className="flex flex-col items-center justify-center h-full gap-3">
+            <Image src="/logo.png" alt="Logo" width={170} height={170} className="opacity-40 transition-opacity duration-300 hover:opacity-100 cursor-pointer" />
+            <div className="flex flex-col gap- w-80">
+              <div
+                className="flex items-center justify-between px-3 py-2 rounded-md cursor-pointer
+  text-[#6b6b6b] bg-transparent hover:bg-[#242424] hover:text-white
+  transition-colors duration-150"
+              >
+                <span>Open AI Agent</span>
+                <div className="flex gap-1.5 text-xs">
+                  <span className="border border-[#6b6b6b] px-2 py-0.5 rounded text-[10px]">⇧</span>
+                  <span className="border border-[#6b6b6b] px-2 py-0.5 rounded text-[10px]">⌘</span>
+                  <span className="border border-[#6b6b6b] px-2 py-0.5 rounded text-[10px]">L</span>
+                </div>
+              </div>
+              <div className="flex items-center justify-between transition-colors px-3 py-1 rounded" style={{ color: "#4c4c4c" }} onMouseEnter={e => (e.currentTarget as HTMLDivElement).style.color = "white"} onMouseLeave={e => (e.currentTarget as HTMLDivElement).style.color = "#4c4c4c"}>
+                <span>Show Agent Stream</span>
+                <div className="flex gap-1.5 text-xs">
+                  <span className="border border-[#6b6b6b] px-2 py-0.5 rounded text-[10px]">⇧</span>
+                  <span className="border border-[#6b6b6b] px-2 py-0.5 rounded text-[10px]">⌘</span>
+                  <span className="border border-[#6b6b6b] px-2 py-0.5 rounded text-[10px]">J</span>
+                </div>
+              </div>
+              <div className="flex items-center justify-between transition-colors px-3 py-1 rounded" style={{ color: "#4c4c4c" }} onMouseEnter={e => (e.currentTarget as HTMLDivElement).style.color = "white"} onMouseLeave={e => (e.currentTarget as HTMLDivElement).style.color = "#4c4c4c"}>
+                <span>Hide Artifacts</span>
+                <div className="flex gap-1.5 text-xs">
+                  <span className="border border-[#6b6b6b] px-2 py-0.5 rounded">⌘</span>
+                  <span className="border border-[#6b6b6b] px-2 py-0.5 rounded">B</span>
+                </div>
+              </div>
+              <div className="flex items-center justify-between transition-colors px-3 py-1 rounded" style={{ color: "#4c4c4c" }} onMouseEnter={e => (e.currentTarget as HTMLDivElement).style.color = "white"} onMouseLeave={e => (e.currentTarget as HTMLDivElement).style.color = "#4c4c4c"}>
+                <span>Search X-Rays</span>
+                <div className="flex gap-1.5 text-xs">
+                  <span className="border border-[#6b6b6b] px-2 py-0.5 rounded text-[10px]">⌘</span>
+                  <span className="border border-[#6b6b6b] px-2 py-0.5 rounded text-[10px]">P</span>
+                </div>
+              </div>
+              <div className="flex items-center justify-between transition-colors px-3 py-1 rounded" style={{ color: "#4c4c4c" }} onMouseEnter={e => (e.currentTarget as HTMLDivElement).style.color = "white"} onMouseLeave={e => (e.currentTarget as HTMLDivElement).style.color = "#4c4c4c"}>
+                <span>Upload Files</span>
+                <div className="flex gap-1.5 text-xs">
+                  <span className="border border-[#6b6b6b] px-2 py-0.5 rounded text-[10px]">⇧</span>
+                  <span className="border border-[#6b6b6b] px-2 py-0.5 rounded text-[10px]">⌘</span>
+                  <span className="border border-[#6b6b6b] px-2 py-0.5 rounded text-[10px]">U</span>
+                </div>
+              </div>
+              <div className="flex items-center justify-between transition-colors px-3 py-1 rounded" style={{ color: "#4c4c4c" }} onMouseEnter={e => (e.currentTarget as HTMLDivElement).style.color = "white"} onMouseLeave={e => (e.currentTarget as HTMLDivElement).style.color = "#4c4c4c"}>
+                <span>Open X-Ray</span>
+                <div className="flex gap-1.5 text-xs">
+                  <span className="border border-[#6b6b6b] px-2 py-0.5 rounded text-[10px]">⌘</span>
+                  <span className="border border-[#6b6b6b] px-2 py-0.5 rounded text-[10px]">O</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
 }
 
-function XrayPlaceholder() {
-  return (
-    <div className="flex-1 flex flex-col items-center justify-center h-full text-center p-8">
-      <div className="w-16 h-16 rounded-lg bg-ide-surface flex items-center justify-center mb-4">
-        <span className="text-2xl">🦷</span>
-      </div>
-      <h3 className="text-sm font-medium text-ide-text mb-1">Dental X-Ray Viewer</h3>
-      <p className="text-[11px] text-ide-muted max-w-xs">
-        Upload a dental X-ray to begin analysis.{" "}
-        <kbd className="px-1 py-0.5 bg-ide-surface border border-ide-border rounded text-[10px]">⌘+Click</kbd>{" "}
-        on a tooth to trigger the imaging copilot.
-      </p>
-    </div>
-  );
-}
+
 
 function ClinicalNotesPlaceholder({ patientState }: { patientState: PatientState | null }) {
   const demoNotes = `CLINICAL NOTES — Sarah Chen (DOB: 1990-04-12)
@@ -147,7 +190,7 @@ function TimelineCard({ urgency, color, tooth, condition, treatment, visits, cos
 }) {
   return (
     <div className="bg-ide-surface border border-ide-border rounded-md p-2.5 animate-slide-in">
-      <div className="flex items-center gap-2 mb-1.5">
+      <div className="flex items-center gap-1 mb-1.5">
         <span
           className="text-[9px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded"
           style={{ color, background: `${color}20` }}
