@@ -12,11 +12,39 @@ export class SSEClient {
   private eventSource: EventSource | null = null;
 
   connect(sessionId: string, onEvent: SSECallback): void {
-    // TODO: implement
+    if (this.eventSource) {
+      this.disconnect();
+    }
+
+    const baseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+    const streamUrl = `${baseUrl}/api/stream/${sessionId}`;
+
+    this.eventSource = new EventSource(streamUrl);
+
+    this.eventSource.addEventListener("message", (event: Event) => {
+      try {
+        const data = JSON.parse((event as MessageEvent).data);
+        onEvent(data as LogEvent);
+      } catch (error) {
+        console.error("Failed to parse SSE message:", error);
+      }
+    });
+
+    this.eventSource.addEventListener("heartbeat", () => {
+      // Ignore heartbeat events
+    });
+
+    this.eventSource.addEventListener("error", () => {
+      console.error("SSE connection error");
+      this.disconnect();
+    });
   }
 
   disconnect(): void {
-    // TODO: implement
+    if (this.eventSource) {
+      this.eventSource.close();
+      this.eventSource = null;
+    }
   }
 
   isConnected(): boolean {

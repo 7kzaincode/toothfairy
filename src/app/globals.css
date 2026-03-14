@@ -1,21 +1,35 @@
+@font-face {
+  font-family: 'Inter Variable';
+  src: url('/fonts/InterVariable.ttf') format('truetype');
+  font-weight: 100 900;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Inter Variable';
+  src: url('/fonts/InterVariable-Italic.ttf') format('truetype');
+  font-weight: 100 900;
+  font-style: italic;
+}
+
 @import "tailwindcss";
 
 :root {
-  /* Midnight Charcoal — matches Onco IDE */
-  --bg: #07090D;
-  --panel: #0B0F15;
+  font-family: 'Inter Variable', system-ui, sans-serif;
+  --bg: #141414;
+  --panel: #141414;
   --surface: #101725;
   --hover: #0F1623;
   --selected: #121B2B;
 
-  --border: #1A2232;
+  --border: #232323;
   --hairline: #141B28;
 
   --text: #E7ECF5;
   --text-2: #AAB4C5;
   --muted: #6E7A92;
 
-  --accent: #7A5CFF;
+  --accent: #F4C152;
   --link: #4C9AFF;
 
   /* log severities */
@@ -72,10 +86,23 @@ body {
 }
 
 /* Scrollbar */
-.scrollbar-ide::-webkit-scrollbar { width: 8px; height: 8px; }
-.scrollbar-ide::-webkit-scrollbar-track { background: var(--bg); }
-.scrollbar-ide::-webkit-scrollbar-thumb { background: var(--surface); border-radius: 4px; }
-.scrollbar-ide::-webkit-scrollbar-thumb:hover { background: var(--border); }
+.scrollbar-ide::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.scrollbar-ide::-webkit-scrollbar-track {
+  background: var(--bg);
+}
+
+.scrollbar-ide::-webkit-scrollbar-thumb {
+  background: var(--surface);
+  border-radius: 4px;
+}
+
+.scrollbar-ide::-webkit-scrollbar-thumb:hover {
+  background: var(--border);
+}
 
 /* Terminal log lines */
 .log-line {
@@ -87,7 +114,10 @@ body {
   line-height: 1.5;
   transition: background-color 0.15s;
 }
-.log-line:hover { background: var(--hover); }
+
+.log-line:hover {
+  background: var(--hover);
+}
 
 .log-badge {
   font-size: 0.625rem;
@@ -102,24 +132,98 @@ body {
   margin-top: 0.125rem;
 }
 
-.log-info .log-badge   { color: var(--info); background: rgba(76, 154, 255, 0.15); }
-.log-progress .log-badge { color: var(--warn); background: rgba(244, 193, 82, 0.15); }
-.log-success .log-badge { color: var(--success); background: rgba(43, 212, 167, 0.15); }
-.log-fallback .log-badge { color: var(--fallback); background: rgba(255, 159, 74, 0.15); }
-.log-error .log-badge   { color: var(--error); background: rgba(255, 92, 122, 0.2); }
-.log-error { background: rgba(255, 92, 122, 0.05); }
+.log-info .log-badge {
+  color: var(--info);
+  background: rgba(76, 154, 255, 0.15);
+}
 
-.log-info .log-msg   { color: var(--info); }
-.log-progress .log-msg { color: var(--warn); }
-.log-success .log-msg { color: var(--success); }
-.log-fallback .log-msg { color: var(--fallback); }
-.log-error .log-msg   { color: var(--error); }
+.log-progress .log-badge {
+  color: var(--warn);
+  background: rgba(244, 193, 82, 0.15);
+}
+
+.log-success .log-badge {
+  color: var(--success);
+  background: rgba(43, 212, 167, 0.15);
+}
+
+.log-fallback .log-badge {
+  color: var(--fallback);
+  background: rgba(255, 159, 74, 0.15);
+}
+
+.log-error .log-badge {
+  color: var(--error);
+  background: rgba(255, 92, 122, 0.2);
+}
+
+.log-error {
+  background: rgba(255, 92, 122, 0.05);
+}
+
+.log-info .log-msg {
+  color: var(--info);
+}
+
+.log-progress .log-msg {
+  color: var(--warn);
+}
+
+.log-success .log-msg {
+  color: var(--success);
+}
+
+.log-fallback .log-msg {
+  color: var(--fallback);
+}
+
+.log-error .log-msg {
+  color: var(--error);
+}
 
 /* Animations */
-@keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
-@keyframes slide-in { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
-@keyframes pulse-subtle { 0%, 100% { opacity: 1; } 50% { opacity: 0.6; } }
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
 
-.animate-fade-in { animation: fade-in 0.25s ease-out; }
-.animate-slide-in { animation: slide-in 0.3s cubic-bezier(0.16, 1, 0.3, 1); }
-.animate-pulse-subtle { animation: pulse-subtle 2s ease-in-out infinite; }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slide-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pulse-subtle {
+
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.6;
+  }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.25s ease-out;
+}
+
+.animate-slide-in {
+  animation: slide-in 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.animate-pulse-subtle {
+  animation: pulse-subtle 2s ease-in-out infinite;
+}

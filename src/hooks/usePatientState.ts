@@ -6,7 +6,8 @@
 
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
+import { apiClient } from "@/lib/api/client";
 import type { PatientState } from "@/types/patient-state";
 
 export function usePatientState() {
@@ -14,13 +15,33 @@ export function usePatientState() {
   const [patientState, setPatientState] = useState<PatientState | null>(null);
   const [loading, setLoading] = useState(false);
 
-  const createSession = async () => {
-    // TODO: implement
-  };
+  const createSession = useCallback(async () => {
+    setLoading(true);
+    try {
+      const response = await apiClient.createSession();
+      setSessionId(response.session_id);
+    } catch (error) {
+      console.error("Failed to create session:", error);
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
-  const refreshState = async () => {
-    // TODO: implement
-  };
+  const refreshState = useCallback(async () => {
+    if (!sessionId) return;
+
+    setLoading(true);
+    try {
+      const state = await apiClient.getSessionState(sessionId);
+      setPatientState(state);
+    } catch (error) {
+      console.error("Failed to refresh patient state:", error);
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  }, [sessionId]);
 
   return {
     sessionId,

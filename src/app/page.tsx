@@ -1,12 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { usePatientState } from "@/hooks/usePatientState";
 import LeftPane from "@/components/layout/LeftPane";
 import CenterPane from "@/components/layout/CenterPane";
 import RightPane from "@/components/layout/RightPane";
 import type { ViewerTab } from "@/components/layout/CenterPane";
 import type { LogEvent } from "@/types/logs";
-import type { PatientState, ToothFinding } from "@/types/patient-state";
+import type { PatientState } from "@/types/patient-state";
 
 // Demo patient state for visual scaffolding
 const DEMO_STATE: PatientState = {
@@ -41,13 +42,33 @@ const DEMO_LOGS: LogEvent[] = [
 
 export default function Home() {
   const [activeTab, setActiveTab] = useState<ViewerTab>("xray");
-  const [patientState] = useState<PatientState>(DEMO_STATE);
   const [logs] = useState<LogEvent[]>(DEMO_LOGS);
+  const { sessionId, patientState, createSession, setPatientState } = usePatientState();
+  const [hasUploaded, setHasUploaded] = useState(false);
+  const displayState = patientState || (hasUploaded ? DEMO_STATE : null);
+
+  // Create session on mount
+  useEffect(() => {
+    createSession().catch((err) => {
+      console.error("Failed to create session on mount:", err);
+    });
+  }, [createSession]);
+
+  // Handle file upload - show mock patient data
+  const handleFileUpload = (file: File) => {
+    console.log("File uploaded:", file.name);
+    // Mock workflow: set the hardcoded patient state when file is uploaded
+    setPatientState(DEMO_STATE);
+    setHasUploaded(true);
+    // Switch to xray tab to show the data
+    setActiveTab("xray");
+  };
 
   return (
     <main className="flex h-screen w-screen overflow-hidden bg-ide-bg">
       <LeftPane
-        patientState={patientState}
+        patientState={displayState}
+        onUploadImage={handleFileUpload}
         onSelectArtifact={(type) => {
           if (type === "imaging") setActiveTab("xray");
           else if (type === "clinical_notes") setActiveTab("clinical-notes");
@@ -57,13 +78,13 @@ export default function Home() {
       <CenterPane
         activeTab={activeTab}
         onTabChange={setActiveTab}
-        patientState={patientState}
-        sessionId={patientState.identifiers.session_id}
+        patientState={displayState}
+        sessionId={sessionId || displayState?.identifiers.session_id || null}
       />
       <RightPane
         logs={logs}
         connected={true}
-        patientState={patientState}
+        patientState={displayState}
       />
     </main>
   );
