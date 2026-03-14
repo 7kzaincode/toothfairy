@@ -129,6 +129,26 @@ PROTOCOL_MAP = {
         "moderate": {"treatment": "Deep cleaning (scaling)", "urgency": "soon", "visits": 1, "explanation": "Your gums need more attention. A thorough cleaning will help reduce inflammation.", "cdt": "D4341", "cost": "$200-400"},
         "severe": {"treatment": "Deep cleaning + follow-up", "urgency": "soon", "visits": 2, "explanation": "Significant gum inflammation that needs professional treatment.", "cdt": "D4341", "cost": "$300-600"},
     },
+    "abscess": {
+        "mild": {"treatment": "Antibiotics + monitoring", "urgency": "soon", "visits": 1, "explanation": "There's a minor infection. We'll prescribe antibiotics and monitor it.", "cdt": "D7510", "cost": "$100-200"},
+        "moderate": {"treatment": "Incision and drainage + antibiotics", "urgency": "immediate", "visits": 2, "explanation": "The infection needs to be drained. We'll also prescribe antibiotics.", "cdt": "D7510", "cost": "$200-400"},
+        "severe": {"treatment": "Incision and drainage + root canal or extraction", "urgency": "immediate", "visits": 3, "explanation": "This is a serious infection. We need to drain it and then treat the source — either root canal or extraction.", "cdt": "D7510", "cost": "$500-1500"},
+    },
+    "crown_defect": {
+        "mild": {"treatment": "Monitoring", "urgency": "routine", "visits": 1, "explanation": "There's minor wear on an existing crown. We'll keep an eye on it.", "cdt": "D0120", "cost": "$50-100"},
+        "moderate": {"treatment": "Crown replacement", "urgency": "soon", "visits": 2, "explanation": "Your crown needs to be replaced to protect the tooth underneath.", "cdt": "D2740", "cost": "$800-1500"},
+        "severe": {"treatment": "Crown replacement + possible root canal", "urgency": "immediate", "visits": 3, "explanation": "The crown has failed significantly. We may need root canal treatment before placing a new crown.", "cdt": "D2740", "cost": "$1500-2500"},
+    },
+    "missing": {
+        "mild": {"treatment": "Monitoring + discuss replacement options", "urgency": "routine", "visits": 1, "explanation": "You're missing a tooth. Let's discuss whether a replacement would benefit you.", "cdt": "D0150", "cost": "$50-100"},
+        "moderate": {"treatment": "Bridge or partial denture", "urgency": "soon", "visits": 3, "explanation": "We recommend replacing this missing tooth to prevent shifting. A bridge or partial denture are good options.", "cdt": "D6240", "cost": "$1000-3000"},
+        "severe": {"treatment": "Implant consultation", "urgency": "soon", "visits": 4, "explanation": "Multiple missing teeth need replacement. We'll refer you for implant evaluation.", "cdt": "D6010", "cost": "$2000-5000"},
+    },
+    "root_resorption": {
+        "mild": {"treatment": "Monitoring with periodic radiographs", "urgency": "routine", "visits": 1, "explanation": "We've noticed minor root resorption. We'll monitor it with regular X-rays.", "cdt": "D0220", "cost": "$25-50"},
+        "moderate": {"treatment": "Root canal therapy to arrest resorption", "urgency": "soon", "visits": 2, "explanation": "Root resorption is progressing. Root canal treatment can help stop it.", "cdt": "D3330", "cost": "$700-1200"},
+        "severe": {"treatment": "Extraction + replacement planning", "urgency": "immediate", "visits": 2, "explanation": "The root has resorbed significantly and the tooth likely can't be saved. We'll plan for extraction and replacement.", "cdt": "D7140", "cost": "$150-400"},
+    },
 }
 
 
