@@ -59,7 +59,7 @@ class ImagingArtifact(BaseModel):
 class ImagingOutput(BaseModel):
     """Imaging copilot output."""
     segmentation_provenance: str = Field(default="none", description="'live' or 'cached'")
-    contour_points: Optional[list[list[int]]] = Field(default=None, description="Contour polygon as [[x,y], ...] points")
+    contour_points: Optional[list[list[float]]] = Field(default=None, description="Contour polygon as [[x,y], ...] points")
     tooth_number: Optional[int] = Field(default=None, description="FDI tooth number identified")
     findings: Optional[list[ToothFinding]] = Field(default=None, description="Detected findings for the tooth")
     measurements: Optional[dict] = Field(default=None, description="Size measurements")
@@ -97,6 +97,7 @@ class ClinicalNotesProvenance(BaseModel):
     """Clinical notes action provenance."""
     timestamp: Optional[datetime] = Field(default=None)
     duration_ms: Optional[int] = Field(default=None)
+    fallback_used: bool = Field(default=False, description="Whether regex fallback was used")
 
 
 # =====================
@@ -113,7 +114,7 @@ class TreatmentOutput(BaseModel):
     evidence_summary: Optional[str] = Field(default=None, description="Evidence-based treatment summary")
     success_rate: Optional[float] = Field(default=None, description="Treatment success rate 0-1")
     risk_factors: Optional[list[str]] = Field(default=None, description="Risk factors to consider")
-    alternatives: Optional[list[dict]] = Field(default=None, description="Alternative treatments")
+    alternatives: Optional[list[str]] = Field(default=None, description="Alternative treatments")
     referral_summary: Optional[str] = Field(default=None, description="Specialist referral summary")
     patient_education: Optional[str] = Field(default=None, description="Patient education material")
 

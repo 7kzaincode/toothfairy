@@ -1,0 +1,20 @@
+{
+  "condition": "root_canal_needed",
+  "summary": "Root canal therapy (endodontic treatment) removes infected or necrotic pulp tissue, disinfects the canal system, and seals it with biocompatible filling material. Success rates are 86-98% for initial treatment. Modern techniques using rotary NiTi instruments, apex locators, and dental operating microscopes have significantly improved outcomes. Post-endodontic restoration with a crown is critical for posterior teeth to prevent fracture.",
+  "success_rate": 0.94,
+  "risk_factors": [
+    "Complex root anatomy (extra canals, severe curvature, calcification)",
+    "Preoperative periapical lesion size >5mm",
+    "Tooth with existing post or previous endodontic treatment",
+    "Perforation during access or instrumentation",
+    "Delayed permanent restoration after root canal completion"
+  ],
+  "alternatives": [
+    "Vital pulp therapy (pulpotomy/pulp capping for reversible pulpitis)",
+    "Extraction and dental implant (single-tooth replacement)",
+    "Extraction and fixed bridge (uses adjacent teeth as abutments)",
+    "Extraction and removable partial denture (cost-effective option)"
+  ],
+  "referral_summary": "Refer to endodontist for: retreatment cases, calcified canals, teeth with complex anatomy (3+ canals in premolars, C-shaped canals), teeth requiring post removal, or when procedural complications occur (separated instrument, perforation).",
+  "patient_education": "Root canal treatment saves a badly damaged or infected tooth. The dentist removes the nerve and infected tissue inside the tooth, cleans and shapes the canals, then fills and seals them. Despite its reputation, modern root canal treatment is no more uncomfortable than getting a filling — the area is fully numbed. After treatment, a crown is usually placed to protect the tooth. With proper care, a root-canal-treated tooth can last a lifetime. Take prescribed antibiotics and pain medication as directed."
+}
