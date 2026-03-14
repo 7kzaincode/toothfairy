@@ -18,6 +18,8 @@ from app.core.config import settings
 
 logger = logging.getLogger(__name__)
 
+GEMINI_MODEL = "gemini-2.5-flash"
+
 CLINICAL_NOTES_SYSTEM_PROMPT = """You are a dental clinician AI assistant. Your job is to extract structured diagnoses from clinical notes text.
 
 For each finding, return a JSON array of objects with these exact fields:
@@ -72,7 +74,7 @@ class LLMClient:
 
         logger.info("Calling Gemini for clinical notes extraction")
         response = await self._client.aio.models.generate_content(
-            model="gemini-2.0-flash",
+            model=GEMINI_MODEL,
             contents=f"{CLINICAL_NOTES_SYSTEM_PROMPT}\n\nClinical notes to analyze:\n\n{text}",
         )
 
@@ -90,7 +92,7 @@ class LLMClient:
 
         logger.info("Calling Gemini vision for dental finding detection")
         response = await self._client.aio.models.generate_content(
-            model="gemini-2.0-flash",
+            model=GEMINI_MODEL,
             contents=[full_prompt, image_part],
         )
 
@@ -107,7 +109,7 @@ class LLMClient:
 
         logger.info("Calling Gemini for clinical chat")
         response = await self._client.aio.models.generate_content(
-            model="gemini-2.0-flash",
+            model=GEMINI_MODEL,
             contents=prompt,
         )
 
