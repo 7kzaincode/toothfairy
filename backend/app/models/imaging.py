@@ -9,8 +9,8 @@ class ImagingActionRequest(BaseModel):
     """Request for imaging copilot action (tooth click)."""
     session_id: str = Field(..., description="Session ID")
     image_id: str = Field(..., description="Uploaded image ID")
-    x: int = Field(..., description="Click x coordinate on image")
-    y: int = Field(..., description="Click y coordinate on image")
+    x: float = Field(..., description="Click x coordinate (0-1 normalized or pixel)")
+    y: float = Field(..., description="Click y coordinate (0-1 normalized or pixel)")
     image_type: str = Field(default="panoramic", description="periapical, panoramic, bitewing")
 
 
@@ -18,7 +18,7 @@ class ImagingActionResponse(BaseModel):
     """Response from imaging copilot."""
     session_id: str
     tooth_number: Optional[int] = None
-    contour_points: Optional[list[list[int]]] = None
+    contour_points: Optional[list[list[float]]] = None
     findings: Optional[list[ToothFinding]] = None
     measurements: Optional[dict] = None
     narrative: Optional[str] = None

@@ -18,7 +18,7 @@ class TreatmentActionResponse(BaseModel):
     evidence_summary: Optional[str] = None
     success_rate: Optional[float] = None
     risk_factors: Optional[list[str]] = None
-    alternatives: Optional[list[dict]] = None
+    alternatives: Optional[list[str]] = None
     referral_summary: Optional[str] = None
     patient_education: Optional[str] = None
     provenance: str = "cached"

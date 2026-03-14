@@ -1,0 +1,20 @@
+{
+  "condition": "bone_loss",
+  "summary": "Alveolar bone loss is primarily caused by periodontal disease (chronic bacterial infection). Treatment ranges from non-surgical scaling and root planing (SRP) for mild-moderate cases to surgical intervention for advanced disease. SRP achieves 1-2mm attachment gain in moderate pockets. Maintenance therapy every 3-4 months is critical for long-term stability. Bone grafting may be indicated for significant vertical defects.",
+  "success_rate": 0.85,
+  "risk_factors": [
+    "Smoking (3-6x increased risk of progression)",
+    "Uncontrolled diabetes mellitus",
+    "Genetic susceptibility (IL-1 polymorphisms)",
+    "Poor oral hygiene and irregular maintenance visits",
+    "Tooth mobility grade II or higher"
+  ],
+  "alternatives": [
+    "Guided tissue regeneration (GTR) with membrane and bone graft",
+    "Enamel matrix derivative (Emdogain) for intrabony defects",
+    "Laser-assisted periodontal therapy (LANAP)",
+    "Systemic or local antibiotic adjunct therapy (minocycline microspheres)"
+  ],
+  "referral_summary": "Refer to periodontist for: pockets >6mm not responding to SRP, vertical bone defects requiring regenerative surgery, furcation involvement grade II-III, or patients with systemic conditions complicating periodontal management.",
+  "patient_education": "Bone loss around your teeth is caused by gum disease — a bacterial infection that gradually destroys the bone supporting your teeth. Treatment starts with deep cleaning below the gumline to remove bacteria and tartar. You'll need to maintain excellent home care: brush twice daily, floss every day, and use any prescribed mouth rinse. Regular professional cleanings every 3-4 months are essential to prevent further bone loss. If caught early, the bone can stabilize; in advanced cases, surgery may help regenerate lost bone."
+}

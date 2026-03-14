@@ -1,0 +1,20 @@
+{
+  "condition": "impacted",
+  "summary": "Impacted teeth, most commonly third molars (wisdom teeth), are teeth that fail to fully erupt into the dental arch. Surgical extraction is recommended when impaction causes symptoms, pathology, or risk to adjacent teeth. Prophylactic removal of asymptomatic impacted third molars remains debated but is generally recommended in younger patients (age 17-25) when the risk of future complications is high. Surgical outcomes are better with younger patient age.",
+  "success_rate": 0.97,
+  "risk_factors": [
+    "Proximity to inferior alveolar nerve (risk of paresthesia)",
+    "Deep impaction or unfavorable angulation (horizontal, distoangular)",
+    "Patient age >35 (increased risk of complications, slower healing)",
+    "Adjacent tooth root resorption",
+    "Associated dentigerous cyst or pathology"
+  ],
+  "alternatives": [
+    "Coronectomy (partial removal of crown only, preserving roots near nerve)",
+    "Orthodontic-assisted eruption (for non-third-molar impactions)",
+    "Monitoring with periodic radiographs (for asymptomatic, low-risk cases)",
+    "Marsupialization (for large associated cysts before definitive extraction)"
+  ],
+  "referral_summary": "Refer to oral and maxillofacial surgeon for: deeply impacted teeth close to the inferior alveolar nerve, impactions requiring bone removal, patients requiring sedation or general anesthesia, and cases with associated pathology (cysts, tumors).",
+  "patient_education": "An impacted tooth is one that hasn't fully come through the gum, usually because there isn't enough room. If left untreated, impacted teeth can cause pain, infection, damage to neighboring teeth, or cyst formation. Surgical removal involves numbing the area (or sedation if preferred), making a small incision in the gum, removing any bone covering the tooth, and extracting the tooth. Recovery typically takes 3-7 days. Apply ice packs, eat soft foods, and follow your post-operative instructions carefully."
+}
