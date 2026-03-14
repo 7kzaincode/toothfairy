@@ -43,17 +43,19 @@ const DEMO_LOGS: LogEvent[] = [
 export default function Home() {
   const [activeTab, setActiveTab] = useState<ViewerTab>("xray");
   const [logs] = useState<LogEvent[]>(DEMO_LOGS);
-<<<<<<< Updated upstream
   const { sessionId, patientState, createSession, setPatientState } = usePatientState();
   const [hasUploaded, setHasUploaded] = useState(false);
   const displayState = patientState || (hasUploaded ? DEMO_STATE : null);
+  const [, setSelectedTooth] = useState<number | null>(null);
 
-  // Create session on mount
+  // Create session on mount (only when backend is available)
   useEffect(() => {
-    createSession().catch((err) => {
-      console.error("Failed to create session on mount:", err);
-    });
+    createSession();
   }, [createSession]);
+
+  const handleToothSelect = (toothNumber: number) => {
+    setSelectedTooth(toothNumber);
+  };
 
   // Handle file upload - show mock patient data
   const handleFileUpload = (file: File) => {
@@ -63,12 +65,6 @@ export default function Home() {
     setHasUploaded(true);
     // Switch to xray tab to show the data
     setActiveTab("xray");
-=======
-  const [, setSelectedTooth] = useState<number | null>(null);
-
-  const handleToothSelect = (toothNumber: number) => {
-    setSelectedTooth(toothNumber);
->>>>>>> Stashed changes
   };
 
   return (
@@ -85,14 +81,9 @@ export default function Home() {
       <CenterPane
         activeTab={activeTab}
         onTabChange={setActiveTab}
-<<<<<<< Updated upstream
         patientState={displayState}
         sessionId={sessionId || displayState?.identifiers.session_id || null}
-=======
-        patientState={patientState}
-        sessionId={patientState.identifiers.session_id}
         onToothSelect={handleToothSelect}
->>>>>>> Stashed changes
       />
       <RightPane
         logs={logs}
