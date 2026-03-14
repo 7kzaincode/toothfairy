@@ -41,8 +41,41 @@ async def clinical_notes_chat(request: ClinicalNotesChatRequest):
     if not patient_state:
         raise HTTPException(status_code=404, detail=f"Session {request.session_id} not found")
 
-    # Placeholder — will be implemented with Gemini
-    return ClinicalNotesChatResponse(
-        session_id=request.session_id,
-        response="Chat functionality will be available soon.",
-    )
+    from app.services.llm_client import llm_client
+
+    if not llm_client.is_available:
+        return ClinicalNotesChatResponse(
+            session_id=request.session_id,
+            response="Chat requires a configured LLM. Set GOOGLE_API_KEY in your .env file.",
+        )
+
+    # Build clinical context from patient state
+    context_parts = []
+    if patient_state.tooth_chart:
+        findings_str = ", ".join(
+            f"#{num} {f.condition} ({f.severity})"
+            for num, f in patient_state.tooth_chart.items()
+        )
+        context_parts.append(f"Current findings: {findings_str}")
+
+    if patient_state.clinical_notes_output:
+        out = patient_state.clinical_notes_output
+        if out.dentist_summary:
+            context_parts.append(f"Clinical assessment:\n{out.dentist_summary}")
+
+    if request.context:
+        context_parts.append(f"Additional context: {request.context}")
+
+    context = "\n\n".join(context_parts)
+
+    try:
+        reply = await llm_client.chat(request.message, context=context)
+        return ClinicalNotesChatResponse(
+            session_id=request.session_id,
+            response=reply,
+        )
+    except Exception as e:
+        return ClinicalNotesChatResponse(
+            session_id=request.session_id,
+            response=f"Error communicating with LLM: {str(e)}",
+        )
