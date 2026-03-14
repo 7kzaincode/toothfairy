@@ -1,7 +1,17 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import type { PatientState } from "@/types/patient-state";
 import Image from "next/image";
+
+const ToothChart3D = dynamic(() => import("@/components/3d-viewer/ToothChart3D"), {
+  ssr: false,
+  loading: () => (
+    <div className="flex-1 flex items-center justify-center h-full">
+      <span className="text-xs text-ide-muted">Loading 3D model...</span>
+    </div>
+  ),
+});
 
 export type ViewerTab = "xray" | "clinical-notes" | "treatment" | "tooth-chart";
 
@@ -19,14 +29,22 @@ interface CenterPaneProps {
   sessionId: string | null;
   onImagingClick?: (imageId: string, x: number, y: number) => void;
   onTextHighlight?: (text: string) => void;
+<<<<<<< Updated upstream
   onFileUpload?: (file: File) => void;
+=======
+  onToothSelect?: (toothNumber: number) => void;
+>>>>>>> Stashed changes
 }
 
 export default function CenterPane({
   activeTab,
   onTabChange,
   patientState,
+<<<<<<< Updated upstream
   onFileUpload,
+=======
+  onToothSelect,
+>>>>>>> Stashed changes
 }: CenterPaneProps) {
   return (
     <div className="flex-1 min-w-0 flex flex-col bg-ide-panel">
@@ -47,9 +65,18 @@ export default function CenterPane({
       </div>
 
       {/* Viewer Content */}
+<<<<<<< Updated upstream
       <div className="flex-1 min-w-0 flex flex-col bg-ide-panel origin-top-left scale-[0.9]">
+=======
+      <div className="flex-1 min-h-0 overflow-auto scrollbar-ide relative">
+        {activeTab === "xray" && <XrayPlaceholder />}
+>>>>>>> Stashed changes
         {activeTab === "clinical-notes" && <ClinicalNotesPlaceholder patientState={patientState} />}
-        {activeTab === "tooth-chart" && <ToothChartPlaceholder patientState={patientState} />}
+        {activeTab === "tooth-chart" && patientState && (
+          <div className="absolute inset-0">
+            <ToothChart3D toothChart={patientState.tooth_chart} onToothSelect={onToothSelect} />
+          </div>
+        )}
         {activeTab === "treatment" && <TreatmentPlaceholder patientState={patientState} />}
         {activeTab === "xray" && (
           <div className="flex flex-col items-center justify-center h-full gap-3">
