@@ -1,12 +1,72 @@
 """Dental Diagnosis Extractor
 
 Parses clinical notes text to extract structured dental diagnoses.
-Uses regex patterns for common dental notation.
+Two paths:
+  1. LLM (Gemini) — structured extraction via prompt (primary)
+  2. Regex — pattern matching fallback when Gemini is unavailable
 """
 
 import re
+import logging
 from app.models.patient_state import ToothFinding
+from app.services.llm_client import llm_client
 
+logger = logging.getLogger(__name__)
+
+# Valid conditions the system understands
+VALID_CONDITIONS = {
+    "cavity", "periapical_lesion", "bone_loss", "impacted",
+    "root_canal_needed", "fracture", "gingivitis", "abscess",
+    "crown_defect", "missing", "root_resorption",
+}
+
+VALID_SEVERITIES = {"mild", "moderate", "severe"}
+
+# ===========================
+# LLM Extraction
+# ===========================
+
+async def extract_dental_diagnoses_llm(text: str) -> list[ToothFinding]:
+    """Extract diagnoses using Gemini structured output.
+
+    Returns list of ToothFinding or raises on failure.
+    """
+    raw_findings = await llm_client.parse_clinical_notes(text)
+
+    findings = []
+    for item in raw_findings:
+        try:
+            condition = item.get("condition", "").lower().replace(" ", "_")
+            if condition not in VALID_CONDITIONS:
+                logger.warning(f"LLM returned unknown condition '{condition}', skipping")
+                continue
+
+            severity = item.get("severity", "moderate").lower()
+            if severity not in VALID_SEVERITIES:
+                severity = "moderate"
+
+            tooth_num = int(item.get("tooth_number", 0))
+            confidence = float(item.get("confidence", 0.85))
+            confidence = max(0.0, min(1.0, confidence))
+
+            findings.append(ToothFinding(
+                tooth_number=tooth_num,
+                condition=condition,
+                severity=severity,
+                confidence=confidence,
+                location_description=str(item.get("location_description", ""))[:120],
+            ))
+        except (ValueError, TypeError) as e:
+            logger.warning(f"Skipping malformed LLM finding: {e}")
+            continue
+
+    # Deduplicate
+    return _deduplicate(findings)
+
+
+# ===========================
+# Regex Extraction (fallback)
+# ===========================
 
 # Common dental condition patterns
 CONDITION_PATTERNS = {
@@ -26,6 +86,7 @@ CONDITION_PATTERNS = {
     r"missing\s*tooth|edentulous": "missing",
     r"abscess": "abscess",
     r"gingivitis": "gingivitis",
+    r"root\s*resorption": "root_resorption",
 }
 
 # Severity indicators
@@ -33,6 +94,7 @@ SEVERITY_MAP = {
     "severe": "severe",
     "advanced": "severe",
     "significant": "severe",
+    "extensive": "severe",
     "moderate": "moderate",
     "mild": "mild",
     "slight": "mild",
@@ -44,8 +106,8 @@ SEVERITY_MAP = {
 TOOTH_PATTERN = re.compile(r"#(\d{1,2})\b|tooth\s*(\d{1,2})", re.IGNORECASE)
 
 
-def extract_dental_diagnoses(text: str) -> list[ToothFinding]:
-    """Extract dental diagnoses from clinical notes text.
+def extract_dental_diagnoses_regex(text: str) -> list[ToothFinding]:
+    """Extract dental diagnoses from clinical notes using regex patterns.
 
     Args:
         text: Clinical notes text (highlighted or full)
@@ -54,7 +116,6 @@ def extract_dental_diagnoses(text: str) -> list[ToothFinding]:
         List of ToothFinding objects
     """
     findings = []
-    text_lower = text.lower()
 
     # Split text into segments by tooth references or sentences
     sentences = re.split(r"[.;\n]", text)
@@ -108,7 +169,6 @@ def extract_dental_diagnoses(text: str) -> list[ToothFinding]:
                         location_description=location or sentence.strip()[:80],
                     ))
         elif conditions_found and not tooth_numbers:
-            # Condition found but no tooth number — assign to general
             for condition in conditions_found:
                 findings.append(ToothFinding(
                     tooth_number=0,
@@ -118,13 +178,50 @@ def extract_dental_diagnoses(text: str) -> list[ToothFinding]:
                     location_description=sentence.strip()[:80],
                 ))
 
-    # Deduplicate by (tooth_number, condition)
+    return _deduplicate(findings)
+
+
+# ===========================
+# Unified entry point
+# ===========================
+
+async def extract_diagnoses(text: str, use_llm: bool = True) -> tuple[list[ToothFinding], str]:
+    """Extract dental diagnoses, trying LLM first with regex fallback.
+
+    Args:
+        text: Clinical notes text
+        use_llm: Whether to attempt LLM extraction
+
+    Returns:
+        Tuple of (findings, provenance) where provenance is "gemini", "regex", or "fallback-regex"
+    """
+    if use_llm and llm_client.is_available:
+        try:
+            findings = await extract_dental_diagnoses_llm(text)
+            if findings:
+                logger.info(f"LLM extraction returned {len(findings)} findings")
+                return findings, "gemini"
+            else:
+                logger.warning("LLM extraction returned empty results, falling back to regex")
+        except Exception as e:
+            logger.error(f"LLM extraction failed: {e}, falling back to regex")
+
+        # Fallback to regex after LLM failure
+        findings = extract_dental_diagnoses_regex(text)
+        return findings, "fallback-regex"
+
+    # Regex-only path
+    findings = extract_dental_diagnoses_regex(text)
+    return findings, "regex"
+
+
+def _deduplicate(findings: list[ToothFinding]) -> list[ToothFinding]:
+    """Deduplicate findings by (tooth_number, condition)."""
     seen = set()
-    unique_findings = []
+    unique = []
     for f in findings:
         key = (f.tooth_number, f.condition)
         if key not in seen:
             seen.add(key)
-            unique_findings.append(f)
-
-    return unique_findings
+            unique.append(f)
+    return unique
