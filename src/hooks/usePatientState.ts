@@ -22,7 +22,6 @@ export function usePatientState() {
       setSessionId(response.session_id);
     } catch (error) {
       console.error("Failed to create session:", error);
-      throw error;
     } finally {
       setLoading(false);
     }
