@@ -2,15 +2,17 @@
 
 import { useState, useEffect } from "react";
 import { usePatientState } from "@/hooks/usePatientState";
+import { useCopilot } from "@/hooks/useCopilot";
+import { useSSE } from "@/hooks/useSSE";
+import { apiClient } from "@/lib/api/client";
 import LeftPane from "@/components/layout/LeftPane";
 import CenterPane from "@/components/layout/CenterPane";
 import RightPane from "@/components/layout/RightPane";
 import LandingPopup from "@/components/layout/LandingPopup";
 import type { ViewerTab } from "@/components/layout/CenterPane";
-import type { LogEvent } from "@/types/logs";
 import type { PatientState } from "@/types/patient-state";
 
-// Demo patient state for visual scaffolding
+// Demo patient state for visual scaffolding when backend is unavailable
 const DEMO_STATE: PatientState = {
   identifiers: {
     session_id: "sess-demo-001",
@@ -28,45 +30,71 @@ const DEMO_STATE: PatientState = {
   action_count: 4,
 };
 
-const DEMO_LOGS: LogEvent[] = [
-  { session_id: "sess-demo-001", copilot: "imaging", severity: "info", message: "Initializing imaging copilot...", timestamp: new Date().toISOString() },
-  { session_id: "sess-demo-001", copilot: "imaging", severity: "progress", message: "Segmenting tooth at click position (342, 218)...", timestamp: new Date().toISOString() },
-  { session_id: "sess-demo-001", copilot: "imaging", severity: "success", message: "Mapped click to FDI tooth #36", timestamp: new Date().toISOString() },
-  { session_id: "sess-demo-001", copilot: "imaging", severity: "fallback", message: "Using cached segmentation mask", timestamp: new Date().toISOString() },
-  { session_id: "sess-demo-001", copilot: "imaging", severity: "success", message: "Found: periapical radiolucency (moderate, confidence: 0.92)", timestamp: new Date().toISOString() },
-  { session_id: "sess-demo-001", copilot: "clinical_notes", severity: "info", message: "Parsing highlighted clinical text...", timestamp: new Date().toISOString() },
-  { session_id: "sess-demo-001", copilot: "clinical_notes", severity: "progress", message: "Extracting dental diagnoses from notes...", timestamp: new Date().toISOString() },
-  { session_id: "sess-demo-001", copilot: "clinical_notes", severity: "success", message: "Extracted 3 diagnoses, mapped to treatment protocols", timestamp: new Date().toISOString() },
-  { session_id: "sess-demo-001", copilot: "clinical_notes", severity: "info", message: "Generating urgency-ranked treatment timeline...", timestamp: new Date().toISOString() },
-  { session_id: "sess-demo-001", copilot: "clinical_notes", severity: "success", message: "Timeline generated: 2 immediate, 1 soon, 1 routine", timestamp: new Date().toISOString() },
-];
-
 export default function Home() {
   const [activeTab, setActiveTab] = useState<ViewerTab>("xray");
-  const [logs] = useState<LogEvent[]>(DEMO_LOGS);
-  const { sessionId, patientState, createSession, setPatientState } = usePatientState();
+  const { sessionId, patientState, createSession, refreshState, setPatientState } = usePatientState();
   const [hasUploaded, setHasUploaded] = useState(false);
   const [showLanding, setShowLanding] = useState(true);
-  const displayState = patientState || (hasUploaded ? DEMO_STATE : null);
   const [, setSelectedTooth] = useState<number | null>(null);
+  const [uploadedImageId, setUploadedImageId] = useState<string | null>(null);
+  const [uploadedImageUrl, setUploadedImageUrl] = useState<string | null>(null);
 
-  // Create session on mount (only when backend is available)
+  // Collapse state for sidebars
+  const [leftCollapsed, setLeftCollapsed] = useState(false);
+  const [rightCollapsed, setRightCollapsed] = useState(false);
+
+  // SSE logs from backend
+  const { logs, connected } = useSSE(sessionId);
+
+  // Copilot actions
+  const copilot = useCopilot(sessionId, refreshState);
+
+  // Display state: prefer real state from backend, fall back to demo
+  const displayState = patientState || (hasUploaded ? DEMO_STATE : null);
+
+  // Create session on mount
   useEffect(() => {
     createSession();
   }, [createSession]);
 
   const handleToothSelect = (toothNumber: number) => {
-    setSelectedTooth(toothNumber);
+    // Could trigger treatment lookup for clicked tooth
+    const finding = displayState?.tooth_chart[toothNumber];
+    if (finding) {
+      copilot.triggerTreatment(finding.condition, toothNumber);
+      setActiveTab("treatment");
+    }
   };
 
-  // Handle file upload - show mock patient data
-  const handleFileUpload = (file: File) => {
-    console.log("File uploaded:", file.name);
-    // Mock workflow: set the hardcoded patient state when file is uploaded
-    setPatientState(DEMO_STATE);
-    setHasUploaded(true);
-    // Switch to xray tab to show the data
-    setActiveTab("xray");
+  const handleFileUpload = async (file: File) => {
+    try {
+      const result = await apiClient.uploadImage(file);
+      setUploadedImageId(result.image_id);
+      setUploadedImageUrl(`http://localhost:8000/api/imaging/image/${result.image_id}`);
+      setPatientState(DEMO_STATE);
+      setHasUploaded(true);
+      setActiveTab("xray");
+    } catch (err) {
+      console.error("Upload failed:", err);
+      // Fallback to local preview
+      setUploadedImageUrl(URL.createObjectURL(file));
+      setPatientState(DEMO_STATE);
+      setHasUploaded(true);
+      setActiveTab("xray");
+    }
+  };
+
+  const handleImagingClick = (imageId: string, x: number, y: number) => {
+    copilot.triggerImaging(imageId, x, y);
+  };
+
+  const handleTextHighlight = (text: string) => {
+    copilot.triggerClinicalNotes(text);
+  };
+
+  const handleTreatmentClick = (condition: string, toothNumber?: number) => {
+    copilot.triggerTreatment(condition, toothNumber);
+    setActiveTab("treatment");
   };
 
   return (
@@ -81,6 +109,8 @@ export default function Home() {
           else if (type === "treatment") setActiveTab("treatment");
           else if (type === "tooth-chart") setActiveTab("tooth-chart");
         }}
+        collapsed={leftCollapsed}
+        onToggle={() => setLeftCollapsed((v) => !v)}
       />
       <CenterPane
         activeTab={activeTab}
@@ -88,11 +118,31 @@ export default function Home() {
         patientState={displayState}
         sessionId={sessionId || displayState?.identifiers.session_id || null}
         onToothSelect={handleToothSelect}
+        onTextHighlight={handleTextHighlight}
+        onTreatmentClick={handleTreatmentClick}
+        onImagingClick={handleImagingClick}
+        onFileUpload={handleFileUpload}
+        imageId={uploadedImageId}
+        imageUrl={uploadedImageUrl}
+        imagingResult={copilot.lastImagingResult}
+        clinicalNotesOutput={copilot.lastClinicalNotesResult ? {
+          diagnoses: copilot.lastClinicalNotesResult.diagnoses,
+          protocols: copilot.lastClinicalNotesResult.treatment_protocols,
+          timeline: copilot.lastClinicalNotesResult.treatment_timeline,
+          patient_summary: copilot.lastClinicalNotesResult.patient_summary,
+          dentist_summary: copilot.lastClinicalNotesResult.dentist_summary,
+        } : undefined}
+        treatmentResult={copilot.lastTreatmentResult}
+        onClearTreatment={copilot.clearTreatmentResult}
+        processing={copilot.processing}
       />
       <RightPane
         logs={logs}
-        connected={true}
+        connected={connected}
         patientState={displayState}
+        sessionId={sessionId}
+        collapsed={rightCollapsed}
+        onToggle={() => setRightCollapsed((v) => !v)}
       />
     </main>
   );

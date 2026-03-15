@@ -3,23 +3,21 @@
 import { useRef } from "react";
 import type { PatientState } from "@/types/patient-state";
 
-const CONDITION_COLORS: Record<string, string> = {
-  cavity: "#F4C152",
-  periapical_lesion: "#FF5C7A",
-  bone_loss: "#A78BFA",
-  impacted: "#4C9AFF",
-  root_canal_needed: "#FF5C7A",
-  fracture: "#FF9F4A",
-  gingivitis: "#F4C152",
-};
-
 interface LeftPaneProps {
   patientState: PatientState | null;
   onUploadImage?: (file: File) => void;
   onSelectArtifact?: (type: string) => void;
+  collapsed: boolean;
+  onToggle: () => void;
 }
 
-export default function LeftPane({ patientState, onSelectArtifact, onUploadImage }: LeftPaneProps) {
+export default function LeftPane({
+  patientState,
+  onSelectArtifact,
+  onUploadImage,
+  collapsed,
+  onToggle,
+}: LeftPaneProps) {
   const findings = patientState ? Object.values(patientState.tooth_chart) : [];
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -31,25 +29,67 @@ export default function LeftPane({ patientState, onSelectArtifact, onUploadImage
     const file = e.target.files?.[0];
     if (file) {
       onUploadImage?.(file);
-      // Reset input for future uploads
       if (fileInputRef.current) {
         fileInputRef.current.value = "";
       }
     }
   };
 
+  // Collapsed state
+  if (collapsed) {
+    return (
+      <div className="w-[36px] flex-shrink-0 border-r border-ide-border bg-ide-bg flex flex-col items-center h-full">
+        <button
+          onClick={onToggle}
+          className="w-full h-9 flex items-center justify-center border-b border-ide-border hover:bg-ide-surface transition-colors text-ide-muted hover:text-ide-text"
+          title="Expand sidebar"
+        >
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <polyline points="9 18 15 12 9 6" />
+          </svg>
+        </button>
+        <div className="flex-1 flex items-center justify-center">
+          <span
+            className="text-[10px] font-semibold uppercase tracking-[0.15em] text-ide-muted"
+            style={{ writingMode: "vertical-rl", textOrientation: "mixed" }}
+          >
+            Tooth Fairy
+          </span>
+        </div>
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*"
+          onChange={handleFileSelect}
+          className="hidden"
+        />
+      </div>
+    );
+  }
+
   return (
     <div className="w-[240px] flex-shrink-0 border-r border-ide-border bg-ide-panel flex flex-col h-full">
       {/* Header */}
-      <div className="h-9 flex items-center justify-between px-3 border-b border-ide-border">
+      <div className="h-9 flex items-center justify-between px-3 border-b border-ide-border shrink-0">
         <span className="text-[11px] font-semibold uppercase tracking-[0.05em] text-ide-text-2">
           Tooth Fairy
         </span>
-        {patientState && (
-          <span className="text-[9px] font-mono text-ide-muted bg-ide-surface px-1.5 py-0.5 rounded">
-            {patientState.identifiers.session_id.slice(0, 13)}
-          </span>
-        )}
+        <div className="flex items-center gap-1">
+          {patientState && (
+            <span className="text-[9px] font-mono text-ide-muted bg-ide-surface px-1.5 py-0.5 rounded">
+              {patientState.identifiers.session_id.slice(0, 13)}
+            </span>
+          )}
+          <button
+            onClick={onToggle}
+            className="p-1 hover:bg-ide-surface rounded transition-colors text-ide-muted hover:text-ide-text"
+            title="Collapse"
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="15 18 9 12 15 6" />
+            </svg>
+          </button>
+        </div>
       </div>
 
       {patientState ? (
@@ -60,25 +100,11 @@ export default function LeftPane({ patientState, onSelectArtifact, onUploadImage
               Patient
             </div>
             <div className="text-sm font-medium text-ide-text mb-3">Sarah Chen</div>
-
-            {/* Patient History */}
             <div className="space-y-2 text-[10px]">
-              <div className="flex items-start justify-between">
-                <span className="text-ide-muted">ID:</span>
-                <span className="text-ide-text-2">SC-2024-001</span>
-              </div>
-              <div className="flex items-start justify-between">
-                <span className="text-ide-muted">Age:</span>
-                <span className="text-ide-text-2">34 years</span>
-              </div>
-              <div className="flex items-start justify-between">
-                <span className="text-ide-muted">Allergies:</span>
-                <span className="text-ide-text-2">Penicillin, NSAIDs</span>
-              </div>
-              <div className="flex items-start justify-between">
-                <span className="text-ide-muted">Last Visit:</span>
-                <span className="text-ide-text-2">2024-03-08</span>
-              </div>
+              <InfoRow label="ID" value="SC-2024-001" />
+              <InfoRow label="Age" value="34 years" />
+              <InfoRow label="Allergies" value="Penicillin, NSAIDs" />
+              <InfoRow label="Last Visit" value="2024-03-08" />
             </div>
           </div>
 
@@ -118,7 +144,6 @@ export default function LeftPane({ patientState, onSelectArtifact, onUploadImage
           </div>
         </>
       ) : (
-        /* Empty State - Show patient selector and scan options */
         <>
           {/* Patient Selector */}
           <div className="px-3 py-3 border-b border-ide-hairline">
@@ -140,8 +165,6 @@ export default function LeftPane({ patientState, onSelectArtifact, onUploadImage
             <p className="text-[10px] font-semibold uppercase tracking-[0.05em] text-ide-muted mb-4">
               Select Scan Type
             </p>
-
-            {/* X-Ray Scan */}
             <button
               onClick={handleUploadClick}
               className="w-full flex items-start gap-3 text-ide-text text-xs py-3 px-2 rounded transition-colors duration-150 hover:text-ide-accent text-left"
@@ -152,8 +175,6 @@ export default function LeftPane({ patientState, onSelectArtifact, onUploadImage
                 <span className="text-[9px] text-ide-muted">2D dental radiograph</span>
               </div>
             </button>
-
-            {/* 3D Intraoral Scan */}
             <button
               onClick={() => onSelectArtifact?.("tooth-chart")}
               className="w-full flex items-start gap-3 text-ide-text text-xs py-3 px-2 rounded transition-colors duration-150 hover:text-ide-accent text-left"
@@ -164,7 +185,6 @@ export default function LeftPane({ patientState, onSelectArtifact, onUploadImage
                 <span className="text-[9px] text-ide-muted">Digital 3D mouth scan</span>
               </div>
             </button>
-
             <input
               ref={fileInputRef}
               type="file"
@@ -175,7 +195,15 @@ export default function LeftPane({ patientState, onSelectArtifact, onUploadImage
           </div>
         </>
       )}
+    </div>
+  );
+}
 
+function InfoRow({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex items-start justify-between">
+      <span className="text-ide-muted">{label}:</span>
+      <span className="text-ide-text-2">{value}</span>
     </div>
   );
 }

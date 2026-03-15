@@ -46,6 +46,10 @@ async def extract_dental_diagnoses_llm(text: str) -> list[ToothFinding]:
                 severity = "moderate"
 
             tooth_num = int(item.get("tooth_number", 0))
+            if tooth_num < 11 or tooth_num > 48:
+                logger.warning(f"LLM returned invalid tooth number {tooth_num}, skipping")
+                continue
+
             confidence = float(item.get("confidence", 0.85))
             confidence = max(0.0, min(1.0, confidence))
 
@@ -60,8 +64,17 @@ async def extract_dental_diagnoses_llm(text: str) -> list[ToothFinding]:
             logger.warning(f"Skipping malformed LLM finding: {e}")
             continue
 
-    # Deduplicate
-    return _deduplicate(findings)
+    # Deduplicate and filter root_canal_needed when periapical_lesion exists
+    findings = _deduplicate(findings)
+    tooth_conditions: dict[int, set[str]] = {}
+    for f in findings:
+        tooth_conditions.setdefault(f.tooth_number, set()).add(f.condition)
+    findings = [
+        f for f in findings
+        if not (f.condition == "root_canal_needed"
+                and "periapical_lesion" in tooth_conditions.get(f.tooth_number, set()))
+    ]
+    return findings
 
 
 # ===========================
@@ -157,28 +170,33 @@ def extract_dental_diagnoses_regex(text: str) -> list[ToothFinding]:
         if found_locations:
             location = " ".join(found_locations) + " surface"
 
-        # Create findings for each tooth + condition combination
+        # Create findings only when we have both tooth number and condition
+        # Skip findings without a tooth number (no "Tooth #0" entries)
         if tooth_numbers and conditions_found:
             for tooth_num in tooth_numbers:
                 for condition in conditions_found:
+                    # Only use real anatomical location, leave empty otherwise
+                    desc = location if location else ""
                     findings.append(ToothFinding(
                         tooth_number=tooth_num,
                         condition=condition,
                         severity=severity,
                         confidence=0.85,
-                        location_description=location or sentence.strip()[:80],
+                        location_description=desc,
                     ))
-        elif conditions_found and not tooth_numbers:
-            for condition in conditions_found:
-                findings.append(ToothFinding(
-                    tooth_number=0,
-                    condition=condition,
-                    severity=severity,
-                    confidence=0.6,
-                    location_description=sentence.strip()[:80],
-                ))
 
-    return _deduplicate(findings)
+    # If a tooth has both periapical_lesion and root_canal_needed,
+    # keep only periapical_lesion (root canal is the treatment, not diagnosis)
+    findings = _deduplicate(findings)
+    tooth_conditions: dict[int, set[str]] = {}
+    for f in findings:
+        tooth_conditions.setdefault(f.tooth_number, set()).add(f.condition)
+    findings = [
+        f for f in findings
+        if not (f.condition == "root_canal_needed"
+                and "periapical_lesion" in tooth_conditions.get(f.tooth_number, set()))
+    ]
+    return findings
 
 
 # ===========================
@@ -195,7 +213,7 @@ async def extract_diagnoses(text: str, use_llm: bool = True) -> tuple[list[Tooth
     Returns:
         Tuple of (findings, provenance) where provenance is "gemini", "regex", or "fallback-regex"
     """
-    if use_llm and llm_client.is_available:
+    if False:  # LLM disabled — saving quota for treatment+MCP
         try:
             findings = await extract_dental_diagnoses_llm(text)
             if findings:
