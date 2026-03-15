@@ -14,8 +14,8 @@ from app.core.config import settings
 logger = logging.getLogger(__name__)
 
 
-class ReplicateClient:
-    """Client for MedSAM2 tooth segmentation."""
+class ModalClient:
+    """Client for MedSAM2 tooth segmentation via Modal endpoint."""
 
     def __init__(self):
         self.endpoint_url = settings.MODAL_ENDPOINT_URL
@@ -52,5 +52,63 @@ class ReplicateClient:
             data = r.json()
             return {"contour_points": data["contour_points"]}  # [[x,y], ...]
 
+    async def segment_teeth_batch(
+        self,
+        image_url: str,
+        points: list[tuple[int, int]]
+    ) -> dict:
+        """Segment multiple teeth in batch (4x faster than sequential).
 
-replicate_client = ReplicateClient()
+        Args:
+            image_url: URL to X-ray image
+            points: List of (x, y) tuples for each tooth
+
+        Returns:
+            {
+                "success": True,
+                "results": [
+                    {
+                        "point_index": 0,
+                        "point": [x, y],
+                        "contour_points": [[x, y], ...],
+                        "confidence": 0.92,
+                        "area_pixels": 1250,
+                        "used_fallback": False
+                    },
+                    ...
+                ],
+                "total_points": 32,
+                "successful_segments": 28
+            }
+
+        Raises:
+            RuntimeError: If MODAL_ENDPOINT_URL is not configured
+            httpx.HTTPStatusError: If request fails
+        """
+        if not self.endpoint_url:
+            raise RuntimeError("MODAL_ENDPOINT_URL is not configured")
+
+        # Use /segment-teeth-batch endpoint
+        # Construct batch URL by replacing the last path segment
+        # This works regardless of whether URL ends with /segment-tooth or has a different format
+        if "/segment-tooth" in self.endpoint_url:
+            batch_url = self.endpoint_url.replace("/segment-tooth", "/segment-teeth-batch")
+        else:
+            # Fallback: append to base URL
+            base_url = self.endpoint_url.rstrip("/")
+            batch_url = f"{base_url}/segment-teeth-batch"
+
+        async with httpx.AsyncClient(timeout=120) as client:  # Longer timeout for batch
+            r = await client.post(batch_url, json={
+                "image_url": image_url,
+                "points": [[x, y] for x, y in points]
+            })
+            r.raise_for_status()
+            return r.json()
+
+
+# Default client instance (using Modal)
+modal_client = ModalClient()
+
+# Alias for backward compatibility
+replicate_client = modal_client

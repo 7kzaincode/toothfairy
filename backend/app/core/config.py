@@ -31,6 +31,7 @@ class Settings:
 
     # Modal/Replicate Configuration (for MedSAM2)
     MODAL_ENDPOINT_URL: str = os.getenv("MODAL_ENDPOINT_URL", "")
+    MEDSAM_MODEL_SIZE: str = os.getenv("MEDSAM_MODEL_SIZE", "vit_b")  # vit_b | vit_l | vit_h
 
     # Moorcheh AI Configuration (patient memory / MUMLA)
     MOORCHEH_API_KEY: str = os.getenv("MOORCHEH_API_KEY", "")
@@ -78,6 +79,7 @@ class Settings:
             "demo_mode": cls.DEMO_MODE,
             "gemini_configured": bool(cls.GOOGLE_API_KEY),
             "modal_configured": bool(cls.MODAL_ENDPOINT_URL),
+            "medsam_model_size": cls.MEDSAM_MODEL_SIZE,
             "timeout_imaging_sec": cls.IMAGING_INFERENCE_TIMEOUT_SECONDS,
             "timeout_evidence_sec": cls.EVIDENCE_API_TIMEOUT_SECONDS,
             "valid": is_valid,
