@@ -15,7 +15,6 @@ interface DentalXrayViewerProps {
   onAutoScan?: (imageId: string) => void;
   autoScanResult?: AutoScanResponse | null;
   onTreatmentClick?: (condition: string, toothNumber?: number) => void;
-  onClose?: () => void;
 }
 
 export default function DentalXrayViewer({

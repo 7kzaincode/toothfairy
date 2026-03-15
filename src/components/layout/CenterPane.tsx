@@ -27,31 +27,7 @@ const TABS: { key: ViewerTab; label: string }[] = [
   { key: "treatment", label: "Treatment" },
 ];
 
-const DEMO_NOTES = `CLINICAL NOTES — Sarah Chen (DOB: 1990-04-12)
-Date: 2024-03-15  Provider: Dr. Martinez
-
-CHIEF COMPLAINT: Routine checkup, occasional sensitivity upper left.
-
-CLINICAL FINDINGS:
-- Tooth #14: MOD caries extending to dentin, moderate depth.
-  Recommend composite restoration (D2392).
-- Tooth #36: Periapical radiolucency noted on PA radiograph.
-  Positive to percussion, negative vitality.
-  Root canal therapy indicated (D3330).
-- Tooth #47: Early horizontal bone loss (2-3mm).
-  Recommend scaling and root planing (D4341).
-- Tooth #28: Partially impacted, mesioangular orientation.
-  Refer to OMFS for evaluation.
-
-TREATMENT PLAN:
-1. [IMMEDIATE] Tooth #36 — Root canal therapy
-2. [SOON] Tooth #14 — Composite restoration
-3. [SOON] Tooth #28 — Surgical extraction referral
-4. [ROUTINE] Tooth #47 — Scaling and root planing
-
-NOTES: Patient informed of findings. Discussed treatment
-options and costs. Patient consents to begin with #36 RCT
-at next visit.`;
+const DEFAULT_NOTES = "Select a patient profile to view their clinical notes.";
 
 interface CenterPaneProps {
   activeTab: ViewerTab;
@@ -74,6 +50,7 @@ interface CenterPaneProps {
   autoScanResult?: AutoScanResponse | null;
   clinicalNotesOutput?: ClinicalNotesOutput | null;
   treatmentResult?: TreatmentActionResponse | null;
+  profileNotes?: string | null;
   processing?: boolean;
 }
 
@@ -97,6 +74,7 @@ export default function CenterPane({
   autoScanResult,
   clinicalNotesOutput,
   treatmentResult,
+  profileNotes,
   processing,
 }: CenterPaneProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -124,7 +102,7 @@ export default function CenterPane({
         {activeTab === "clinical-notes" && (
           <div className="absolute inset-0">
             <ClinicalNotesViewer
-              notesText={patientState?.clinical_notes_artifact?.notes_text || DEMO_NOTES}
+              notesText={patientState?.clinical_notes_artifact?.notes_text || profileNotes || DEFAULT_NOTES}
               output={clinicalNotesOutput || patientState?.clinical_notes_output || undefined}
               onTextHighlight={onTextHighlight}
               onTimelineEntryClick={(entry) =>
