@@ -1,13 +1,14 @@
 "use client";
 
 import { useState, useEffect, useRef, Suspense } from "react";
-import { DM_Sans } from "next/font/google";
+import { DM_Sans, DM_Serif_Display } from "next/font/google";
 import Image from "next/image";
 import { Canvas, useFrame } from "@react-three/fiber";
 import { useGLTF, Environment } from "@react-three/drei";
 import * as THREE from "three";
 
 const dmSans = DM_Sans({ subsets: ["latin"] });
+const dmSerif = DM_Serif_Display({ weight: "400", subsets: ["latin"] });
 
 type GLTFNodes = {
   nodes: {
@@ -121,36 +122,17 @@ interface LandingPopupProps {
 export default function LandingPopup({ onDismiss }: LandingPopupProps) {
   const [mounted, setMounted] = useState(false);
   const [showModel, setShowModel] = useState(false);
-  const cardRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     setMounted(true);
-
-    const handleMouseMove = (e: MouseEvent) => {
-      document.documentElement.style.setProperty("--cursor-x", `${e.clientX}px`);
-      document.documentElement.style.setProperty("--cursor-y", `${e.clientY}px`);
-    };
-
-    window.addEventListener("mousemove", handleMouseMove);
     const modelTimer = setTimeout(() => setShowModel(true), 1200);
-
-    return () => {
-      window.removeEventListener("mousemove", handleMouseMove);
-      clearTimeout(modelTimer);
-    };
+    return () => clearTimeout(modelTimer);
   }, []);
-
-  const handleCardMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (!cardRef.current) return;
-    const rect = cardRef.current.getBoundingClientRect();
-    cardRef.current.style.setProperty("--mouse-x", `${e.clientX - rect.left}px`);
-    cardRef.current.style.setProperty("--mouse-y", `${e.clientY - rect.top}px`);
-  };
 
   if (!mounted) return null;
 
   return (
-    <div className={`fixed inset-0 z-50 flex items-center justify-center overflow-hidden bg-[#080808] ${dmSans.className}`}>
+    <div className={`fixed inset-0 z-50 flex items-center justify-center overflow-hidden bg-[#181818] ${dmSans.className}`}>
 
       {/* Top Spotlight Beam */}
       <div
@@ -174,21 +156,11 @@ export default function LandingPopup({ onDismiss }: LandingPopupProps) {
         }}
       />
 
-      {/* Global Spotlight (cursor-following) */}
-      <div
-        className="absolute inset-0 z-0 pointer-events-none opacity-60"
-        style={{
-          background: `radial-gradient(600px circle at var(--cursor-x, 50%) var(--cursor-y, 50%), rgba(255,255,255,0.08), transparent 40%)`,
-        }}
-      />
-
       {/* 3D Teeth Model — absolutely positioned, floats in from the right */}
       {showModel && (
         <div
           className="absolute pointer-events-none z-10"
           style={{
-            // Model left edge sits at page center — it bleeds off the right side
-            // (clipped by overflow-hidden). Card shifts left to balance visually.
             left: "calc(50% - 500px)",
             top: "50%",
             transform: "translateY(-50%)",
@@ -223,9 +195,7 @@ export default function LandingPopup({ onDismiss }: LandingPopupProps) {
         </div>
       )}
 
-      {/* Card — shifts left when the model appears.
-          Two wrappers: outer handles translateX shift, inner handles the float-in animation
-          (keeping them separate avoids transform conflicts). */}
+      {/* Left content area — shifts left when model appears */}
       <div
         style={{
           transform: showModel ? "translateX(-340px)" : "translateX(0)",
@@ -239,51 +209,63 @@ export default function LandingPopup({ onDismiss }: LandingPopupProps) {
             animation: "card-float-in 0.85s cubic-bezier(0.16, 1, 0.3, 1) forwards",
           }}
         >
-          <div className="relative w-full max-w-[400px] p-[1px] rounded-2xl mx-4 group">
+          <div className="flex flex-col items-center text-center mx-4 max-w-[440px]">
 
-            {/* Border Glow Highlight (mouse-tracked) */}
-            <div
-              className="absolute inset-0 rounded-2xl z-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"
-              style={{
-                background: `radial-gradient(300px circle at var(--mouse-x, 50%) var(--mouse-y, 50%), rgba(255,255,255,0.25), transparent 40%)`,
-              }}
-            />
+            <div className="w-14 h-14 mb-8 rounded-2xl bg-white/5 border border-white/[0.08] flex items-center justify-center p-2">
+              <Image src="/logo.png" alt="Tooth Fairy Logo" width={44} height={44} className="opacity-90" />
+            </div>
 
-            {/* Card Content */}
-            <div
-              ref={cardRef}
-              onMouseMove={handleCardMouseMove}
-              className="relative z-10 bg-white/[0.03] backdrop-blur-[20px] border border-white/10 rounded-2xl p-8 shadow-2xl flex flex-col items-center"
+            <h1 className={`text-[56px] leading-[1.1] font-normal text-white/90 tracking-tight ${dmSerif.className}`}>
+              Reimagine your
+            </h1>
+            <h1 className={`text-[56px] leading-[1.1] font-normal italic text-white/90 tracking-tight mb-5 ${dmSerif.className}`}>
+              dental workflow.
+            </h1>
+
+            <p className="text-[17px] leading-relaxed text-white/45 mb-10 max-w-[340px]">
+              Your AI-powered dental IDE for X-ray analysis, clinical notes, and treatment planning.
+            </p>
+
+            <button
+              type="button"
+              onClick={() => onDismiss(false)}
+              className="bg-white text-black rounded-xl px-10 py-3.5 text-[15px] font-semibold transition-all hover:bg-white/90 active:scale-[0.97] shadow-lg shadow-white/10"
             >
-              <div className="w-16 h-16 mb-6 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center shadow-inner p-2">
-                <Image src="/logo.png" alt="Tooth Fairy Logo" width={48} height={48} className="opacity-90" />
-              </div>
+              Jump in!
+            </button>
 
-              <h1 className="text-3xl font-medium text-white/90 mb-3 text-center tracking-tight">
-                Tooth Fairy
-              </h1>
-              <p className="text-[15px] leading-relaxed text-white/50 mb-8 text-center max-w-[280px]">
-                Your Agentic Dental IDE for X-ray analysis, clinical notes, and interactive treatment planning.
-              </p>
+          </div>
+        </div>
+      </div>
 
-              <button
-                type="button"
-                onClick={() => onDismiss(false)}
-                className="w-full bg-white/10 hover:bg-white/15 border border-white/10 text-white rounded-lg px-4 py-3.5 text-[15px] font-medium transition-all shadow-sm active:scale-[0.98]"
-              >
-                Enter Workspace
-              </button>
-
-              <button
-                type="button"
-                onClick={() => onDismiss(true)}
-                className="w-full mt-3 bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/20 text-emerald-300 rounded-lg px-4 py-3.5 text-[15px] font-medium transition-all shadow-sm active:scale-[0.98]"
-              >
-                Demo Mode
-              </button>
-              <p className="text-[11px] text-white/30 mt-2 text-center">
-                Uses cached data only — no API keys needed
-              </p>
+      {/* Footer */}
+      <div className="absolute bottom-0 left-0 right-0 z-20 pb-6 flex flex-col items-center gap-4 pointer-events-none">
+        <p className="text-[13px] text-white/30">
+          By continuing, you agree to Tooth Fairy&apos;s{" "}
+          <span className="underline cursor-pointer pointer-events-auto">Terms of Service</span>{" "}
+          and{" "}
+          <span className="underline cursor-pointer pointer-events-auto">Privacy Policy</span>
+        </p>
+        <div className="flex items-center gap-8">
+          <div className="flex items-center gap-2">
+            <svg className="w-4 h-4 text-white/30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M9.813 15.904 9 18.75l-.813-2.846a4.5 4.5 0 0 0-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 0 0 3.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 0 0 3.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 0 0-3.09 3.09ZM18.259 8.715 18 9.75l-.259-1.035a3.375 3.375 0 0 0-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 0 0 2.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 0 0 2.455 2.456L21.75 6l-1.036.259a3.375 3.375 0 0 0-2.455 2.456Z" /></svg>
+            <div className="flex flex-col">
+              <span className="text-[11px] font-semibold text-white/40 tracking-wider uppercase">AI Powered</span>
+              <span className="text-[10px] text-white/25 uppercase tracking-wider">Gemini</span>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <svg className="w-4 h-4 text-white/30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M9 12.75 11.25 15 15 9.75m-3-7.036A11.959 11.959 0 0 1 3.598 6 11.99 11.99 0 0 0 3 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285Z" /></svg>
+            <div className="flex flex-col">
+              <span className="text-[11px] font-semibold text-white/40 tracking-wider uppercase">Privacy First</span>
+              <span className="text-[10px] text-white/25 uppercase tracking-wider">Secure</span>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <svg className="w-4 h-4 text-white/30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M17.25 6.75 22.5 12l-5.25 5.25m-10.5 0L1.5 12l5.25-5.25m7.5-3-4.5 16.5" /></svg>
+            <div className="flex flex-col">
+              <span className="text-[11px] font-semibold text-white/40 tracking-wider uppercase">Open Source</span>
+              <span className="text-[10px] text-white/25 uppercase tracking-wider">MIT</span>
             </div>
           </div>
         </div>
