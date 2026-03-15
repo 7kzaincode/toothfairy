@@ -23,6 +23,7 @@ class ImagingActionResponse(BaseModel):
     measurements: Optional[dict] = None
     narrative: Optional[str] = None
     provenance: str = "cached"
+    image_url: Optional[str] = None
     inference_time_ms: Optional[int] = None
 
 

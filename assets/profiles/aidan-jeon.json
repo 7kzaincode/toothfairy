@@ -1,0 +1,54 @@
+{
+  "patient_id": "aidan-jeon",
+  "name": "Aidan Jeon",
+  "date_of_birth": "1998-05-12",
+  "age": 27,
+  "gender": "M",
+  "allergies": [
+    "None known"
+  ],
+  "last_visit": "2025-11-15",
+  "insurance": "Sun Life \u2014 Group Plan",
+  "dental_history": {
+    "notes": "Generally healthy dentition. Wisdom teeth partially erupted. Previous composite on #26 for incipient caries.",
+    "previous_procedures": [
+      {
+        "date": "2025-11-15",
+        "procedure": "Routine cleaning and exam",
+        "tooth": null
+      },
+      {
+        "date": "2024-06-10",
+        "procedure": "Routine cleaning",
+        "tooth": null
+      },
+      {
+        "date": "2023-09-22",
+        "procedure": "Composite filling",
+        "tooth": 26
+      }
+    ]
+  },
+  "xrays": [
+    {
+      "image_id": "xray-2d3f10c7",
+      "image_type": "panoramic",
+      "date": "2026-03-15",
+      "notes": ""
+    },
+    {
+      "image_id": "xray-b67da451",
+      "image_type": "panoramic",
+      "date": "2026-03-15",
+      "notes": ""
+    },
+    {
+      "image_id": "xray-c1ef2b1d",
+      "image_type": "panoramic",
+      "date": "2026-03-15",
+      "notes": ""
+    }
+  ],
+  "known_conditions": {},
+  "clinical_notes": "CLINICAL NOTES \u2014 Aidan Jeon (DOB: 1998-05-12)\nDate: 2026-03-15  Provider: Dr. Patel\nChart #: AJ-2026-001\n\nPATIENT HISTORY:\n- Last visit: 2025-11-15 (routine cleaning, no issues)\n- Previous composite restoration #26 (2023-09-22)\n- No known allergies. Non-smoker.\n- Partially erupted wisdom teeth noted since 2023.\n\nCHIEF COMPLAINT: Dull ache lower right, intermittent over past 2 weeks.\nAlso requesting evaluation of wisdom teeth.\n\nCLINICAL FINDINGS:\n- Tooth #46: Occlusal-distal caries extending into dentin.\n  Cold test positive (delayed response). Moderate depth.\n  Recommend composite restoration (D2392).\n- Tooth #18: Partially erupted, distal soft tissue impaction.\n  Mild pericoronitis, erythematous tissue distal to crown.\n  Recommend extraction (D7230).\n- Tooth #38: Horizontally impacted against #37 distal root.\n  Risk of resorption on #37. Refer to OMFS for surgical\n  extraction (D7240).\n- Tooth #26: Previous composite intact, no recurrent caries.\n  Margins sealed, no intervention needed.\n- Tooth #11: Mild enamel demineralization on facial surface.\n  White spot lesion. Recommend fluoride varnish and monitoring.\n\nPERIODONTAL ASSESSMENT:\n- Probing depths 2-3mm throughout, within normal limits.\n- No bleeding on probing. Adequate oral hygiene.\n- Minimal calculus deposits lower anterior lingual.\n\nTREATMENT PLAN:\n1. [IMMEDIATE] Tooth #46 \u2014 Composite restoration (D2392)\n2. [SOON] Tooth #18 \u2014 Simple extraction (D7230)\n3. [SOON] Tooth #38 \u2014 Surgical extraction referral to OMFS (D7240)\n4. [ROUTINE] Tooth #11 \u2014 Fluoride varnish application (D1206)\n\nRADIOGRAPHIC NOTES:\nPanoramic radiograph taken today. #38 horizontal impaction\nconfirmed. #46 radiolucency consistent with clinical findings.\nNo other pathology noted. Bone levels within normal limits.\n\nNOTES: Patient informed of findings. Discussed extraction options\nfor wisdom teeth \u2014 patient prefers to address #18 first due to\nsymptoms, then schedule #38 OMFS referral. Consents to #46\nrestoration at next appointment. Fluoride varnish applied today.\nNext visit: 2 weeks for #46 composite."
+}

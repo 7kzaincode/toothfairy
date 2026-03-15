@@ -3,7 +3,7 @@
 import { useRef } from "react";
 import dynamic from "next/dynamic";
 import type { PatientState, ClinicalNotesOutput } from "@/types/patient-state";
-import type { TreatmentActionResponse, ImagingActionResponse } from "@/types/api";
+import type { TreatmentActionResponse, ImagingActionResponse, AutoScanResponse } from "@/types/api";
 import Image from "next/image";
 import ClinicalNotesViewer from "@/components/viewers/ClinicalNotesViewer";
 import TreatmentTable from "@/components/viewers/TreatmentTable";
@@ -27,31 +27,7 @@ const TABS: { key: ViewerTab; label: string }[] = [
   { key: "treatment", label: "Treatment" },
 ];
 
-const DEMO_NOTES = `CLINICAL NOTES — Sarah Chen (DOB: 1990-04-12)
-Date: 2024-03-15  Provider: Dr. Martinez
-
-CHIEF COMPLAINT: Routine checkup, occasional sensitivity upper left.
-
-CLINICAL FINDINGS:
-- Tooth #14: MOD caries extending to dentin, moderate depth.
-  Recommend composite restoration (D2392).
-- Tooth #36: Periapical radiolucency noted on PA radiograph.
-  Positive to percussion, negative vitality.
-  Root canal therapy indicated (D3330).
-- Tooth #47: Early horizontal bone loss (2-3mm).
-  Recommend scaling and root planing (D4341).
-- Tooth #28: Partially impacted, mesioangular orientation.
-  Refer to OMFS for evaluation.
-
-TREATMENT PLAN:
-1. [IMMEDIATE] Tooth #36 — Root canal therapy
-2. [SOON] Tooth #14 — Composite restoration
-3. [SOON] Tooth #28 — Surgical extraction referral
-4. [ROUTINE] Tooth #47 — Scaling and root planing
-
-NOTES: Patient informed of findings. Discussed treatment
-options and costs. Patient consents to begin with #36 RCT
-at next visit.`;
+const DEFAULT_NOTES = "Select a patient profile to view their clinical notes.";
 
 interface CenterPaneProps {
   activeTab: ViewerTab;
@@ -67,11 +43,15 @@ interface CenterPaneProps {
   onClearImage?: () => void;
   onToggleLeftPane?: () => void;
   onToggleRightPane?: () => void;
+  onAutoScan?: (imageId: string) => void;
+  onViewOnModel?: (toothNumber: number) => void;
   imageId?: string | null;
   imageUrl?: string | null;
   imagingResult?: ImagingActionResponse | null;
+  autoScanResult?: AutoScanResponse | null;
   clinicalNotesOutput?: ClinicalNotesOutput | null;
   treatmentResult?: TreatmentActionResponse | null;
+  profileNotes?: string | null;
   processing?: boolean;
 }
 
@@ -88,11 +68,15 @@ export default function CenterPane({
   onToggleLeftPane,
   onToggleRightPane,
   onToothSelect,
+  onAutoScan,
+  onViewOnModel,
   imageId,
   imageUrl,
   imagingResult,
+  autoScanResult,
   clinicalNotesOutput,
   treatmentResult,
+  profileNotes,
   processing,
 }: CenterPaneProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -120,8 +104,8 @@ export default function CenterPane({
         {activeTab === "clinical-notes" && (
           <div className="absolute inset-0">
             <ClinicalNotesViewer
-              notesText={patientState?.clinical_notes_artifact?.notes_text || DEMO_NOTES}
-              output={clinicalNotesOutput || patientState?.clinical_notes_output || undefined}
+              notesText={patientState?.clinical_notes_artifact?.notes_text || profileNotes || DEFAULT_NOTES}
+              output={patientState?.clinical_notes_output || clinicalNotesOutput || undefined}
               onTextHighlight={onTextHighlight}
               onTimelineEntryClick={(entry) =>
                 onTreatmentClick?.(entry.condition, entry.tooth_number)
@@ -141,10 +125,11 @@ export default function CenterPane({
           <div className="absolute inset-0 overflow-auto scrollbar-ide">
             <TreatmentView
               patientState={patientState}
-              clinicalNotesOutput={clinicalNotesOutput || patientState?.clinical_notes_output || undefined}
+              clinicalNotesOutput={patientState?.clinical_notes_output || clinicalNotesOutput || undefined}
               treatmentResult={treatmentResult}
               onRowClick={onTreatmentClick}
               onBack={onClearTreatment}
+              onViewOnModel={onViewOnModel}
             />
           </div>
         )}
@@ -157,8 +142,12 @@ export default function CenterPane({
                 imageId={imageId || undefined}
                 onToothClick={onImagingClick}
                 segmentationOverlay={imagingResult?.contour_points}
+                imagingResult={imagingResult}
                 onFileUpload={onFileUpload}
                 onClose={onClearImage}
+                onAutoScan={onAutoScan}
+                autoScanResult={autoScanResult}
+                onTreatmentClick={onTreatmentClick}
               />
             </div>
           ) : (
@@ -214,12 +203,14 @@ function TreatmentView({
   treatmentResult,
   onRowClick,
   onBack,
+  onViewOnModel,
 }: {
   patientState: PatientState | null;
   clinicalNotesOutput?: ClinicalNotesOutput;
   treatmentResult?: TreatmentActionResponse | null;
   onRowClick?: (condition: string, toothNumber?: number) => void;
   onBack?: () => void;
+  onViewOnModel?: (toothNumber: number) => void;
 }) {
   const protocols = clinicalNotesOutput?.protocols;
 
@@ -240,12 +231,27 @@ function TreatmentView({
           <span className="text-[10px] font-semibold uppercase tracking-[0.05em] text-ide-muted">
             Evidence Detail
           </span>
+          {treatmentResult.tooth_number && onViewOnModel && (
+            <button
+              onClick={() => onViewOnModel(treatmentResult.tooth_number!)}
+              className="ml-auto text-[10px] text-ide-accent hover:text-ide-text transition-colors flex items-center gap-1"
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="10" />
+                <path d="M12 8v8M8 12h8" />
+              </svg>
+              View on Model
+            </button>
+          )}
         </div>
 
         <div className="p-4 space-y-4">
           <div className="flex items-center gap-2">
             <span className="text-sm font-semibold text-ide-text capitalize">
               {treatmentResult.condition.replace(/_/g, " ")}
+              {treatmentResult.tooth_number && (
+                <span className="text-ide-muted font-mono"> — Tooth #{treatmentResult.tooth_number}</span>
+              )}
             </span>
             <span className="text-[9px] text-ide-muted font-mono bg-ide-surface px-1.5 py-0.5 rounded">
               {treatmentResult.provenance}
@@ -301,6 +307,27 @@ function TreatmentView({
                   </li>
                 ))}
               </ul>
+            </div>
+          )}
+
+          {treatmentResult.pharmacy_results && treatmentResult.pharmacy_results.length > 0 && (
+            <div>
+              <div className="text-[10px] font-semibold uppercase tracking-[0.05em] text-ide-muted mb-1">
+                Recommended Medications (Health Canada DPD)
+              </div>
+              <div className="space-y-1.5">
+                {treatmentResult.pharmacy_results.map((med, i) => (
+                  <div key={i} className="text-xs text-ide-text-2 bg-ide-surface rounded px-2 py-1.5 flex items-start gap-2">
+                    <span className="text-log-success shrink-0">Rx</span>
+                    <div>
+                      <span className="font-medium text-ide-text">{med.drug_name || med.brand_name || Object.values(med)[0]}</span>
+                      {med.din && <span className="text-ide-muted ml-1.5 font-mono text-[10px]">DIN: {med.din}</span>}
+                      {med.form && <span className="text-ide-muted ml-1.5">{med.form}</span>}
+                      {med.schedule && <span className="text-ide-muted ml-1.5">({med.schedule})</span>}
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           )}
         </div>

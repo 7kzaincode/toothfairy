@@ -1,0 +1,19 @@
+# Replicate configuration (alternative deployment option)
+# https://replicate.com/docs/guides/get-started
+
+build:
+  gpu: true
+  python_version: "3.11"
+  python_packages:
+    - torch>=2.0.0
+    - torchvision>=0.15.0
+    - numpy>=1.24.0
+    - opencv-python-headless>=4.8.0
+    - pillow>=10.0.0
+    - scipy>=1.11.0
+
+  # Uncomment to install SAM2 from GitHub
+  # run:
+  #   - pip install git+https://github.com/facebookresearch/segment-anything-2.git
+
+predict: "predict.py:Predictor"

@@ -25,6 +25,7 @@ export interface ImagingActionResponse {
     confidence: number;
     location_description: string;
   }>;
+  narrative?: string;
   narrative_summary?: string;
   provenance: string;
   inference_time_ms: number;
@@ -40,6 +41,32 @@ export interface ImageUploadResponse {
 
 export interface ImageListResponse {
   images: ImageUploadResponse[];
+}
+
+export interface AutoScanRequest {
+  session_id: string;
+  image_id: string;
+  image_type?: string;
+}
+
+export interface AutoScanResponse {
+  total_teeth: number;
+  segmented: number;
+  suspicious_teeth: number;
+  findings: Array<{
+    tooth_number: number;
+    condition: string;
+    severity: string;
+    confidence: number;
+    location_description: string;
+  }>;
+  inference_time_ms: number;
+  segments: Array<{
+    tooth_number: number;
+    contour_points: number[][];
+    confidence: number;
+  }>;
+  provenance: string;
 }
 
 // Clinical Notes
@@ -58,7 +85,7 @@ export interface ClinicalNotesActionResponse {
     confidence: number;
     location_description: string;
   }>;
-  treatment_protocols: Array<{
+  protocols: Array<{
     condition: string;
     tooth_number: number;
     recommended_treatment: string;
@@ -68,7 +95,7 @@ export interface ClinicalNotesActionResponse {
     cdt_code?: string;
     estimated_cost?: string;
   }>;
-  treatment_timeline: Array<{
+  timeline: Array<{
     order: number;
     tooth_number: number;
     condition: string;
@@ -107,12 +134,14 @@ export interface TreatmentActionRequest {
 export interface TreatmentActionResponse {
   session_id: string;
   condition: string;
+  tooth_number?: number;
   evidence_summary?: string;
   success_rate?: string;
   risk_factors?: string[];
   alternatives?: string[];
   referral_summary?: string;
   patient_education?: string;
+  pharmacy_results?: Array<Record<string, string>>;
   provenance: string;
   inference_time_ms: number;
 }

@@ -6,7 +6,7 @@ Endpoints for dental X-ray upload and analysis.
 import uuid
 import shutil
 from pathlib import Path
-from fastapi import APIRouter, HTTPException, UploadFile, File, Form
+from fastapi import APIRouter, HTTPException, UploadFile, File, Form, Body
 from typing import Optional
 
 from app.core.config import settings
@@ -96,3 +96,48 @@ async def imaging_action(request: ImagingActionRequest):
     # Update session
     session_manager.update_session(request.session_id, patient_state)
     return response
+
+
+@router.post("/auto-scan")
+async def auto_scan_xray(
+    session_id: str = Body(...),
+    image_id: str = Body(...),
+    image_type: str = Body(default="panoramic")
+):
+    """Auto-scan all teeth in panoramic X-ray using HYBRID approach.
+
+    This analyzes all 32 teeth in one request:
+    1. Batch segment all teeth (~15-20s)
+    2. Flag suspicious teeth using heuristics
+    3. Run Gemini vision on suspicious teeth only (~10-15s)
+
+    Total time: ~25-35 seconds (vs. 75-110s for full analysis)
+
+    Returns:
+        {
+            "total_teeth": 32,
+            "segmented": 28,
+            "suspicious_teeth": 7,
+            "findings": [...],
+            "inference_time_ms": 25000,
+            "segments": [...]
+        }
+    """
+    session = session_manager.get_session(session_id)
+    if not session:
+        raise HTTPException(status_code=404, detail=f"Session {session_id} not found")
+
+    # Import handler lazily
+    from app.copilots.imaging.handler import ImagingHandler
+    handler = ImagingHandler()
+
+    result = await handler.handle_auto_scan(
+        image_id=image_id,
+        patient_state=session,
+        image_type=image_type
+    )
+
+    # Update session with new findings
+    session_manager.update_session(session_id, session)
+
+    return result

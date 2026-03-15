@@ -115,7 +115,7 @@ function TeethDisplay() {
 }
 
 interface LandingPopupProps {
-  onDismiss: (demoMode?: boolean) => void;
+  onDismiss: () => void;
 }
 
 export default function LandingPopup({ onDismiss }: LandingPopupProps) {
@@ -268,22 +268,11 @@ export default function LandingPopup({ onDismiss }: LandingPopupProps) {
 
               <button
                 type="button"
-                onClick={() => onDismiss(false)}
+                onClick={() => onDismiss()}
                 className="w-full bg-white/10 hover:bg-white/15 border border-white/10 text-white rounded-lg px-4 py-3.5 text-[15px] font-medium transition-all shadow-sm active:scale-[0.98]"
               >
                 Enter Workspace
               </button>
-
-              <button
-                type="button"
-                onClick={() => onDismiss(true)}
-                className="w-full mt-3 bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/20 text-emerald-300 rounded-lg px-4 py-3.5 text-[15px] font-medium transition-all shadow-sm active:scale-[0.98]"
-              >
-                Demo Mode
-              </button>
-              <p className="text-[11px] text-white/30 mt-2 text-center">
-                Uses cached data only — no API keys needed
-              </p>
             </div>
           </div>
         </div>

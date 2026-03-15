@@ -13,23 +13,51 @@ Coordinates can be:
 """
 
 
-# Panoramic X-ray tooth zones (normalized 0-1 x-coordinates)
-# Mapped against real OPG: "R" marker on left = patient's right
-# Teeth visible in dental arch span roughly x: 0.10 to 0.90
-PANORAMIC_TEETH_UPPER = {
-    # Patient's right (image left) → patient's left (image right)
-    18: (0.05, 0.10), 17: (0.10, 0.15), 16: (0.15, 0.21), 15: (0.21, 0.26),
-    14: (0.26, 0.32), 13: (0.32, 0.37), 12: (0.37, 0.42), 11: (0.42, 0.48),
-    21: (0.48, 0.54), 22: (0.54, 0.59), 23: (0.59, 0.64), 24: (0.64, 0.69),
-    25: (0.69, 0.74), 26: (0.74, 0.80), 27: (0.80, 0.86), 28: (0.86, 0.93),
-}
-
-PANORAMIC_TEETH_LOWER = {
-    # Patient's right (image left) → patient's left (image right)
-    48: (0.05, 0.11), 47: (0.11, 0.17), 46: (0.17, 0.23), 45: (0.23, 0.28),
-    44: (0.28, 0.33), 43: (0.33, 0.38), 42: (0.38, 0.43), 41: (0.43, 0.48),
-    31: (0.48, 0.53), 32: (0.53, 0.58), 33: (0.58, 0.63), 34: (0.63, 0.68),
-    35: (0.68, 0.73), 36: (0.73, 0.79), 37: (0.79, 0.85), 38: (0.85, 0.93),
+# Panoramic X-ray tooth zones (normalized 0-1 coordinates)
+# Structured by quadrant with x and y zones for each tooth
+# Upper arch: y ~10-50%, Lower arch: y ~50-90%
+# No dead zone — jaw boundary at y=0.50
+PANORAMIC_TEETH = {
+    "upper_right": {
+        18: {"x_min": 0.02, "x_max": 0.08, "y_min": 0.10, "y_max": 0.50},
+        17: {"x_min": 0.08, "x_max": 0.13, "y_min": 0.10, "y_max": 0.50},
+        16: {"x_min": 0.13, "x_max": 0.18, "y_min": 0.10, "y_max": 0.50},
+        15: {"x_min": 0.18, "x_max": 0.23, "y_min": 0.10, "y_max": 0.50},
+        14: {"x_min": 0.23, "x_max": 0.28, "y_min": 0.10, "y_max": 0.50},
+        13: {"x_min": 0.28, "x_max": 0.33, "y_min": 0.10, "y_max": 0.50},
+        12: {"x_min": 0.33, "x_max": 0.38, "y_min": 0.10, "y_max": 0.50},
+        11: {"x_min": 0.38, "x_max": 0.44, "y_min": 0.10, "y_max": 0.50},
+    },
+    "upper_left": {
+        21: {"x_min": 0.44, "x_max": 0.50, "y_min": 0.10, "y_max": 0.50},
+        22: {"x_min": 0.50, "x_max": 0.55, "y_min": 0.10, "y_max": 0.50},
+        23: {"x_min": 0.55, "x_max": 0.60, "y_min": 0.10, "y_max": 0.50},
+        24: {"x_min": 0.60, "x_max": 0.65, "y_min": 0.10, "y_max": 0.50},
+        25: {"x_min": 0.65, "x_max": 0.70, "y_min": 0.10, "y_max": 0.50},
+        26: {"x_min": 0.70, "x_max": 0.75, "y_min": 0.10, "y_max": 0.50},
+        27: {"x_min": 0.75, "x_max": 0.82, "y_min": 0.10, "y_max": 0.50},
+        28: {"x_min": 0.82, "x_max": 0.90, "y_min": 0.10, "y_max": 0.50},
+    },
+    "lower_right": {
+        48: {"x_min": 0.02, "x_max": 0.08, "y_min": 0.50, "y_max": 0.90},
+        47: {"x_min": 0.08, "x_max": 0.14, "y_min": 0.50, "y_max": 0.90},
+        46: {"x_min": 0.14, "x_max": 0.20, "y_min": 0.50, "y_max": 0.90},
+        45: {"x_min": 0.20, "x_max": 0.25, "y_min": 0.50, "y_max": 0.90},
+        44: {"x_min": 0.25, "x_max": 0.30, "y_min": 0.50, "y_max": 0.90},
+        43: {"x_min": 0.30, "x_max": 0.35, "y_min": 0.50, "y_max": 0.90},
+        42: {"x_min": 0.35, "x_max": 0.40, "y_min": 0.50, "y_max": 0.90},
+        41: {"x_min": 0.40, "x_max": 0.45, "y_min": 0.50, "y_max": 0.90},
+    },
+    "lower_left": {
+        31: {"x_min": 0.45, "x_max": 0.50, "y_min": 0.50, "y_max": 0.90},
+        32: {"x_min": 0.50, "x_max": 0.55, "y_min": 0.50, "y_max": 0.90},
+        33: {"x_min": 0.55, "x_max": 0.60, "y_min": 0.50, "y_max": 0.90},
+        34: {"x_min": 0.60, "x_max": 0.65, "y_min": 0.50, "y_max": 0.90},
+        35: {"x_min": 0.65, "x_max": 0.70, "y_min": 0.50, "y_max": 0.90},
+        36: {"x_min": 0.70, "x_max": 0.77, "y_min": 0.50, "y_max": 0.90},
+        37: {"x_min": 0.77, "x_max": 0.84, "y_min": 0.50, "y_max": 0.90},
+        38: {"x_min": 0.84, "x_max": 0.92, "y_min": 0.50, "y_max": 0.90},
+    },
 }
 
 
@@ -66,27 +94,37 @@ def _normalize(x: float, y: float, width: int, height: int) -> tuple[float, floa
 
 
 def _map_panoramic(x: float, y: float, width: int, height: int) -> int:
-    """Map click on panoramic X-ray to tooth number."""
+    """Map click on panoramic X-ray to tooth number.
+
+    Uses 2D distance to find the closest tooth zone center,
+    checking ALL quadrants to avoid jaw-boundary misclassification.
+    """
     norm_x, norm_y = _normalize(x, y, width, height)
 
-    # Upper jaw: ~20-48% of image height. Lower jaw: ~52-82%.
-    # Split point at ~0.50
-    is_upper = norm_y < 0.50
+    # First pass: check if click falls INSIDE any zone (containment)
+    for quadrant in PANORAMIC_TEETH.values():
+        for tooth_num, zone in quadrant.items():
+            if (zone["x_min"] <= norm_x <= zone["x_max"]
+                    and zone["y_min"] <= norm_y <= zone["y_max"]):
+                return tooth_num
 
-    # Select the correct jaw's tooth map
-    teeth = PANORAMIC_TEETH_UPPER if is_upper else PANORAMIC_TEETH_LOWER
-
-    # Find closest tooth by x position
-    best_tooth = 11 if is_upper else 41
+    # Second pass: find closest zone center by 2D Euclidean distance
+    # Weight X more heavily since teeth are arranged horizontally
+    best_tooth = 11
     best_distance = float("inf")
 
-    for tooth_num, (x_min, x_max) in teeth.items():
-        center_x = (x_min + x_max) / 2
-        distance = abs(norm_x - center_x)
+    for quadrant in PANORAMIC_TEETH.values():
+        for tooth_num, zone in quadrant.items():
+            center_x = (zone["x_min"] + zone["x_max"]) / 2
+            center_y = (zone["y_min"] + zone["y_max"]) / 2
+            # X distance matters more — teeth are narrow columns
+            dx = norm_x - center_x
+            dy = norm_y - center_y
+            distance = (dx * dx) + (dy * dy)
 
-        if distance < best_distance:
-            best_distance = distance
-            best_tooth = tooth_num
+            if distance < best_distance:
+                best_distance = distance
+                best_tooth = tooth_num
 
     return best_tooth
 

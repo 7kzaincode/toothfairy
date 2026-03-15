@@ -16,6 +16,7 @@ const CONDITION_COLORS: Record<string, string> = {
   root_canal_needed: "#FF5C7A",
   fracture: "#FF9F4A",
   gingivitis: "#F4C152",
+  missing: "#6B7280",
 };
 
 interface ToothChart3DProps {

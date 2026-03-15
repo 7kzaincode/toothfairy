@@ -6,6 +6,7 @@ import type {
   ClinicalNotesActionResponse,
   ImagingActionResponse,
   TreatmentActionResponse,
+  AutoScanResponse,
 } from "@/types/api";
 
 export function useCopilot(
@@ -20,6 +21,8 @@ export function useCopilot(
     useState<ImagingActionResponse | null>(null);
   const [lastTreatmentResult, setLastTreatmentResult] =
     useState<TreatmentActionResponse | null>(null);
+  const [lastAutoScanResult, setLastAutoScanResult] =
+    useState<AutoScanResponse | null>(null);
 
   const triggerImaging = useCallback(
     async (imageId: string, x: number, y: number) => {
@@ -94,6 +97,33 @@ export function useCopilot(
     [sessionId, refreshState]
   );
 
+  const triggerAutoScan = useCallback(
+    async (imageId: string, imageType: string = "panoramic") => {
+      if (!sessionId) return;
+      setProcessing(true);
+      setActiveCopilot("imaging");
+      try {
+        const response = await apiClient.triggerAutoScan(
+          sessionId,
+          imageId,
+          imageType
+        );
+        setLastAutoScanResult(response);
+        // Clear stale clinical notes result so frontend uses backend's merged state
+        // (which now includes both notes-based + imaging-based findings)
+        setLastClinicalNotesResult(null);
+        await refreshState();
+        return response;
+      } catch (error) {
+        console.error("Auto-scan copilot error:", error);
+      } finally {
+        setProcessing(false);
+        setActiveCopilot(null);
+      }
+    },
+    [sessionId, refreshState]
+  );
+
   const clearTreatmentResult = useCallback(() => {
     setLastTreatmentResult(null);
   }, []);
@@ -104,9 +134,11 @@ export function useCopilot(
     triggerImaging,
     triggerClinicalNotes,
     triggerTreatment,
+    triggerAutoScan,
     clearTreatmentResult,
     lastClinicalNotesResult,
     lastImagingResult,
     lastTreatmentResult,
+    lastAutoScanResult,
   };
 }

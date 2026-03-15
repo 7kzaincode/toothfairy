@@ -20,6 +20,7 @@ from app.api.routes import session as session_routes
 from app.api.routes import imaging as imaging_routes
 from app.api.routes import clinical_notes as clinical_notes_routes
 from app.api.routes import treatment as treatment_routes
+from app.api.routes import profiles as profile_routes
 
 
 @asynccontextmanager
@@ -96,6 +97,7 @@ app.include_router(session_routes.router, prefix="/api")
 app.include_router(imaging_routes.router, prefix="/api")
 app.include_router(clinical_notes_routes.router, prefix="/api")
 app.include_router(treatment_routes.router, prefix="/api")
+app.include_router(profile_routes.router, prefix="/api")
 
 
 # SSE Streaming

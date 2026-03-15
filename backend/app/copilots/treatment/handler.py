@@ -35,7 +35,8 @@ Return your response as JSON with these exact fields:
   "success_rate": "string",
   "risk_factors": ["string", ...],
   "alternatives": ["string", ...],
-  "patient_education": "string"
+  "patient_education": "string",
+  "pharmacy_medications": [{"drug_name": "string", "din": "string", "form": "string", "schedule": "string"}, ...]
 }
 
 Return ONLY valid JSON. No markdown, no explanation."""
@@ -53,8 +54,8 @@ class TreatmentHandler:
 
         await log_emitter.emit_info(session_id, copilot, f"Looking up evidence for: {request.condition}")
 
-        # Try LLM + MCP first
-        if not settings.DEMO_MODE and llm_client.is_available:
+        # Use cache only — MCP+Gemini disabled to conserve API quota
+        if False:
             try:
                 logger.info("Starting LLM+MCP treatment lookup...")
                 response = await self._llm_mcp_lookup(request, session_id, copilot, start_time)
@@ -81,6 +82,7 @@ class TreatmentHandler:
             response = TreatmentActionResponse(
                 session_id=session_id,
                 condition=request.condition,
+                tooth_number=request.tooth_number,
                 evidence_summary=evidence.get("summary"),
                 success_rate=raw_rate,
                 risk_factors=evidence.get("risk_factors"),
@@ -95,6 +97,7 @@ class TreatmentHandler:
             response = TreatmentActionResponse(
                 session_id=session_id,
                 condition=request.condition,
+                tooth_number=request.tooth_number,
                 evidence_summary=f"Evidence-based treatment information for {request.condition} is being compiled.",
                 provenance="placeholder",
                 inference_time_ms=elapsed_ms,
@@ -230,12 +233,14 @@ class TreatmentHandler:
         return TreatmentActionResponse(
             session_id=session_id,
             condition=request.condition,
+            tooth_number=request.tooth_number,
             evidence_summary=parsed.get("evidence_summary", final_text[:500]),
             success_rate=parsed.get("success_rate"),
             risk_factors=parsed.get("risk_factors"),
             alternatives=parsed.get("alternatives"),
             referral_summary=parsed.get("referral_summary"),
             patient_education=parsed.get("patient_education"),
+            pharmacy_results=parsed.get("pharmacy_medications"),
             provenance="gemini+mcp" if has_mcp else "gemini",
             inference_time_ms=elapsed_ms,
         )

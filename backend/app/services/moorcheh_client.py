@@ -172,7 +172,7 @@ class MoorchehService:
                 ))
 
         # Document 3: Treatment timeline
-        timeline = clinical_output.get("treatment_timeline", []) if clinical_output else []
+        timeline = clinical_output.get("timeline", []) if clinical_output else []
         if timeline:
             timeline_lines = []
             for entry in timeline:

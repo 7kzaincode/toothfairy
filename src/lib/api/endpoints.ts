@@ -15,6 +15,7 @@ export const ENDPOINTS = {
   // Imaging
   IMAGING_ACTION: `${BASE}/api/imaging/action`,
   IMAGING_UPLOAD: `${BASE}/api/imaging/upload`,
+  IMAGING_AUTO_SCAN: `${BASE}/api/imaging/auto-scan`,
   IMAGING_IMAGE: (id: string) => `${BASE}/api/imaging/image/${id}`,
   IMAGING_IMAGES: `${BASE}/api/imaging/images`,
 
@@ -24,6 +25,11 @@ export const ENDPOINTS = {
 
   // Treatment
   TREATMENT_ACTION: `${BASE}/api/treatment/action`,
+
+  // Profiles
+  PROFILES_LIST: `${BASE}/api/profiles/`,
+  PROFILE_GET: (id: string) => `${BASE}/api/profiles/${id}`,
+  PROFILE_LINK_XRAY: (id: string) => `${BASE}/api/profiles/${id}/link-xray`,
 
   // SSE
   STREAM: (sessionId: string) => `${BASE}/api/stream/${sessionId}`,

@@ -14,7 +14,7 @@ from app.models.logs import CopilotType
 from app.models.clinical_notes import ClinicalNotesActionRequest, ClinicalNotesActionResponse
 from app.models.patient_state import (
     PatientState, ClinicalNotesOutput, ClinicalNotesProvenance,
-    ToothFinding, TreatmentProtocol,
+    ClinicalNotesArtifact, ToothFinding, TreatmentProtocol,
 )
 from app.copilots.clinical_notes.extractor import extract_diagnoses
 from app.copilots.clinical_notes.protocol_mapper import map_condition_to_protocol
@@ -33,16 +33,19 @@ class ClinicalNotesHandler:
 
         await log_emitter.emit_info(session_id, copilot, "Clinical notes copilot activated")
 
-        # Step 1: Extract diagnoses (LLM or regex)
-        use_llm = not settings.DEMO_MODE and settings.GOOGLE_API_KEY
+        # Step 1: Extract diagnoses (regex only — LLM reserved for imaging)
+        use_llm = False
         extraction_method = "Gemini LLM" if use_llm else "regex patterns"
         await log_emitter.emit_progress(
             session_id, copilot,
             f"Extracting diagnoses using {extraction_method}..."
         )
 
+        # Use full notes for extraction (more context = better results),
+        # fall back to highlighted text if full notes not provided
+        extraction_text = request.full_notes or request.highlighted_text
         diagnoses, provenance = await extract_diagnoses(
-            request.highlighted_text, use_llm=bool(use_llm)
+            extraction_text, use_llm=bool(use_llm)
         )
 
         if provenance == "fallback-regex":
@@ -92,12 +95,16 @@ class ClinicalNotesHandler:
         # Update patient state
         clinical_output = ClinicalNotesOutput(
             diagnoses=diagnoses,
-            treatment_protocols=protocols,
-            treatment_timeline=timeline,
+            protocols=protocols,
+            timeline=timeline,
             patient_summary=patient_summary,
             dentist_summary=dentist_summary,
         )
         patient_state.clinical_notes_output = clinical_output
+        # Store the notes text so imaging handler can append to it later
+        patient_state.clinical_notes_artifact = ClinicalNotesArtifact(
+            notes_text=extraction_text,
+        )
         patient_state.clinical_notes_provenance = ClinicalNotesProvenance(
             duration_ms=elapsed_ms,
             fallback_used=(provenance != "gemini"),
@@ -111,8 +118,8 @@ class ClinicalNotesHandler:
         return ClinicalNotesActionResponse(
             session_id=session_id,
             diagnoses=diagnoses,
-            treatment_protocols=protocols,
-            treatment_timeline=timeline,
+            protocols=protocols,
+            timeline=timeline,
             patient_summary=patient_summary,
             dentist_summary=dentist_summary,
             provenance=provenance,

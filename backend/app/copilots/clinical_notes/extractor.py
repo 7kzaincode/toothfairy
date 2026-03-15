@@ -85,21 +85,30 @@ async def extract_dental_diagnoses_llm(text: str) -> list[ToothFinding]:
 CONDITION_PATTERNS = {
     r"(?:MOD|MO|DO|OD|OM|OL|OB|MOB|DOL)\s*caries": "cavity",
     r"caries\s*(?:extending|into|to)": "cavity",
-    r"(?:deep|moderate|mild|incipient)\s*caries": "cavity",
+    r"(?:deep|moderate|mild|incipient|secondary|recurrent|occlusal|mesial|distal|pit)\s*caries": "cavity",
+    r"(?:caries|decay)\s*(?:detected|noted|suspected|observed|present|visible)": "cavity",
+    r"\bcaries\b": "cavity",
     r"periapical\s*(?:radiolucency|lesion|pathology|abscess)": "periapical_lesion",
+    r"pulp\s*necrosis": "periapical_lesion",
     r"bone\s*loss": "bone_loss",
     r"pocket\s*depth": "bone_loss",
     r"periodontitis": "bone_loss",
+    r"horizontal\s*bone\s*loss": "bone_loss",
     r"impacted|impaction": "impacted",
     r"partially\s*erupted": "impacted",
+    r"pericoronitis": "impacted",
     r"root\s*canal": "root_canal_needed",
-    r"pulp\s*(?:necrosis|exposure|involvement)": "root_canal_needed",
-    r"fracture|fractured|cracked": "fracture",
+    r"pulp\s*(?:exposure|involvement)": "root_canal_needed",
+    r"fracture|fractured|cracked|crack\s*line": "fracture",
     r"crown\s*(?:defect|fracture|breakdown)": "crown_defect",
+    r"occlusal\s*adjustment": "crown_defect",
+    r"high\s*(?:occlusal|bite)\s*contact": "crown_defect",
     r"missing\s*tooth|edentulous": "missing",
     r"abscess": "abscess",
-    r"gingivitis": "gingivitis",
+    r"gingivitis|gingival\s*inflammation|bleeding\s*on\s*probing": "gingivitis",
+    r"recession|cervical\s*abrasion": "gingivitis",
     r"root\s*resorption": "root_resorption",
+    r"erosion|demineralization|white\s*spot": "cavity",
 }
 
 # Severity indicators
@@ -146,6 +155,14 @@ def extract_dental_diagnoses_regex(text: str) -> list[ToothFinding]:
             num = int(match.group(1) or match.group(2))
             if 11 <= num <= 48:
                 tooth_numbers.append(num)
+
+        # Skip sentences with negation (e.g. "no recurrent caries", "no pathology")
+        if re.search(r"\bno\s+(?:recurrent|visible|apparent|significant|acute)\b", sentence_lower):
+            continue
+        if re.search(r"\bno\s+(?:caries|decay|pathology|lesion|fracture|impaction)\b", sentence_lower):
+            continue
+        if re.search(r"\bintact\b.*\bno\b|\bno\b.*\bintervention\b", sentence_lower):
+            continue
 
         # Find conditions in this sentence
         conditions_found = []
