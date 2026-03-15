@@ -5,6 +5,7 @@ Endpoints for clinical notes analysis.
 
 from fastapi import APIRouter, HTTPException
 
+from app.core.config import settings
 from app.core.session_manager import session_manager
 from app.models.clinical_notes import (
     ClinicalNotesActionRequest,
@@ -43,7 +44,7 @@ async def clinical_notes_chat(request: ClinicalNotesChatRequest):
 
     from app.services.llm_client import llm_client
 
-    if not llm_client.is_available:
+    if not llm_client.is_available or settings.DEMO_MODE:
         return ClinicalNotesChatResponse(
             session_id=request.session_id,
             response="Chat requires a configured LLM. Set GOOGLE_API_KEY in your .env file.",

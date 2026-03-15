@@ -63,6 +63,18 @@ async def health_check():
     return {"status": "ok", "sessions": session_manager.get_session_count()}
 
 
+@app.post("/api/demo-mode")
+async def set_demo_mode(enabled: bool = True):
+    """Toggle demo mode at runtime."""
+    settings.DEMO_MODE = enabled
+    return {"demo_mode": settings.DEMO_MODE}
+
+
+@app.get("/api/demo-mode")
+async def get_demo_mode():
+    return {"demo_mode": settings.DEMO_MODE}
+
+
 @app.get("/")
 async def root():
     return {

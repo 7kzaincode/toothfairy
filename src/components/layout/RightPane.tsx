@@ -12,6 +12,7 @@ interface RightPaneProps {
   sessionId: string | null;
   collapsed: boolean;
   onToggle: () => void;
+  width?: number;
 }
 
 interface ChatMessage {
@@ -28,6 +29,7 @@ export default function RightPane({
   sessionId,
   collapsed,
   onToggle,
+  width = 300,
 }: RightPaneProps) {
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
@@ -128,7 +130,7 @@ export default function RightPane({
   }
 
   return (
-    <div className="w-[300px] flex-shrink-0 border-l border-ide-border bg-ide-panel flex flex-col h-full">
+    <div className="flex-shrink-0 border-l border-ide-border bg-ide-panel flex flex-col h-full" style={{ width }}>
       {/* Header */}
       <div className="h-9 flex items-center justify-between px-3 border-b border-ide-border bg-ide-bg shrink-0">
         <div className="flex items-center gap-2">
