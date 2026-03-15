@@ -14,7 +14,7 @@ from app.models.logs import CopilotType
 from app.models.clinical_notes import ClinicalNotesActionRequest, ClinicalNotesActionResponse
 from app.models.patient_state import (
     PatientState, ClinicalNotesOutput, ClinicalNotesProvenance,
-    ToothFinding, TreatmentProtocol,
+    ClinicalNotesArtifact, ToothFinding, TreatmentProtocol,
 )
 from app.copilots.clinical_notes.extractor import extract_diagnoses
 from app.copilots.clinical_notes.protocol_mapper import map_condition_to_protocol
@@ -92,12 +92,16 @@ class ClinicalNotesHandler:
         # Update patient state
         clinical_output = ClinicalNotesOutput(
             diagnoses=diagnoses,
-            treatment_protocols=protocols,
-            treatment_timeline=timeline,
+            protocols=protocols,
+            timeline=timeline,
             patient_summary=patient_summary,
             dentist_summary=dentist_summary,
         )
         patient_state.clinical_notes_output = clinical_output
+        # Store the notes text so imaging handler can append to it later
+        patient_state.clinical_notes_artifact = ClinicalNotesArtifact(
+            notes_text=extraction_text,
+        )
         patient_state.clinical_notes_provenance = ClinicalNotesProvenance(
             duration_ms=elapsed_ms,
             fallback_used=(provenance != "gemini"),
@@ -111,8 +115,8 @@ class ClinicalNotesHandler:
         return ClinicalNotesActionResponse(
             session_id=session_id,
             diagnoses=diagnoses,
-            treatment_protocols=protocols,
-            treatment_timeline=timeline,
+            protocols=protocols,
+            timeline=timeline,
             patient_summary=patient_summary,
             dentist_summary=dentist_summary,
             provenance=provenance,

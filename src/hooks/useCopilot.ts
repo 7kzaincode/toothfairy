@@ -109,6 +109,9 @@ export function useCopilot(
           imageType
         );
         setLastAutoScanResult(response);
+        // Clear stale clinical notes result so frontend uses backend's merged state
+        // (which now includes both notes-based + imaging-based findings)
+        setLastClinicalNotesResult(null);
         await refreshState();
         return response;
       } catch (error) {

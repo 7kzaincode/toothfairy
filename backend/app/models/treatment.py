@@ -15,11 +15,13 @@ class TreatmentActionResponse(BaseModel):
     """Response from treatment copilot."""
     session_id: str
     condition: str
+    tooth_number: Optional[int] = None
     evidence_summary: Optional[str] = None
     success_rate: Optional[str] = None
     risk_factors: Optional[list[str]] = None
     alternatives: Optional[list[str]] = None
     referral_summary: Optional[str] = None
     patient_education: Optional[str] = None
+    pharmacy_results: Optional[list[dict]] = None
     provenance: str = "cached"
     inference_time_ms: Optional[int] = None

@@ -87,8 +87,8 @@ class ClinicalNotesArtifact(BaseModel):
 class ClinicalNotesOutput(BaseModel):
     """Clinical notes copilot output."""
     diagnoses: Optional[list[ToothFinding]] = Field(default=None, description="Extracted dental diagnoses")
-    treatment_protocols: Optional[list[TreatmentProtocol]] = Field(default=None, description="Mapped treatment protocols")
-    treatment_timeline: Optional[list[dict]] = Field(default=None, description="Urgency-sorted treatment timeline")
+    protocols: Optional[list[TreatmentProtocol]] = Field(default=None, description="Mapped treatment protocols")
+    timeline: Optional[list[dict]] = Field(default=None, description="Urgency-sorted treatment timeline")
     patient_summary: Optional[str] = Field(default=None, description="Patient-friendly summary")
     dentist_summary: Optional[str] = Field(default=None, description="Dentist-facing summary")
 

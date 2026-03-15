@@ -206,13 +206,14 @@ function ToothMesh({ geometry, toothId, isSelected, onSelect, conditionColor }: 
 
   // If tooth has a condition, use that color; otherwise default holographic blue
   const hasCondition = !!conditionColor;
+  const isMissing = conditionColor === "#6B7280";
   const baseColor = conditionColor || "#7cc4f0";
   const baseEmissive = conditionColor || "#5ab0e8";
 
-  const emissiveIntensity = isSelected ? 1.4 : hovered ? 1.0 : hasCondition ? 0.9 : 0.7;
+  const emissiveIntensity = isSelected ? 1.4 : hovered ? 1.0 : isMissing ? 0.2 : hasCondition ? 0.9 : 0.7;
   const color = isSelected ? "#88eeff" : hovered ? baseColor : baseColor;
   const emissive = isSelected ? "#66eeff" : hovered ? baseEmissive : baseEmissive;
-  const opacity = isSelected ? 0.9 : hovered ? 0.8 : hasCondition ? 0.75 : 0.6;
+  const opacity = isSelected ? 0.9 : hovered ? 0.8 : isMissing ? 0.2 : hasCondition ? 0.75 : 0.6;
 
   return (
     <mesh

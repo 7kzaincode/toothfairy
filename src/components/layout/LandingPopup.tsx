@@ -228,7 +228,7 @@ export default function LandingPopup({ onDismiss }: LandingPopupProps) {
 
             <button
               type="button"
-              onClick={() => onDismiss(false)}
+              onClick={() => onDismiss()}
               className="bg-[#171717] text-white rounded-xl px-10 py-3.5 text-[15px] font-semibold transition-all hover:bg-[#2a2a2a] active:scale-[0.97] shadow-lg shadow-black/10"
             >
               Jump in!
