@@ -214,6 +214,20 @@ export default function DentalXrayViewer({
     }
   };
 
+  // Keep overlay dimensions in sync when container resizes
+  useEffect(() => {
+    const img = imgRef.current;
+    if (!img) return;
+    const observer = new ResizeObserver(() => {
+      setImgSize({
+        width: img.clientWidth,
+        height: img.clientHeight,
+      });
+    });
+    observer.observe(img);
+    return () => observer.disconnect();
+  }, [imageUrl]);
+
   // ——— Image viewer mode ———
   if (imageUrl) {
     return (
@@ -386,11 +400,11 @@ export default function DentalXrayViewer({
 
         {/* Auto-scan findings panel — BELOW the image */}
         {autoScanResult && (
-          <div className="border-t border-white/10 bg-[#111] px-4 py-3 overflow-y-auto" style={{ maxHeight: 200 }}>
-            <div className="flex items-center justify-between mb-2">
+          <div className="border-t border-white/10 bg-[#111] px-5 py-4 overflow-y-auto" style={{ maxHeight: 280 }}>
+            <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-3">
-                <h3 className="text-xs font-semibold text-white">Auto-Scan Results</h3>
-                <span className={`text-[9px] font-mono px-1.5 py-0.5 rounded ${
+                <h3 className="text-sm font-bold text-white">Auto-Scan Results</h3>
+                <span className={`text-[10px] font-mono px-2 py-0.5 rounded ${
                   autoScanResult.provenance === "unet" || autoScanResult.provenance === "live"
                     ? "bg-green-500/20 text-green-400 border border-green-500/30"
                     : autoScanResult.provenance === "cached"
@@ -399,31 +413,31 @@ export default function DentalXrayViewer({
                 }`}>
                   {autoScanResult.provenance === "unet" ? "U-NET" : autoScanResult.provenance === "live" ? "LIVE" : autoScanResult.provenance === "cached" ? "CACHED" : "FALLBACK"}
                 </span>
-                <span className="text-[10px] text-white/30">{autoScanResult.inference_time_ms}ms</span>
+                <span className="text-xs text-white/30">{autoScanResult.inference_time_ms}ms</span>
               </div>
-              <div className="flex items-center gap-4 text-xs">
-                <span className="text-white/60"><span className="font-bold text-white">{autoScanResult.segmented}</span> teeth</span>
-                <span className="text-yellow-400"><span className="font-bold">{autoScanResult.suspicious_teeth}</span> flagged</span>
-                <span className="text-red-400"><span className="font-bold">{autoScanResult.findings.length}</span> findings</span>
+              <div className="flex items-center gap-5 text-sm">
+                <span className="text-white/60"><span className="font-bold text-white text-base">{autoScanResult.segmented}</span> teeth</span>
+                <span className="text-yellow-400"><span className="font-bold text-base">{autoScanResult.suspicious_teeth}</span> flagged</span>
+                <span className="text-red-400"><span className="font-bold text-base">{autoScanResult.findings.length}</span> findings</span>
               </div>
             </div>
 
             {autoScanResult.findings.length > 0 && (
-              <div className="grid grid-cols-2 gap-1.5">
+              <div className="grid grid-cols-2 gap-2">
                 {autoScanResult.findings.map((finding, idx) => (
-                  <div key={idx} className="text-xs bg-white/5 rounded px-2.5 py-1.5 flex items-center justify-between">
-                    <div>
-                      <span className="font-semibold text-blue-400">#{finding.tooth_number}</span>
-                      <span className="mx-1 text-white/20">·</span>
+                  <div key={idx} className="text-sm bg-white/5 rounded-lg px-3 py-2.5 flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span className="font-bold text-blue-400">#{finding.tooth_number}</span>
+                      <span className="text-white/20">·</span>
                       <span className="text-white/70">{finding.condition.replace(/_/g, " ")}</span>
-                      <span className="mx-1 text-white/20">·</span>
-                      <span className={`font-medium ${
+                      <span className="text-white/20">·</span>
+                      <span className={`font-semibold ${
                         finding.severity === "severe" ? "text-red-400" :
                         finding.severity === "moderate" ? "text-yellow-400" :
                         "text-green-400"
                       }`}>{finding.severity}</span>
                     </div>
-                    <span className={`text-[9px] font-mono ${
+                    <span className={`text-xs font-mono font-semibold ${
                       finding.confidence >= 0.7 ? "text-green-400" :
                       finding.confidence >= 0.4 ? "text-yellow-400" :
                       "text-red-400"
@@ -436,7 +450,7 @@ export default function DentalXrayViewer({
             )}
 
             {autoScanResult.findings.length === 0 && (
-              <p className="text-[11px] text-white/30">No pathology detected — all teeth appear healthy.</p>
+              <p className="text-sm text-white/30">No pathology detected — all teeth appear healthy.</p>
             )}
           </div>
         )}

@@ -19,7 +19,7 @@ from app.core.reliability_manager import reliability_manager, ReliabilityManager
 from app.api.dependencies import cache_manager
 from app.models.logs import CopilotType
 from app.models.imaging import ImagingActionRequest, ImagingActionResponse
-from app.models.patient_state import PatientState, ImagingOutput, ImagingProvenance, ToothFinding
+from app.models.patient_state import PatientState, ImagingOutput, ImagingProvenance, ToothFinding, ClinicalNotesOutput, ClinicalNotesArtifact, TreatmentProtocol
 from app.copilots.imaging.tooth_mapper import map_click_to_tooth, PANORAMIC_TEETH
 from app.copilots.imaging.finding_detector import detect_findings_with_llm, detect_findings_full_scan
 from app.services.replicate_client import replicate_client
@@ -290,7 +290,178 @@ class ImagingHandler:
             except Exception as e:
                 logger.error(f"Full-scan Gemini diagnostics failed: {e}")
 
+        # Fallback to cached findings if Gemini returned nothing (e.g. rate limited)
+        if not findings:
+            try:
+                import json as _json
+                cache_path = Path(__file__).resolve().parents[3] / "assets" / "cache" / "imaging" / "patient-001" / "demo-panoramic" / "findings.json"
+                if cache_path.exists():
+                    cached = _json.loads(cache_path.read_text())
+                    for tooth_str, tooth_data in cached.get("teeth", {}).items():
+                        for f_data in tooth_data.get("findings", []):
+                            findings.append(ToothFinding(
+                                tooth_number=int(tooth_str),
+                                condition=f_data["condition"],
+                                severity=f_data["severity"],
+                                confidence=f_data["confidence"],
+                                location_description=f_data.get("location", ""),
+                            ))
+                    await log_emitter.emit_fallback(
+                        session_id, copilot,
+                        f"Gemini unavailable, using cached findings ({len(findings)} findings)"
+                    )
+            except Exception as e:
+                logger.error(f"Cached findings fallback failed: {e}")
+
         suspicious = len(set(f.tooth_number for f in findings if f.condition != "healthy"))
+
+        # Write findings to patient_state.tooth_chart (don't overwrite existing notes-based findings)
+        for f in findings:
+            if f.condition not in ("under_review", "healthy"):
+                if f.tooth_number not in patient_state.tooth_chart:
+                    patient_state.tooth_chart[f.tooth_number] = f
+
+        # Generate clinical notes output from imaging findings so other tabs pick it up
+        pathological = [f for f in findings if f.condition not in ("under_review", "healthy")]
+        if pathological:
+            # Build treatment timeline entries from findings
+            _TREATMENT_MAP = {
+                "cavity": ("Composite restoration", "soon", 1, "D2391", "$150-$300"),
+                "bone_loss": ("Scaling & root planing", "soon", 2, "D4341", "$200-$400"),
+                "periapical_lesion": ("Root canal therapy", "immediate", 2, "D3310", "$700-$1200"),
+                "impacted": ("Surgical extraction", "routine", 1, "D7240", "$250-$500"),
+                "fracture": ("Crown placement", "immediate", 2, "D2740", "$800-$1500"),
+                "root_resorption": ("Endodontic evaluation", "soon", 1, "D3310", "$500-$900"),
+                "cyst": ("Surgical excision", "immediate", 1, "D7450", "$400-$800"),
+                "abscess": ("Incision & drainage + antibiotics", "immediate", 1, "D7510", "$300-$600"),
+                "crown_defect": ("Crown replacement", "routine", 2, "D2740", "$800-$1500"),
+                "missing": ("Implant or bridge evaluation", "routine", 3, "D6010", "$1500-$4000"),
+            }
+            _URGENCY_ORDER = {"immediate": 0, "soon": 1, "routine": 2, "monitor": 3}
+
+            timeline = []
+            protocols = []
+            for i, f in enumerate(sorted(pathological, key=lambda x: _URGENCY_ORDER.get(
+                _TREATMENT_MAP.get(x.condition, ("", "routine", 1, None, None))[1], 3
+            ))):
+                tx = _TREATMENT_MAP.get(f.condition, (f.condition.replace("_", " ").title(), "routine", 1, None, None))
+                timeline.append({
+                    "order": i + 1,
+                    "tooth_number": f.tooth_number,
+                    "condition": f.condition,
+                    "treatment": tx[0],
+                    "urgency": tx[1],
+                    "cdt_code": tx[3],
+                    "estimated_cost": tx[4],
+                })
+                protocols.append(TreatmentProtocol(
+                    condition=f.condition,
+                    tooth_number=f.tooth_number,
+                    recommended_treatment=tx[0],
+                    urgency=tx[1],
+                    estimated_visits=tx[2],
+                    patient_explanation=f"Tooth #{f.tooth_number}: {f.condition.replace('_', ' ')} detected via X-ray analysis.",
+                    cdt_code=tx[3],
+                    estimated_cost=tx[4],
+                ))
+
+            # Only set clinical notes output if not already populated by the clinical notes copilot
+            if not patient_state.clinical_notes_output:
+                patient_state.clinical_notes_output = ClinicalNotesOutput(
+                    diagnoses=pathological,
+                    protocols=protocols,
+                    timeline=timeline,
+                    patient_summary=f"X-ray analysis identified {len(pathological)} finding(s) requiring attention.",
+                    dentist_summary=f"Auto-scan ({provenance}): {len(all_segments)} teeth segmented, {len(pathological)} pathological finding(s).",
+                )
+            else:
+                # Merge imaging findings into existing clinical notes
+                existing_teeth = {d.tooth_number for d in (patient_state.clinical_notes_output.diagnoses or [])}
+                existing_timeline_teeth = {
+                    e.get("tooth_number") for e in (patient_state.clinical_notes_output.timeline or [])
+                }
+                next_order = len(patient_state.clinical_notes_output.timeline or []) + 1
+
+                existing_protocol_teeth = {
+                    p.tooth_number for p in (patient_state.clinical_notes_output.protocols or [])
+                }
+
+                for f in pathological:
+                    if f.tooth_number not in existing_teeth:
+                        if patient_state.clinical_notes_output.diagnoses is None:
+                            patient_state.clinical_notes_output.diagnoses = []
+                        patient_state.clinical_notes_output.diagnoses.append(f)
+
+                    if f.tooth_number not in existing_protocol_teeth:
+                        tx = _TREATMENT_MAP.get(f.condition, (f.condition.replace("_", " ").title(), "routine", 1, None, None))
+                        if patient_state.clinical_notes_output.protocols is None:
+                            patient_state.clinical_notes_output.protocols = []
+                        patient_state.clinical_notes_output.protocols.append(TreatmentProtocol(
+                            condition=f.condition,
+                            tooth_number=f.tooth_number,
+                            recommended_treatment=tx[0],
+                            urgency=tx[1],
+                            estimated_visits=tx[2],
+                            patient_explanation=f"Tooth #{f.tooth_number}: {f.condition.replace('_', ' ')} detected via X-ray analysis.",
+                            cdt_code=tx[3],
+                            estimated_cost=tx[4],
+                        ))
+
+                    if f.tooth_number not in existing_timeline_teeth:
+                        tx = _TREATMENT_MAP.get(f.condition, (f.condition.replace("_", " ").title(), "routine", 1, None, None))
+                        if patient_state.clinical_notes_output.timeline is None:
+                            patient_state.clinical_notes_output.timeline = []
+                        patient_state.clinical_notes_output.timeline.append({
+                            "order": next_order,
+                            "tooth_number": f.tooth_number,
+                            "condition": f.condition,
+                            "treatment": tx[0],
+                            "urgency": tx[1],
+                            "cdt_code": tx[3],
+                            "estimated_cost": tx[4],
+                            "source": "imaging",
+                        })
+                        next_order += 1
+
+        # Append imaging findings addendum to clinical notes text
+        if pathological:
+            addendum_lines = ["\n\n--- X-RAY IMAGING FINDINGS (Auto-Scan) ---"]
+            for f in pathological:
+                addendum_lines.append(
+                    f"- Tooth #{f.tooth_number}: {f.condition.replace('_', ' ')} "
+                    f"({f.severity}, {f.confidence:.0%} confidence) — {f.location_description}"
+                )
+            addendum_lines.append(f"\nTotal: {len(pathological)} finding(s) across {suspicious} tooth/teeth.")
+            addendum_text = "\n".join(addendum_lines)
+
+            # Strip previous auto-scan section if re-scanning, append to existing notes
+            MARKER = "--- X-RAY IMAGING FINDINGS (Auto-Scan) ---"
+            if patient_state.clinical_notes_artifact and patient_state.clinical_notes_artifact.notes_text:
+                existing = patient_state.clinical_notes_artifact.notes_text
+                if MARKER in existing:
+                    existing = existing[:existing.index(MARKER)].rstrip()
+                patient_state.clinical_notes_artifact.notes_text = existing + addendum_text
+            else:
+                # No artifact yet (auto-parse hasn't run) — create with just imaging findings.
+                # Frontend will show profileNotes as fallback if this is empty.
+                patient_state.clinical_notes_artifact = ClinicalNotesArtifact(
+                    notes_text=addendum_text.strip()
+                )
+
+        # Update imaging output with all findings for cross-tab access
+        patient_state.imaging_output = ImagingOutput(
+            segmentation_provenance=provenance,
+            contour_points=None,
+            tooth_number=None,
+            findings=findings,
+            narrative_summary=f"Auto-scan detected {len(all_segments)} teeth with {len(findings)} finding(s) across {suspicious} tooth/teeth.",
+        )
+        patient_state.imaging_provenance = ImagingProvenance(
+            live_attempted=True,
+            live_succeeded=(provenance == "unet"),
+            fallback_used=(provenance != "unet"),
+            duration_ms=int((time.time() - start_time) * 1000),
+        )
 
         inference_time_ms = int((time.time() - start_time) * 1000)
 

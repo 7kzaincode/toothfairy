@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { usePatientState } from "@/hooks/usePatientState";
 import { useCopilot } from "@/hooks/useCopilot";
 import { useSSE } from "@/hooks/useSSE";
@@ -45,6 +45,18 @@ export default function Home() {
   // Display state: prefer real state from backend
   const displayState = patientState || null;
 
+  // Auto-parse clinical notes when profile loads (populates tooth chart from notes)
+  const notesParsedRef = useRef<string | null>(null);
+  const triggerClinicalNotes = copilot.triggerClinicalNotes;
+  useEffect(() => {
+    const notes = profile?.clinical_notes;
+    if (notes && sessionId && notesParsedRef.current !== notes) {
+      notesParsedRef.current = notes;
+      triggerClinicalNotes(notes, notes);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [profile?.clinical_notes, sessionId]);
+
   const handleToothSelect = (toothNumber: number) => {
     const finding = displayState?.tooth_chart[toothNumber];
     if (finding) {
@@ -87,8 +99,15 @@ export default function Home() {
     setActiveTab("treatment");
   };
 
+  const handleViewOnModel = (toothNumber: number) => {
+    setActiveTab("tooth-chart");
+  };
+
   const handleAutoScan = (imageId: string) => {
     if (sessionId) {
+      // Collapse sidebars for full-width X-ray view during scan
+      setLeftCollapsed(true);
+      setRightCollapsed(true);
       copilot.triggerAutoScan(imageId, "panoramic");
     }
   };
@@ -143,14 +162,15 @@ export default function Home() {
         onToggleLeftPane={() => setLeftCollapsed((v) => !v)}
         onToggleRightPane={() => setRightCollapsed((v) => !v)}
         onAutoScan={handleAutoScan}
+        onViewOnModel={handleViewOnModel}
         imageId={uploadedImageId}
         imageUrl={uploadedImageUrl}
         imagingResult={copilot.lastImagingResult}
         autoScanResult={copilot.lastAutoScanResult}
         clinicalNotesOutput={copilot.lastClinicalNotesResult ? {
           diagnoses: copilot.lastClinicalNotesResult.diagnoses,
-          protocols: copilot.lastClinicalNotesResult.treatment_protocols,
-          timeline: copilot.lastClinicalNotesResult.treatment_timeline,
+          protocols: copilot.lastClinicalNotesResult.protocols,
+          timeline: copilot.lastClinicalNotesResult.timeline,
           patient_summary: copilot.lastClinicalNotesResult.patient_summary,
           dentist_summary: copilot.lastClinicalNotesResult.dentist_summary,
         } : undefined}

@@ -16,8 +16,8 @@ class ClinicalNotesActionResponse(BaseModel):
     """Response from clinical notes copilot."""
     session_id: str
     diagnoses: Optional[list[ToothFinding]] = None
-    treatment_protocols: Optional[list[TreatmentProtocol]] = None
-    treatment_timeline: Optional[list[dict]] = None
+    protocols: Optional[list[TreatmentProtocol]] = None
+    timeline: Optional[list[dict]] = None
     patient_summary: Optional[str] = None
     dentist_summary: Optional[str] = None
     provenance: str = "live"
