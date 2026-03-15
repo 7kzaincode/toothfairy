@@ -112,7 +112,7 @@ class TreatmentArtifact(BaseModel):
 class TreatmentOutput(BaseModel):
     """Treatment & evidence copilot output."""
     evidence_summary: Optional[str] = Field(default=None, description="Evidence-based treatment summary")
-    success_rate: Optional[float] = Field(default=None, description="Treatment success rate 0-1")
+    success_rate: Optional[str] = Field(default=None, description="Treatment success rate e.g. '85-95%'")
     risk_factors: Optional[list[str]] = Field(default=None, description="Risk factors to consider")
     alternatives: Optional[list[str]] = Field(default=None, description="Alternative treatments")
     referral_summary: Optional[str] = Field(default=None, description="Specialist referral summary")

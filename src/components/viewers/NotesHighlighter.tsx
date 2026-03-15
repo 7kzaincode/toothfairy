@@ -1,8 +1,3 @@
-/**
- * NotesHighlighter - Text selection triggers copilot
- * TODO: Implement text selection detection, highlight rendering, copilot trigger
- */
-
 "use client";
 
 interface NotesHighlighterProps {
@@ -11,10 +6,19 @@ interface NotesHighlighterProps {
 }
 
 export default function NotesHighlighter({ text, onHighlight }: NotesHighlighterProps) {
+  const handleMouseUp = () => {
+    const selection = window.getSelection()?.toString().trim();
+    if (selection && selection.length > 3 && onHighlight) {
+      onHighlight(selection);
+    }
+  };
+
   return (
-    <div className="whitespace-pre-wrap font-mono text-sm p-4">
-      {/* TODO: Render text with selection handler */}
+    <pre
+      onMouseUp={handleMouseUp}
+      className="p-4 text-xs leading-relaxed text-ide-text-2 font-mono whitespace-pre-wrap select-text cursor-text h-full"
+    >
       {text}
-    </div>
+    </pre>
   );
 }

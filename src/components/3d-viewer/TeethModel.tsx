@@ -97,6 +97,7 @@ interface TeethModelProps {
 export default function TeethModel({
   onToothSelect,
   selectedTooth,
+  toothColors = {},
 }: TeethModelProps) {
   const { nodes } = useGLTF("/models/teeth.glb") as unknown as GLTFResult;
 
@@ -141,6 +142,7 @@ export default function TeethModel({
               toothId={toothNum}
               isSelected={selectedTooth === toothNum}
               onSelect={onToothSelect}
+              conditionColor={toothColors[toothNum]}
             />
           ))}
 
@@ -167,9 +169,10 @@ interface ToothMeshProps {
   toothId: number;
   isSelected: boolean;
   onSelect?: (id: number, worldPos: THREE.Vector3) => void;
+  conditionColor?: string;
 }
 
-function ToothMesh({ geometry, toothId, isSelected, onSelect }: ToothMeshProps) {
+function ToothMesh({ geometry, toothId, isSelected, onSelect, conditionColor }: ToothMeshProps) {
   const meshRef = useRef<THREE.Mesh>(null);
   const [hovered, setHovered] = useState(false);
 
@@ -201,10 +204,15 @@ function ToothMesh({ geometry, toothId, isSelected, onSelect }: ToothMeshProps) 
     document.body.style.cursor = "default";
   }, []);
 
-  const emissiveIntensity = isSelected ? 1.4 : hovered ? 1.0 : 0.7;
-  const color = isSelected ? "#88eeff" : hovered ? "#9ad8ff" : "#7cc4f0";
-  const emissive = isSelected ? "#66eeff" : hovered ? "#70ccff" : "#5ab0e8";
-  const opacity = isSelected ? 0.9 : hovered ? 0.8 : 0.6;
+  // If tooth has a condition, use that color; otherwise default holographic blue
+  const hasCondition = !!conditionColor;
+  const baseColor = conditionColor || "#7cc4f0";
+  const baseEmissive = conditionColor || "#5ab0e8";
+
+  const emissiveIntensity = isSelected ? 1.4 : hovered ? 1.0 : hasCondition ? 0.9 : 0.7;
+  const color = isSelected ? "#88eeff" : hovered ? baseColor : baseColor;
+  const emissive = isSelected ? "#66eeff" : hovered ? baseEmissive : baseEmissive;
+  const opacity = isSelected ? 0.9 : hovered ? 0.8 : hasCondition ? 0.75 : 0.6;
 
   return (
     <mesh
