@@ -167,7 +167,6 @@ export default function CenterPane({
                 onAutoScan={onAutoScan}
                 autoScanResult={autoScanResult}
                 onTreatmentClick={onTreatmentClick}
-                onClose={onClearImage}
               />
             </div>
           ) : (
