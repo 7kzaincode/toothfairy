@@ -3,7 +3,7 @@
 Endpoints for clinical notes analysis.
 """
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, BackgroundTasks, HTTPException
 
 from app.core.session_manager import session_manager
 from app.models.clinical_notes import (
@@ -17,7 +17,10 @@ router = APIRouter(prefix="/clinical-notes", tags=["Clinical Notes"])
 
 
 @router.post("/action", response_model=ClinicalNotesActionResponse)
-async def clinical_notes_action(request: ClinicalNotesActionRequest):
+async def clinical_notes_action(
+    request: ClinicalNotesActionRequest,
+    background_tasks: BackgroundTasks,
+):
     """Analyze highlighted clinical notes text.
 
     Extracts diagnoses, maps to treatment protocols, generates timeline.
@@ -31,6 +34,20 @@ async def clinical_notes_action(request: ClinicalNotesActionRequest):
     response = await handler.handle_text_highlight(request, patient_state)
 
     session_manager.update_session(request.session_id, patient_state)
+
+    # Fire-and-forget: ingest session into Moorcheh for longitudinal memory
+    try:
+        from app.services.moorcheh_client import moorcheh_service
+        if moorcheh_service.is_available:
+            background_tasks.add_task(
+                moorcheh_service.ingest_session,
+                patient_id=patient_state.identifiers.patient_id,
+                session_data=patient_state.model_dump(),
+                session_date=patient_state.last_updated_at,
+            )
+    except ImportError:
+        pass  # moorcheh_sdk not installed
+
     return response
 
 
@@ -65,6 +82,21 @@ async def clinical_notes_chat(request: ClinicalNotesChatRequest):
 
     if request.context:
         context_parts.append(f"Additional context: {request.context}")
+
+    # Retrieve historical patient context from Moorcheh (RAG)
+    try:
+        from app.services.moorcheh_client import moorcheh_service
+        if moorcheh_service.is_available:
+            history = await moorcheh_service.retrieve_history(
+                patient_id=patient_state.identifiers.patient_id,
+                query=request.message,
+            )
+            if history:
+                context_parts.append(
+                    f"Here is the exact historical context retrieved for this patient:\n{history}"
+                )
+    except ImportError:
+        pass  # moorcheh_sdk not installed
 
     context = "\n\n".join(context_parts)
 

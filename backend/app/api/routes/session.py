@@ -13,6 +13,7 @@ from app.models import PatientState
 
 class CreateSessionRequest(BaseModel):
     case_id: str = Field(default="demo-dental-001")
+    patient_id: str = Field(default="sarsh-chen")
 
 
 class SessionResponse(BaseModel):
@@ -45,7 +46,10 @@ router = APIRouter(prefix="/session", tags=["Session"])
 
 @router.post("", response_model=SessionResponse, status_code=status.HTTP_201_CREATED)
 async def create_session(request: CreateSessionRequest = CreateSessionRequest()):
-    patient_state = session_manager.create_session(case_id=request.case_id)
+    patient_state = session_manager.create_session(
+        case_id=request.case_id,
+        patient_id=request.patient_id,
+    )
     return SessionResponse(
         session_id=patient_state.identifiers.session_id,
         status="created",
