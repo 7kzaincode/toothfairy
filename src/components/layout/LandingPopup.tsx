@@ -4,7 +4,7 @@ import { useState, useEffect, useRef, Suspense } from "react";
 import { DM_Sans } from "next/font/google";
 import Image from "next/image";
 import { Canvas, useFrame } from "@react-three/fiber";
-import { useGLTF } from "@react-three/drei";
+import { useGLTF, Environment } from "@react-three/drei";
 import * as THREE from "three";
 
 const dmSans = DM_Sans({ subsets: ["latin"] });
@@ -21,6 +21,21 @@ type GLTFNodes = {
 };
 
 const SPIN_DURATION = 1.5; // seconds for the half-rotation entrance
+
+// Animated point light that orbits the model to create a moving specular shine
+function ShimmerLight() {
+  const lightRef = useRef<THREE.PointLight>(null);
+  useFrame(({ clock }) => {
+    if (!lightRef.current) return;
+    const t = clock.getElapsedTime();
+    lightRef.current.position.set(
+      Math.sin(t * 0.7) * 6,
+      22 + Math.cos(t * 0.45) * 2,
+      4 + Math.cos(t * 0.7) * 4
+    );
+  });
+  return <pointLight ref={lightRef} intensity={12} color="#ffffff" distance={22} decay={2} />;
+}
 
 function TeethDisplay() {
   const groupRef = useRef<THREE.Group>(null);
@@ -67,15 +82,17 @@ function TeethDisplay() {
           {[nodes.Object_6, nodes.Object_7].map((node, i) => (
             <mesh key={`tooth-${i}`} geometry={node.geometry}>
               <meshPhysicalMaterial
-                color="#7cc4f0"
-                emissive="#5ab0e8"
-                emissiveIntensity={0.7}
+                color="#9adcff"
+                emissive="#5ab8f0"
+                emissiveIntensity={0.5}
                 transparent
-                opacity={0.6}
-                roughness={0.1}
-                metalness={0.9}
+                opacity={0.72}
+                roughness={0.02}
+                metalness={0.1}
                 clearcoat={1}
-                clearcoatRoughness={0.05}
+                clearcoatRoughness={0.0}
+                ior={1.65}
+                reflectivity={1}
                 side={THREE.DoubleSide}
               />
             </mesh>
@@ -141,7 +158,7 @@ export default function LandingPopup({ onDismiss }: LandingPopupProps) {
         style={{
           height: "65vh",
           background:
-            "radial-gradient(ellipse 38% 75% at 50% -8%, rgba(140, 190, 255, 0.24) 0%, rgba(100, 155, 235, 0.09) 45%, transparent 70%)",
+            "radial-gradient(ellipse 38% 75% at 50% -8%, rgba(140, 190, 255, 0.48) 0%, rgba(100, 155, 235, 0.18) 45%, transparent 70%)",
         }}
       />
 
@@ -192,11 +209,14 @@ export default function LandingPopup({ onDismiss }: LandingPopupProps) {
               style={{ background: "transparent" }}
               onCreated={({ camera }) => camera.lookAt(0, 20, 0)}
             >
-              <ambientLight intensity={0.7} />
-              <pointLight position={[6, 6, 6]} intensity={2.2} color="#88ccff" />
-              <pointLight position={[-6, -4, 4]} intensity={0.9} color="#4466bb" />
+              <ambientLight intensity={0.4} />
+              <pointLight position={[6, 26, 6]} intensity={4} color="#ffffff" />
+              <pointLight position={[-6, 18, 4]} intensity={2} color="#88ccff" />
+              <pointLight position={[0, 24, -4]} intensity={1.5} color="#4466bb" />
               <Suspense fallback={null}>
+                <ShimmerLight />
                 <TeethDisplay />
+                <Environment preset="studio" />
               </Suspense>
             </Canvas>
           </div>
