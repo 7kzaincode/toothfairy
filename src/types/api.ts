@@ -25,6 +25,7 @@ export interface ImagingActionResponse {
     confidence: number;
     location_description: string;
   }>;
+  narrative?: string;
   narrative_summary?: string;
   provenance: string;
   inference_time_ms: number;
@@ -40,6 +41,32 @@ export interface ImageUploadResponse {
 
 export interface ImageListResponse {
   images: ImageUploadResponse[];
+}
+
+export interface AutoScanRequest {
+  session_id: string;
+  image_id: string;
+  image_type?: string;
+}
+
+export interface AutoScanResponse {
+  total_teeth: number;
+  segmented: number;
+  suspicious_teeth: number;
+  findings: Array<{
+    tooth_number: number;
+    condition: string;
+    severity: string;
+    confidence: number;
+    location_description: string;
+  }>;
+  inference_time_ms: number;
+  segments: Array<{
+    tooth_number: number;
+    contour_points: number[][];
+    confidence: number;
+  }>;
+  provenance: string;
 }
 
 // Clinical Notes

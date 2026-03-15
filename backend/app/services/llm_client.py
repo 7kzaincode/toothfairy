@@ -1,25 +1,29 @@
 """
 Gemini LLM Client
 
-Wraps google-genai for dental AI tasks:
+Wraps the Gemini REST API via httpx for dental AI tasks:
 - Clinical notes structured extraction
 - Dental X-ray finding detection (vision)
 - Follow-up chat with clinical context
+
+Uses raw httpx async calls with base64 image encoding.
+Requests JSON responses via generationConfig to avoid parsing markdown.
 """
 
+import base64
 import json
 import logging
 import os
 from typing import Optional
 
-from google import genai
-from google.genai import types
+import httpx
 
 from app.core.config import settings
 
 logger = logging.getLogger(__name__)
 
 GEMINI_MODEL = "gemini-2.5-flash"
+GEMINI_BASE_URL = "https://generativelanguage.googleapis.com/v1beta/models"
 
 CLINICAL_NOTES_SYSTEM_PROMPT = """You are a dental clinician AI assistant. Your job is to extract structured diagnoses from clinical notes text.
 
@@ -50,75 +54,138 @@ Be concise, clinically accurate, and reference specific tooth numbers and condit
 
 
 class LLMClient:
-    """Wrapper around Google Gemini API."""
+    """Wrapper around Google Gemini REST API using httpx."""
 
     def __init__(self):
-        self._client = None
-
-    @property
-    def _api_key(self) -> str:
-        """Read API key dynamically so it picks up .env values."""
-        return settings.GOOGLE_API_KEY or os.getenv("GOOGLE_API_KEY", "")
-
-    def _ensure_client(self):
-        """Lazily create the Gemini client."""
-        if self._client:
-            return
-        if not self._api_key:
-            raise RuntimeError("GOOGLE_API_KEY is not set. Cannot use Gemini.")
-        self._client = genai.Client(api_key=self._api_key)
+        self.api_key = settings.GOOGLE_API_KEY
+        self.model_name = GEMINI_MODEL
 
     @property
     def is_available(self) -> bool:
         """Check if Gemini is configured and usable."""
-        return bool(self._api_key)
+        return bool(self.api_key)
+
+    async def _call_gemini(self, payload: dict, timeout: int = 30) -> dict:
+        """Make a raw POST to the Gemini REST API with retry on 429.
+
+        Args:
+            payload: The full request body (contents, generationConfig, etc.)
+            timeout: Request timeout in seconds
+
+        Returns:
+            The raw JSON response dict from Gemini.
+
+        Raises:
+            RuntimeError: If API key is not configured.
+            httpx.HTTPStatusError: If the API returns a non-2xx status.
+        """
+        import asyncio
+
+        if not self.api_key:
+            raise RuntimeError("GOOGLE_API_KEY is not set. Cannot use Gemini.")
+
+        url = f"{GEMINI_BASE_URL}/{self.model_name}:generateContent?key={self.api_key}"
+
+        max_retries = 3
+        for attempt in range(max_retries):
+            async with httpx.AsyncClient(timeout=timeout) as client:
+                r = await client.post(url, json=payload)
+                if r.status_code == 429 and attempt < max_retries - 1:
+                    wait = 2 ** attempt + 1  # 2s, 3s, 5s
+                    logger.warning(
+                        f"Gemini 429 rate limited, retrying in {wait}s "
+                        f"(attempt {attempt + 1}/{max_retries})"
+                    )
+                    await asyncio.sleep(wait)
+                    continue
+                r.raise_for_status()
+                return r.json()
+
+        # Should not reach here, but just in case
+        r.raise_for_status()
+        return r.json()
+
+    def _extract_text(self, response: dict) -> str:
+        """Extract the text content from a Gemini API response.
+
+        Response structure: candidates[0].content.parts[0].text
+        """
+        try:
+            return response["candidates"][0]["content"]["parts"][0]["text"]
+        except (KeyError, IndexError) as e:
+            logger.error(f"Failed to extract text from Gemini response: {e}")
+            return ""
 
     async def parse_clinical_notes(self, text: str) -> list[dict]:
         """Parse clinical notes into structured diagnoses."""
-        self._ensure_client()
-
         logger.info("Calling Gemini for clinical notes extraction")
-        response = await self._client.aio.models.generate_content(
-            model=GEMINI_MODEL,
-            contents=f"{CLINICAL_NOTES_SYSTEM_PROMPT}\n\nClinical notes to analyze:\n\n{text}",
-        )
 
-        return self._parse_json_response(response.text)
+        payload = {
+            "contents": [{
+                "parts": [
+                    {"text": f"{CLINICAL_NOTES_SYSTEM_PROMPT}\n\nClinical notes to analyze:\n\n{text}"}
+                ]
+            }],
+            "generationConfig": {"response_mime_type": "application/json"}
+        }
 
-    async def extract_dental_findings(self, image_bytes: bytes, prompt: str = "") -> list[dict]:
-        """Extract dental findings from X-ray image using Gemini vision."""
-        self._ensure_client()
+        response = await self._call_gemini(payload)
+        return self._parse_json_response(self._extract_text(response))
+
+    async def extract_dental_findings(self, image_bytes: bytes, prompt: str = "") -> dict:
+        """Extract dental findings from X-ray image using Gemini vision.
+
+        Encodes image as base64, sends as image/jpeg inline_data part to
+        Gemini vision. Requests JSON response via generationConfig.
+
+        Args:
+            image_bytes: Raw image bytes (JPEG or PNG)
+            prompt: Optional additional context for the prompt
+
+        Returns:
+            Raw Gemini response dict. Text is under
+            candidates[0].content.parts[0].text
+        """
+        logger.info("Calling Gemini vision for dental finding detection")
+
+        b64 = base64.b64encode(image_bytes).decode("utf-8")
 
         full_prompt = DENTAL_FINDINGS_SYSTEM_PROMPT
         if prompt:
             full_prompt += f"\n\nAdditional context: {prompt}"
 
-        image_part = types.Part.from_bytes(data=image_bytes, mime_type="image/jpeg")
+        payload = {
+            "contents": [{
+                "parts": [
+                    {"inline_data": {"mime_type": "image/jpeg", "data": b64}},
+                    {"text": full_prompt}
+                ]
+            }],
+            "generationConfig": {"response_mime_type": "application/json"}
+        }
 
-        logger.info("Calling Gemini vision for dental finding detection")
-        response = await self._client.aio.models.generate_content(
-            model=GEMINI_MODEL,
-            contents=[full_prompt, image_part],
-        )
-
-        return self._parse_json_response(response.text)
+        response = await self._call_gemini(payload, timeout=30)
+        return response
 
     async def chat(self, message: str, context: str = "") -> str:
         """General chat completion with clinical context."""
-        self._ensure_client()
+        logger.info("Calling Gemini for clinical chat")
 
         prompt = CHAT_SYSTEM_PROMPT
         if context:
             prompt += f"\n\nCurrent patient context:\n{context}"
         prompt += f"\n\nDentist's question: {message}"
 
-        logger.info("Calling Gemini for clinical chat")
-        response = await self._client.aio.models.generate_content(
-            model=GEMINI_MODEL,
-            contents=prompt,
-        )
+        payload = {
+            "contents": [{
+                "parts": [
+                    {"text": prompt}
+                ]
+            }]
+        }
 
-        return response.text
+        response = await self._call_gemini(payload)
+        return self._extract_text(response)
 
     def _parse_json_response(self, text: str) -> list[dict]:
         """Parse a JSON array from Gemini's response text."""

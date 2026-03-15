@@ -2,14 +2,19 @@
 
 import { useRef, useEffect, useCallback, useState } from "react";
 import SegmentationOverlay from "./SegmentationOverlay";
+import type { AutoScanResponse, ImagingActionResponse } from "@/types/api";
 
 interface DentalXrayViewerProps {
   imageUrl?: string;
   imageId?: string;
   onToothClick?: (imageId: string, x: number, y: number) => void;
   segmentationOverlay?: number[][];
+  imagingResult?: ImagingActionResponse | null;
   onFileUpload?: (file: File) => void;
   onClose?: () => void;
+  onAutoScan?: (imageId: string) => void;
+  autoScanResult?: AutoScanResponse | null;
+  onTreatmentClick?: (condition: string, toothNumber?: number) => void;
 }
 
 export default function DentalXrayViewer({
@@ -17,7 +22,11 @@ export default function DentalXrayViewer({
   imageId,
   onToothClick,
   segmentationOverlay,
+  imagingResult,
   onFileUpload,
+  onAutoScan,
+  autoScanResult,
+  onTreatmentClick,
   onClose,
 }: DentalXrayViewerProps) {
   const wrapperRef = useRef<HTMLDivElement>(null);
@@ -30,8 +39,12 @@ export default function DentalXrayViewer({
   const dropLabelRef = useRef<HTMLParagraphElement>(null);
   const imgRef = useRef<HTMLImageElement>(null);
   const [imgSize, setImgSize] = useState({ width: 0, height: 0 });
+  const [imgNaturalSize, setImgNaturalSize] = useState({ width: 0, height: 0 });
   const [clickMarker, setClickMarker] = useState<{ x: number; y: number } | null>(null);
   const [analyzing, setAnalyzing] = useState(false);
+  const [scanning, setScanning] = useState(false);
+  const [showScanResults, setShowScanResults] = useState(true);
+  const [showToothResult, setShowToothResult] = useState(true);
 
   const drawGrid = useCallback(() => {
     const canvas = canvasRef.current;
@@ -127,6 +140,20 @@ export default function DentalXrayViewer({
     }
   }, [segmentationOverlay]);
 
+  // Clear scanning state when auto-scan completes
+  useEffect(() => {
+    if (autoScanResult) {
+      setScanning(false);
+    }
+  }, [autoScanResult]);
+
+  // Show tooth result panel when new imaging result arrives
+  useEffect(() => {
+    if (imagingResult) {
+      setShowToothResult(true);
+    }
+  }, [imagingResult]);
+
   const showFile = (name: string) => {
     if (dropLabelRef.current) {
       dropLabelRef.current.innerHTML = `<span style="color:rgba(100,200,130,0.9)">✓</span> <span style="color:rgba(255,255,255,0.6)">${name}</span>`;
@@ -180,6 +207,10 @@ export default function DentalXrayViewer({
         width: imgRef.current.clientWidth,
         height: imgRef.current.clientHeight,
       });
+      setImgNaturalSize({
+        width: imgRef.current.naturalWidth,
+        height: imgRef.current.naturalHeight,
+      });
     }
   };
 
@@ -204,18 +235,88 @@ export default function DentalXrayViewer({
           }}
         />
 
-        {/* Close button */}
-        {onClose && (
-          <button
-            onClick={onClose}
-            className="absolute top-3 right-3 z-20 w-8 h-8 flex items-center justify-center rounded-md bg-white/[0.06] border border-white/10 text-white/40 hover:text-white hover:bg-white/[0.12] hover:border-white/20 active:scale-95 transition-all"
-            title="Close X-Ray"
-          >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <line x1="18" y1="6" x2="6" y2="18" />
-              <line x1="6" y1="6" x2="18" y2="18" />
-            </svg>
-          </button>
+        {(onClose || (imageId && onAutoScan)) && (
+          <div className="absolute top-3 right-3 z-20 flex items-start gap-2">
+            {imageId && onAutoScan && (
+              <div className="flex gap-2">
+                {autoScanResult && (
+                  <button
+                    onClick={() => setShowScanResults(!showScanResults)}
+                    className="px-3 py-2 rounded-lg font-medium text-sm transition-all bg-white/10 hover:bg-white/20 active:scale-95"
+                    style={{
+                      border: "1px solid rgba(255,255,255,0.15)",
+                      boxShadow: "0 2px 8px rgba(0,0,0,0.3)",
+                    }}
+                  >
+                    <span className="flex items-center gap-2">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        {showScanResults ? (
+                          <>
+                            <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94" />
+                            <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19" />
+                            <line x1="1" y1="1" x2="23" y2="23" />
+                          </>
+                        ) : (
+                          <>
+                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                            <circle cx="12" cy="12" r="3" />
+                          </>
+                        )}
+                      </svg>
+                      {showScanResults ? "Hide" : "Show"}
+                    </span>
+                  </button>
+                )}
+                <button
+                  onClick={() => {
+                    setScanning(true);
+                    setShowScanResults(true);
+                    onAutoScan(imageId);
+                  }}
+                  disabled={scanning}
+                  className={`px-4 py-2 rounded-lg font-medium text-sm transition-all ${
+                    scanning
+                      ? "bg-blue-500/50 cursor-not-allowed"
+                      : "bg-blue-500 hover:bg-blue-600 active:scale-95"
+                  }`}
+                  style={{
+                    border: "1px solid rgba(255,255,255,0.2)",
+                    boxShadow: "0 2px 8px rgba(0,0,0,0.3)",
+                  }}
+                >
+                  {scanning ? (
+                    <span className="flex items-center gap-2">
+                      <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                      </svg>
+                      Scanning...
+                    </span>
+                  ) : (
+                    <span className="flex items-center gap-2">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                        <circle cx="12" cy="12" r="3" />
+                      </svg>
+                      {autoScanResult ? "Re-Scan" : "Auto-Scan All Teeth"}
+                    </span>
+                  )}
+                </button>
+              </div>
+            )}
+            {onClose && (
+              <button
+                onClick={onClose}
+                className="w-8 h-8 flex items-center justify-center rounded-md bg-white/[0.06] border border-white/10 text-white/40 hover:text-white hover:bg-white/[0.12] hover:border-white/20 active:scale-95 transition-all"
+                title="Close X-Ray"
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="18" y1="6" x2="6" y2="18" />
+                  <line x1="6" y1="6" x2="18" y2="18" />
+                </svg>
+              </button>
+            )}
+          </div>
         )}
 
         <div className="relative" style={{ maxWidth: "90%", maxHeight: "90%" }}>
@@ -246,19 +347,197 @@ export default function DentalXrayViewer({
             </div>
           )}
 
-          {/* Segmentation overlay */}
+          {/* Segmentation overlay (single tooth) */}
           {segmentationOverlay && segmentationOverlay.length >= 3 && imgSize.width > 0 && (
             <SegmentationOverlay
               contourPoints={segmentationOverlay}
               width={imgSize.width}
               height={imgSize.height}
+              viewBoxWidth={imgNaturalSize.width || imgSize.width}
+              viewBoxHeight={imgNaturalSize.height || imgSize.height}
             />
           )}
 
+          {/* Auto-scan segments (all teeth) */}
+          {showScanResults && autoScanResult && autoScanResult.segments && imgSize.width > 0 && autoScanResult.segments.map((seg) => (
+            <SegmentationOverlay
+              key={seg.tooth_number}
+              contourPoints={seg.contour_points}
+              width={imgSize.width}
+              height={imgSize.height}
+              viewBoxWidth={imgNaturalSize.width || imgSize.width}
+              viewBoxHeight={imgNaturalSize.height || imgSize.height}
+            />
+          ))}
+
+          {/* Auto-scan results panel */}
+          {showScanResults && autoScanResult && (
+            <div className="absolute bottom-4 left-4 right-4 bg-black/80 border border-white/10 rounded-lg p-4 backdrop-blur-sm">
+              <div className="flex items-center justify-between mb-2">
+                <h3 className="text-sm font-semibold text-white">Auto-Scan Complete</h3>
+                <div className="flex items-center gap-3">
+                  <span className={`text-[9px] font-mono px-1.5 py-0.5 rounded ${
+                    autoScanResult.provenance === "live"
+                      ? "bg-green-500/20 text-green-400 border border-green-500/30"
+                      : autoScanResult.provenance === "cached"
+                      ? "bg-blue-500/20 text-blue-400 border border-blue-500/30"
+                      : "bg-yellow-500/20 text-yellow-400 border border-yellow-500/30"
+                  }`}>
+                    {autoScanResult.provenance === "live" ? "LIVE" : autoScanResult.provenance === "cached" ? "CACHED" : "FALLBACK"}
+                  </span>
+                  <span className="text-xs text-white/40">{autoScanResult.inference_time_ms}ms</span>
+                  <button
+                    onClick={() => setShowScanResults(false)}
+                    className="text-white/40 hover:text-white/80 transition-colors"
+                  >
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <line x1="18" y1="6" x2="6" y2="18" />
+                      <line x1="6" y1="6" x2="18" y2="18" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-3 gap-3 text-center mb-3">
+                <div className="bg-white/5 rounded p-2">
+                  <div className="text-lg font-bold text-white">{autoScanResult.segmented}</div>
+                  <div className="text-[10px] text-white/40">Teeth Analyzed</div>
+                </div>
+                <div className="bg-yellow-500/10 rounded p-2">
+                  <div className="text-lg font-bold text-yellow-400">{autoScanResult.suspicious_teeth}</div>
+                  <div className="text-[10px] text-white/40">Flagged</div>
+                </div>
+                <div className="bg-red-500/10 rounded p-2">
+                  <div className="text-lg font-bold text-red-400">{autoScanResult.findings.length}</div>
+                  <div className="text-[10px] text-white/40">Findings</div>
+                </div>
+              </div>
+
+              {autoScanResult.findings.length > 0 && (
+                <div className="max-h-32 overflow-y-auto space-y-1">
+                  {autoScanResult.findings.map((finding, idx) => (
+                    <div key={idx} className="text-xs bg-white/5 rounded px-2 py-1.5 flex items-center justify-between">
+                      <div>
+                        <span className="font-semibold text-blue-400">#{finding.tooth_number}</span>
+                        <span className="mx-1.5 text-white/30">·</span>
+                        <span className="text-white/70">{finding.condition.replace(/_/g, " ")}</span>
+                        <span className="mx-1.5 text-white/30">·</span>
+                        <span className={`font-medium ${
+                          finding.severity === "severe" ? "text-red-400" :
+                          finding.severity === "moderate" ? "text-yellow-400" :
+                          "text-green-400"
+                        }`}>{finding.severity}</span>
+                      </div>
+                      <span className={`text-[9px] font-mono ${
+                        finding.confidence >= 0.7 ? "text-green-400" :
+                        finding.confidence >= 0.4 ? "text-yellow-400" :
+                        "text-red-400"
+                      }`}>
+                        {Math.round(finding.confidence * 100)}%
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Single tooth analysis panel (cmd+click result) */}
+          {showToothResult && imagingResult && !(showScanResults && autoScanResult) && (
+            <div className="absolute bottom-4 left-4 right-4 bg-black/80 border border-white/10 rounded-lg p-4 backdrop-blur-sm">
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-sm font-semibold text-white">
+                  Tooth #{imagingResult.tooth_number} Analysis
+                </h3>
+                <div className="flex items-center gap-3">
+                  <span className={`text-[9px] font-mono px-1.5 py-0.5 rounded ${
+                    imagingResult.provenance === "live"
+                      ? "bg-green-500/20 text-green-400 border border-green-500/30"
+                      : imagingResult.provenance === "cached"
+                      ? "bg-blue-500/20 text-blue-400 border border-blue-500/30"
+                      : "bg-yellow-500/20 text-yellow-400 border border-yellow-500/30"
+                  }`}>
+                    {imagingResult.provenance === "live" ? "LIVE" : imagingResult.provenance === "cached" ? "CACHED" : "FALLBACK"}
+                  </span>
+                  {imagingResult.inference_time_ms != null && (
+                    <span className="text-xs text-white/40">{imagingResult.inference_time_ms}ms</span>
+                  )}
+                  <button
+                    onClick={() => setShowToothResult(false)}
+                    className="text-white/40 hover:text-white/80 transition-colors"
+                  >
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <line x1="18" y1="6" x2="6" y2="18" />
+                      <line x1="6" y1="6" x2="18" y2="18" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+
+              {/* Findings */}
+              {imagingResult.findings && imagingResult.findings.length > 0 && (
+                <div className="space-y-1.5 mb-3">
+                  {imagingResult.findings.map((finding, idx) => (
+                    <div key={idx} className="text-xs bg-white/5 rounded px-3 py-2 flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <span className="text-white/80 capitalize">{finding.condition.replace(/_/g, " ")}</span>
+                        <span className="text-white/20">|</span>
+                        <span className={`font-medium ${
+                          finding.severity === "severe" ? "text-red-400" :
+                          finding.severity === "moderate" ? "text-yellow-400" :
+                          "text-green-400"
+                        }`}>{finding.severity}</span>
+                        {finding.location_description && (
+                          <>
+                            <span className="text-white/20">|</span>
+                            <span className="text-white/50 text-[11px]">{finding.location_description}</span>
+                          </>
+                        )}
+                      </div>
+                      <span className={`text-[9px] font-mono ${
+                        finding.confidence >= 0.7 ? "text-green-400" :
+                        finding.confidence >= 0.4 ? "text-yellow-400" :
+                        "text-red-400"
+                      }`}>
+                        {Math.round(finding.confidence * 100)}%
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Narrative */}
+              {(imagingResult.narrative || imagingResult.narrative_summary) && (
+                <p className="text-[11px] text-white/50 leading-relaxed mb-3">
+                  {imagingResult.narrative || imagingResult.narrative_summary}
+                </p>
+              )}
+
+              {/* Treatment lookup button */}
+              {imagingResult.findings && imagingResult.findings.length > 0 &&
+                imagingResult.findings[0].condition !== "under_review" && onTreatmentClick && (
+                <button
+                  onClick={() => onTreatmentClick(
+                    imagingResult.findings![0].condition,
+                    imagingResult.tooth_number
+                  )}
+                  className="text-[11px] text-blue-400 hover:text-blue-300 transition-colors flex items-center gap-1"
+                >
+                  Look up treatment
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <polyline points="9 18 15 12 9 6" />
+                  </svg>
+                </button>
+              )}
+            </div>
+          )}
+
           {/* Instruction hint */}
-          <div className="absolute bottom-3 left-1/2 -translate-x-1/2 text-[10px] text-white/40 bg-black/50 px-3 py-1 rounded-full">
-            Click on a tooth to analyze
-          </div>
+          {!analyzing && !(showScanResults && autoScanResult) && !(showToothResult && imagingResult) && (
+            <div className="absolute bottom-3 left-1/2 -translate-x-1/2 text-[10px] text-white/40 bg-black/50 px-3 py-1 rounded-full">
+              Click on a tooth to analyze
+            </div>
+          )}
         </div>
       </div>
     );

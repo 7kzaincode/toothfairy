@@ -116,7 +116,7 @@ function TeethDisplay() {
 }
 
 interface LandingPopupProps {
-  onDismiss: (demoMode?: boolean) => void;
+  onDismiss: () => void;
 }
 
 export default function LandingPopup({ onDismiss }: LandingPopupProps) {
