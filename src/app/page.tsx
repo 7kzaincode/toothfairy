@@ -107,6 +107,7 @@ export default function Home() {
           if (type === "imaging") setActiveTab("xray");
           else if (type === "clinical_notes") setActiveTab("clinical-notes");
           else if (type === "treatment") setActiveTab("treatment");
+          else if (type === "tooth-chart") setActiveTab("tooth-chart");
         }}
         collapsed={leftCollapsed}
         onToggle={() => setLeftCollapsed((v) => !v)}
