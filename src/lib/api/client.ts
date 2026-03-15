@@ -16,6 +16,7 @@ import type {
   ImageUploadResponse,
   ImageListResponse,
   SessionResponse,
+  AutoScanResponse,
 } from "@/types/api";
 import type { PatientState } from "@/types/patient-state";
 
@@ -97,6 +98,30 @@ export class APIClient {
     }
 
     return response.json() as Promise<ImageListResponse>;
+  }
+
+  async triggerAutoScan(
+    sessionId: string,
+    imageId: string,
+    imageType: string = "panoramic"
+  ): Promise<AutoScanResponse> {
+    const response = await fetch(ENDPOINTS.IMAGING_AUTO_SCAN, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        session_id: sessionId,
+        image_id: imageId,
+        image_type: imageType,
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to trigger auto-scan: ${response.statusText}`);
+    }
+
+    return response.json() as Promise<AutoScanResponse>;
   }
 
   // Clinical Notes

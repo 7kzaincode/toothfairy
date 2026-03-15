@@ -3,7 +3,7 @@
 import { useRef } from "react";
 import dynamic from "next/dynamic";
 import type { PatientState, ClinicalNotesOutput } from "@/types/patient-state";
-import type { TreatmentActionResponse, ImagingActionResponse } from "@/types/api";
+import type { TreatmentActionResponse, ImagingActionResponse, AutoScanResponse } from "@/types/api";
 import Image from "next/image";
 import ClinicalNotesViewer from "@/components/viewers/ClinicalNotesViewer";
 import TreatmentTable from "@/components/viewers/TreatmentTable";
@@ -67,9 +67,11 @@ interface CenterPaneProps {
   onClearImage?: () => void;
   onToggleLeftPane?: () => void;
   onToggleRightPane?: () => void;
+  onAutoScan?: (imageId: string) => void;
   imageId?: string | null;
   imageUrl?: string | null;
   imagingResult?: ImagingActionResponse | null;
+  autoScanResult?: AutoScanResponse | null;
   clinicalNotesOutput?: ClinicalNotesOutput | null;
   treatmentResult?: TreatmentActionResponse | null;
   processing?: boolean;
@@ -88,9 +90,11 @@ export default function CenterPane({
   onToggleLeftPane,
   onToggleRightPane,
   onToothSelect,
+  onAutoScan,
   imageId,
   imageUrl,
   imagingResult,
+  autoScanResult,
   clinicalNotesOutput,
   treatmentResult,
   processing,
@@ -157,7 +161,12 @@ export default function CenterPane({
                 imageId={imageId || undefined}
                 onToothClick={onImagingClick}
                 segmentationOverlay={imagingResult?.contour_points}
+                imagingResult={imagingResult}
                 onFileUpload={onFileUpload}
+                onClose={onClearImage}
+                onAutoScan={onAutoScan}
+                autoScanResult={autoScanResult}
+                onTreatmentClick={onTreatmentClick}
                 onClose={onClearImage}
               />
             </div>

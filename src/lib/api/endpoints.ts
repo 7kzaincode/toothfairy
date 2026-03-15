@@ -15,6 +15,7 @@ export const ENDPOINTS = {
   // Imaging
   IMAGING_ACTION: `${BASE}/api/imaging/action`,
   IMAGING_UPLOAD: `${BASE}/api/imaging/upload`,
+  IMAGING_AUTO_SCAN: `${BASE}/api/imaging/auto-scan`,
   IMAGING_IMAGE: (id: string) => `${BASE}/api/imaging/image/${id}`,
   IMAGING_IMAGES: `${BASE}/api/imaging/images`,
 
