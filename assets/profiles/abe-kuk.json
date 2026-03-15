@@ -4,20 +4,151 @@
   "date_of_birth": "1997-08-03",
   "age": 28,
   "gender": "M",
-  "allergies": ["Penicillin"],
+  "allergies": [
+    "Penicillin"
+  ],
   "last_visit": "2025-09-20",
   "insurance": "Sun Life \u2014 Individual Plan",
   "dental_history": {
     "notes": "History of moderate caries and periodontal issues. Previous RCT #36 with PFM crown. Penicillin allergy \u2014 use clindamycin if ABX needed.",
     "previous_procedures": [
-      { "date": "2025-09-20", "procedure": "Periodontal maintenance cleaning", "tooth": null },
-      { "date": "2025-01-15", "procedure": "PFM crown delivery", "tooth": 36 },
-      { "date": "2024-11-05", "procedure": "Root canal therapy", "tooth": 36 },
-      { "date": "2024-03-18", "procedure": "Scaling and root planing (full mouth)", "tooth": null },
-      { "date": "2023-07-12", "procedure": "Composite filling", "tooth": 14 }
+      {
+        "date": "2025-09-20",
+        "procedure": "Periodontal maintenance cleaning",
+        "tooth": null
+      },
+      {
+        "date": "2025-01-15",
+        "procedure": "PFM crown delivery",
+        "tooth": 36
+      },
+      {
+        "date": "2024-11-05",
+        "procedure": "Root canal therapy",
+        "tooth": 36
+      },
+      {
+        "date": "2024-03-18",
+        "procedure": "Scaling and root planing (full mouth)",
+        "tooth": null
+      },
+      {
+        "date": "2023-07-12",
+        "procedure": "Composite filling",
+        "tooth": 14
+      }
     ]
   },
-  "xrays": [],
+  "xrays": [
+    {
+      "image_id": "xray-6fe42e84",
+      "image_type": "panoramic",
+      "date": "2026-03-15",
+      "notes": ""
+    },
+    {
+      "image_id": "xray-bd350200",
+      "image_type": "panoramic",
+      "date": "2026-03-15",
+      "notes": ""
+    },
+    {
+      "image_id": "xray-32df3290",
+      "image_type": "panoramic",
+      "date": "2026-03-15",
+      "notes": ""
+    },
+    {
+      "image_id": "xray-f74b3800",
+      "image_type": "panoramic",
+      "date": "2026-03-15",
+      "notes": ""
+    },
+    {
+      "image_id": "xray-4da91452",
+      "image_type": "panoramic",
+      "date": "2026-03-15",
+      "notes": ""
+    },
+    {
+      "image_id": "xray-f2aa6e95",
+      "image_type": "panoramic",
+      "date": "2026-03-15",
+      "notes": ""
+    },
+    {
+      "image_id": "xray-a248a52e",
+      "image_type": "panoramic",
+      "date": "2026-03-15",
+      "notes": ""
+    },
+    {
+      "image_id": "xray-4ed04a46",
+      "image_type": "panoramic",
+      "date": "2026-03-15",
+      "notes": ""
+    },
+    {
+      "image_id": "xray-1a17269d",
+      "image_type": "panoramic",
+      "date": "2026-03-15",
+      "notes": ""
+    },
+    {
+      "image_id": "xray-d46730bd",
+      "image_type": "panoramic",
+      "date": "2026-03-15",
+      "notes": ""
+    },
+    {
+      "image_id": "xray-5f3b5312",
+      "image_type": "panoramic",
+      "date": "2026-03-15",
+      "notes": ""
+    },
+    {
+      "image_id": "xray-93a40aa4",
+      "image_type": "panoramic",
+      "date": "2026-03-15",
+      "notes": ""
+    },
+    {
+      "image_id": "xray-a398e209",
+      "image_type": "panoramic",
+      "date": "2026-03-15",
+      "notes": ""
+    },
+    {
+      "image_id": "xray-1998a569",
+      "image_type": "panoramic",
+      "date": "2026-03-15",
+      "notes": ""
+    },
+    {
+      "image_id": "xray-26fb3747",
+      "image_type": "panoramic",
+      "date": "2026-03-15",
+      "notes": ""
+    },
+    {
+      "image_id": "xray-4f6e6efa",
+      "image_type": "panoramic",
+      "date": "2026-03-15",
+      "notes": ""
+    },
+    {
+      "image_id": "xray-5dd84459",
+      "image_type": "panoramic",
+      "date": "2026-03-15",
+      "notes": ""
+    },
+    {
+      "image_id": "xray-b1403bea",
+      "image_type": "panoramic",
+      "date": "2026-03-15",
+      "notes": ""
+    }
+  ],
   "known_conditions": {},
   "clinical_notes": "CLINICAL NOTES \u2014 Abe Kuk (DOB: 1997-08-03)\nDate: 2026-03-15  Provider: Dr. Nakamura\nChart #: AK-2026-001\n\nALLERGIES: PENICILLIN (hives) \u2014 substitute clindamycin.\n\nPATIENT HISTORY:\n- Chronic moderate periodontitis, stabilized after SRP (2024-03).\n- RCT #36 completed 2024-11, PFM crown seated 2025-01.\n- Previous composite #14 (2023-07) for mesial caries.\n- Periodontal maintenance every 4 months since 2024.\n- Social history: occasional smoker (5 cig/week), moderate\n  alcohol consumption.\n\nCHIEF COMPLAINT: Crown on #36 feels \"high\" when biting.\nAlso noticed bleeding gums lower front when flossing.\n\nCLINICAL FINDINGS:\n- Tooth #36: PFM crown with high occlusal contact on\n  mesio-lingual cusp. Occlusal adjustment needed.\n  Percussion negative, no periapical pathology on PA.\n  Crown margins intact, no recurrent decay.\n- Tooth #14: Previous composite showing marginal staining\n  and slight ditching at distal margin. Early secondary\n  caries suspected. Recommend replacement restoration (D2392).\n- Tooth #24: Mesial caries detected on bitewing radiograph.\n  Enamel-dentin junction involvement. Moderate severity.\n  Recommend composite restoration (D2391).\n- Tooth #31: Facial recession 3mm with root sensitivity.\n  Cervical abrasion noted. Recommend desensitizing agent\n  and soft-bristle brush education.\n\nPERIODONTAL ASSESSMENT:\n- Probing depths: generalized 3-4mm, localized 5mm at\n  #31 facial, #36 distal, #46 mesial.\n- Bleeding on probing: 25% of sites (improved from 45%).\n- Lower anterior lingual: moderate calculus buildup.\n- Gingival inflammation localized to #31-41 facial.\n\nTREATMENT PLAN:\n1. [IMMEDIATE] Tooth #36 \u2014 Occlusal adjustment of PFM crown\n2. [SOON] Tooth #14 \u2014 Replace composite restoration (D2392)\n3. [SOON] Tooth #24 \u2014 Composite restoration (D2391)\n4. [ROUTINE] Tooth #31 \u2014 Desensitizing treatment + patient\n   education on brushing technique\n5. [ROUTINE] Full mouth \u2014 Periodontal maintenance (D4910)\n\nRADIOGRAPHIC NOTES:\nBitewing radiographs (4) and PA #36 taken. #36 RCT fill\nadequate, periapical area clear. #14 distal radiolucency\nat restoration margin. #24 mesial radiolucency at DEJ.\nGeneralized mild-moderate horizontal bone loss consistent\nwith history of periodontitis. No acute pathology.\n\nNOTES: Adjusted occlusion on #36 crown \u2014 patient reports\nimproved bite. Scheduled #14 and #24 restorations for next\nvisit. Reinforced flossing technique for lower anteriors.\nPeriodontal maintenance due in 4 months. NOTE: Penicillin\nallergy documented \u2014 prescribe clindamycin 300mg if\nantibiotics needed. Next visit: 3 weeks."
 }

@@ -35,12 +35,14 @@ async def detect_findings_with_llm(
 
     try:
         prompt = (
-            "You are a dental radiologist. List all pathological findings visible in this "
-            "cropped X-ray region. Respond ONLY with a JSON array of objects, each with: "
+            f"You are a dental radiologist analyzing a panoramic X-ray. "
+            f"Focus ONLY on tooth #{tooth_number} (FDI numbering). "
+            f"Ignore all other teeth. List pathological findings for THIS TOOTH ONLY. "
+            f"Respond ONLY with a JSON array of objects, each with: "
             '{"condition": str, "severity": "mild|moderate|severe", "confidence": 0.0-1.0, '
             '"location_description": str}. Use snake_case conditions: cavity, bone_loss, '
             "periapical_lesion, impacted, fracture, root_resorption, cyst, abscess, "
-            "crown_defect, missing. Return [] if no pathology visible."
+            "crown_defect, missing. Return [] if tooth #{tooth_number} appears healthy."
         )
 
         # Decode base64 image to raw bytes
@@ -89,6 +91,74 @@ async def detect_findings_with_llm(
         return []
     except Exception as e:
         logger.error(f"Finding detection failed: {e}")
+        return []
+
+
+async def detect_findings_full_scan(
+    image_base64: str,
+    image_type: str = "panoramic",
+) -> list[ToothFinding]:
+    """Detect dental findings across ALL teeth using Gemini vision.
+
+    Used by auto-scan to analyze the full X-ray in one call instead of
+    per-tooth calls. Returns findings for any teeth with pathology.
+    """
+    if not llm_client.is_available:
+        logger.warning("Gemini API key not configured — skipping full-scan detection")
+        return []
+
+    try:
+        prompt = (
+            "You are an expert dental radiologist analyzing a panoramic X-ray. "
+            "Examine ALL visible teeth and identify any pathological findings. "
+            "Use FDI tooth numbering (11-18, 21-28, 31-38, 41-48). "
+            "Respond ONLY with a JSON array of objects, each with: "
+            '{"tooth_number": int, "condition": str, "severity": "mild|moderate|severe", '
+            '"confidence": 0.0-1.0, "location_description": str}. '
+            "Use snake_case conditions: cavity, bone_loss, periapical_lesion, impacted, "
+            "fracture, root_resorption, cyst, abscess, crown_defect, missing. "
+            "Only report teeth with actual pathology. Return [] if all teeth appear healthy. "
+            "Be thorough but precise — false positives are worse than missed findings."
+        )
+
+        image_bytes = base64.b64decode(image_base64)
+        raw = await llm_client.extract_dental_findings(image_bytes, prompt)
+        text = llm_client._extract_text(raw)
+        if not text:
+            return []
+
+        cleaned = text.strip()
+        if cleaned.startswith("```"):
+            lines = cleaned.split("\n")
+            lines = [l for l in lines if not l.strip().startswith("```")]
+            cleaned = "\n".join(lines).strip()
+
+        parsed = json.loads(cleaned)
+        if not isinstance(parsed, list):
+            parsed = [parsed] if isinstance(parsed, dict) else []
+
+        findings: list[ToothFinding] = []
+        for item in parsed:
+            try:
+                findings.append(ToothFinding(
+                    tooth_number=item.get("tooth_number", 0),
+                    condition=item.get("condition", "under_review"),
+                    severity=item.get("severity", "moderate"),
+                    confidence=float(item.get("confidence", 0.5)),
+                    location_description=item.get("location_description", ""),
+                ))
+            except Exception as e:
+                logger.warning(f"Failed to parse finding item {item}: {e}")
+                continue
+
+        logger.info(f"Full-scan Gemini detected {len(findings)} finding(s)")
+        return findings
+
+    except json.JSONDecodeError as e:
+        logger.error(f"Failed to parse Gemini full-scan JSON: {e}")
+        return []
+    except Exception as e:
+        logger.error(f"Full-scan finding detection failed: {e}")
         return []
 
 

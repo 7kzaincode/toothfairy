@@ -4,22 +4,66 @@
   "date_of_birth": "2000-12-28",
   "age": 25,
   "gender": "F",
-  "allergies": ["Latex", "NSAIDs"],
+  "allergies": [
+    "Latex",
+    "NSAIDs"
+  ],
   "last_visit": "2026-01-10",
   "insurance": "Sun Life \u2014 Family Plan",
   "dental_history": {
     "notes": "Post-orthodontic patient. All 4 wisdom teeth extracted 2021. Wears Essix retainer nightly. Latex and NSAID allergies \u2014 use nitrile gloves, acetaminophen only.",
     "previous_procedures": [
-      { "date": "2026-01-10", "procedure": "Routine cleaning and exam", "tooth": null },
-      { "date": "2025-06-20", "procedure": "Sealant application", "tooth": 16 },
-      { "date": "2025-06-20", "procedure": "Sealant application", "tooth": 26 },
-      { "date": "2022-04-15", "procedure": "Orthodontic retainer fitting", "tooth": null },
-      { "date": "2021-08-30", "procedure": "Surgical extraction (4 wisdom teeth)", "tooth": null },
-      { "date": "2020-02-10", "procedure": "Orthodontic bracket placement", "tooth": null }
+      {
+        "date": "2026-01-10",
+        "procedure": "Routine cleaning and exam",
+        "tooth": null
+      },
+      {
+        "date": "2025-06-20",
+        "procedure": "Sealant application",
+        "tooth": 16
+      },
+      {
+        "date": "2025-06-20",
+        "procedure": "Sealant application",
+        "tooth": 26
+      },
+      {
+        "date": "2022-04-15",
+        "procedure": "Orthodontic retainer fitting",
+        "tooth": null
+      },
+      {
+        "date": "2021-08-30",
+        "procedure": "Surgical extraction (4 wisdom teeth)",
+        "tooth": null
+      },
+      {
+        "date": "2020-02-10",
+        "procedure": "Orthodontic bracket placement",
+        "tooth": null
+      }
     ]
   },
   "xrays": [
-    { "image_id": "xray-12f53516", "image_type": "panoramic", "date": "2026-03-15", "notes": "" }
+    {
+      "image_id": "xray-12f53516",
+      "image_type": "panoramic",
+      "date": "2026-03-15",
+      "notes": ""
+    },
+    {
+      "image_id": "xray-5d0bb830",
+      "image_type": "panoramic",
+      "date": "2026-03-15",
+      "notes": ""
+    },
+    {
+      "image_id": "xray-8b452511",
+      "image_type": "panoramic",
+      "date": "2026-03-15",
+      "notes": ""
+    }
   ],
   "known_conditions": {},
   "clinical_notes": "CLINICAL NOTES \u2014 Michelle Jeon (DOB: 2000-12-28)\nDate: 2026-03-15  Provider: Dr. Williams\nChart #: MJ-2026-001\n\nALLERGIES: LATEX (contact dermatitis), NSAIDs (GI upset).\nUse nitrile gloves. Analgesic: acetaminophen only.\n\nPATIENT HISTORY:\n- Post-orthodontic (braces 2020-2022). Essix retainer\n  worn nightly, good compliance.\n- All 4 wisdom teeth surgically extracted Aug 2021,\n  healed without complications.\n- Sealants placed on #16 and #26 (June 2025).\n- Last cleaning Jan 2026 \u2014 no issues noted at that time.\n- Non-smoker, no medications, vegetarian diet.\n\nCHIEF COMPLAINT: Sharp pain upper right when eating cold\nfoods (started ~1 week ago). Also concerned about a\n\"dark spot\" she noticed on lower left molar.\n\nCLINICAL FINDINGS:\n- Tooth #15: Crack line visible on mesial marginal ridge\n  under transillumination. Cold test: sharp, lingering\n  pain (8 sec). No periapical radiolucency. Cracked\n  tooth syndrome. Recommend ceramic onlay (D2664) to\n  prevent fracture propagation.\n- Tooth #37: Occlusal pit caries (the \"dark spot\").\n  Early enamel-dentin involvement. Small but definite\n  on bitewing. Recommend composite restoration (D2391).\n- Tooth #12: Mild facial erosion on incisal edge,\n  consistent with acid erosion pattern. No sensitivity.\n  Monitor and counsel on dietary acids.\n- Tooth #43: Lingual calculus buildup with localized\n  gingivitis. Bleeding on probing. Recommend targeted\n  scaling and oral hygiene reinforcement.\n\nPERIODONTAL ASSESSMENT:\n- Probing depths 1-3mm throughout \u2014 generally excellent.\n- Localized bleeding #43 lingual, #33 lingual.\n- Minimal plaque. Excellent home care overall.\n- Orthodontic alignment stable, no relapse noted.\n\nORTHODONTIC FOLLOW-UP:\n- Retainer fit checked: adequate, no adjustments needed.\n- Alignment stable since debonding (2022).\n- Mild black triangle #31-41 (common post-ortho),\n  patient aware, no treatment requested.\n\nTREATMENT PLAN:\n1. [IMMEDIATE] Tooth #15 \u2014 Ceramic onlay (D2664) to\n   stabilize crack before it propagates to pulp\n2. [SOON] Tooth #37 \u2014 Composite restoration (D2391)\n3. [ROUTINE] Tooth #43 \u2014 Localized scaling + OHI\n4. [MONITOR] Tooth #12 \u2014 Erosion monitoring, dietary\n   counseling re: citrus and carbonated beverages\n\nRADIOGRAPHIC NOTES:\nBitewing radiographs (4) taken. #15 no periapical\npathology, crack not visible radiographically (clinical\ndiagnosis). #37 occlusal radiolucency at DEJ. Extraction\nsites #18, #28, #38, #48 fully healed. Sealants #16,\n#26 intact. No other pathology. Bone levels excellent.\n\nNOTES: Discussed crack on #15 \u2014 patient understands risk\nof delayed treatment (potential root canal if crack\nreaches pulp). Scheduled onlay prep for next week.\n#37 restoration to be done same visit if time allows.\nReminder: LATEX ALLERGY \u2014 ensure nitrile setup.\nNO NSAIDs \u2014 post-op pain management with acetaminophen\n500mg q6h PRN. Next visit: 1 week."

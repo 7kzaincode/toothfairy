@@ -41,8 +41,11 @@ class ClinicalNotesHandler:
             f"Extracting diagnoses using {extraction_method}..."
         )
 
+        # Use full notes for extraction (more context = better results),
+        # fall back to highlighted text if full notes not provided
+        extraction_text = request.full_notes or request.highlighted_text
         diagnoses, provenance = await extract_diagnoses(
-            request.highlighted_text, use_llm=bool(use_llm)
+            extraction_text, use_llm=bool(use_llm)
         )
 
         if provenance == "fallback-regex":

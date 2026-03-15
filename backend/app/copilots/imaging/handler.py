@@ -21,8 +21,9 @@ from app.models.logs import CopilotType
 from app.models.imaging import ImagingActionRequest, ImagingActionResponse
 from app.models.patient_state import PatientState, ImagingOutput, ImagingProvenance, ToothFinding
 from app.copilots.imaging.tooth_mapper import map_click_to_tooth, PANORAMIC_TEETH
-from app.copilots.imaging.finding_detector import detect_findings_with_llm
+from app.copilots.imaging.finding_detector import detect_findings_with_llm, detect_findings_full_scan
 from app.services.replicate_client import replicate_client
+from app.services.tooth_segmentation import segment_full_image, extract_tooth_contour, is_available as unet_available
 
 logger = logging.getLogger(__name__)
 
@@ -67,14 +68,12 @@ class ImagingHandler:
         tooth_number = map_click_to_tooth(request.x, request.y, request.image_type)
         await log_emitter.emit_info(session_id, copilot, f"Identified FDI tooth #{tooth_number}")
 
-        # Step 2: Attempt segmentation (cache → live MedSAM2 → bounding box fallback)
+        # Step 2: Segment tooth using U-Net model
         await log_emitter.emit_progress(session_id, copilot, "Segmenting tooth region...")
-        contour_points = None
-        provenance = "cached"
         live_attempted = False
         live_succeeded = False
 
-        # Load image to get dimensions + base64
+        # Load image to get dimensions
         image_bytes = _load_image_bytes(request.image_id)
         img_width, img_height = 1200, 800  # defaults
 
@@ -84,70 +83,35 @@ class ImagingHandler:
             img = Image.open(io.BytesIO(image_bytes))
             img_width, img_height = img.size
 
-        # Convert normalized (0-1) coordinates to pixel coordinates
-        click_x = request.x
-        click_y = request.y
-        if 0.0 <= click_x <= 1.0 and 0.0 <= click_y <= 1.0:
-            pixel_x = int(click_x * img_width)
-            pixel_y = int(click_y * img_height)
-        else:
-            pixel_x = int(click_x)
-            pixel_y = int(click_y)
+        # Look up the zone for this tooth
+        zone = None
+        for quadrant in PANORAMIC_TEETH.values():
+            if tooth_number in quadrant:
+                zone = quadrant[tooth_number]
+                break
 
-        # Build fallback bounding box (in pixel coordinates)
-        pad = 40
-        bounding_box_estimate = [
-            [max(0, pixel_x - pad), max(0, pixel_y - pad)],
-            [min(img_width, pixel_x + pad), max(0, pixel_y - pad)],
-            [min(img_width, pixel_x + pad), min(img_height, pixel_y + pad)],
-            [max(0, pixel_x - pad), min(img_height, pixel_y + pad)],
-        ]
+        contour_points = None
+        provenance = "zone-map"
 
-        # Check cache first (exact match, then demo fallback)
-        cached_seg = cache_manager.get_imaging_segmentation(
-            patient_state.identifiers.patient_id,
-            request.image_id,
-            str(tooth_number),
-        )
-        if not cached_seg:
-            cached_seg = cache_manager.get_imaging_segmentation(
-                _DEMO_PATIENT_ID, _DEMO_IMAGE_ID, str(tooth_number),
-            )
-
-        if cached_seg:
-            contour_points = cached_seg.get("contour_points", [])
-            await log_emitter.emit_fallback(session_id, copilot, "Using cached segmentation mask")
-        else:
-            # Build base64 data URI so Modal can access the image
-            if image_bytes:
-                b64 = base64.b64encode(image_bytes).decode("utf-8")
-                image_url = f"data:image/png;base64,{b64}"
-            else:
-                image_url = f"/api/imaging/image/{request.image_id}"
+        # Try U-Net segmentation first
+        if image_bytes and zone and unet_available():
             live_attempted = True
+            try:
+                mask = segment_full_image(image_bytes, request.image_id)
+                if mask is not None:
+                    contour = extract_tooth_contour(mask, tooth_number, zone, img_width, img_height)
+                    if contour and len(contour) >= 3:
+                        contour_points = contour
+                        provenance = "unet"
+                        live_succeeded = True
+                        await log_emitter.emit_success(session_id, copilot, f"U-Net segmented tooth #{tooth_number}")
+            except Exception as e:
+                logger.warning(f"U-Net segmentation failed: {e}")
 
-            result, status = await reliability_manager.execute_with_fallback(
-                live_fn=lambda: replicate_client.segment_tooth(
-                    image_url, pixel_x, pixel_y
-                ),
-                fallback_value=bounding_box_estimate,
-                timeout_seconds=settings.IMAGING_INFERENCE_TIMEOUT_SECONDS,
-            )
-
-            prov_dict = ReliabilityManager.get_provenance(status)
-            provenance = prov_dict["method"]
-            live_succeeded = status == ExecutionStatus.LIVE_SUCCESS
-
-            if live_succeeded:
-                contour_points = result if isinstance(result, list) else result.get("contour_points", bounding_box_estimate)
-                await log_emitter.emit_success(session_id, copilot, "Live segmentation succeeded")
-            else:
-                contour_points = bounding_box_estimate
-                reason = prov_dict.get("reason", "unavailable")
-                await log_emitter.emit_fallback(
-                    session_id, copilot,
-                    f"Live segmentation {reason}, using bounding box estimate"
-                )
+        # Fallback to zone-based contour
+        if contour_points is None:
+            contour_points = self._generate_tooth_contour(tooth_number, img_width, img_height, image_bytes)
+            await log_emitter.emit_success(session_id, copilot, f"Tooth #{tooth_number} region mapped")
 
         # Step 3: Detect findings (cache → Gemini vision → placeholder)
         await log_emitter.emit_progress(session_id, copilot, f"Analyzing tooth #{tooth_number} for pathology...")
@@ -174,13 +138,14 @@ class ImagingHandler:
                 ))
             await log_emitter.emit_success(session_id, copilot, f"Found {len(findings)} finding(s) for tooth #{tooth_number}")
         else:
-            # Attempt LLM-based finding detection
+            # Attempt LLM-based finding detection (rate-limited)
             image_bytes = _load_image_bytes(request.image_id)
             if image_bytes:
                 image_base64 = base64.b64encode(image_bytes).decode("utf-8")
-                findings = await detect_findings_with_llm(
-                    image_base64, tooth_number, request.image_type
-                )
+                async with _gemini_semaphore:
+                    findings = await detect_findings_with_llm(
+                        image_base64, tooth_number, request.image_type
+                    )
                 if findings:
                     await log_emitter.emit_success(
                         session_id, copilot,
@@ -255,97 +220,97 @@ class ImagingHandler:
         patient_state: PatientState,
         image_type: str = "panoramic"
     ) -> dict:
-        """Auto-scan all teeth in panoramic X-ray using HYBRID approach.
+        """Auto-scan all teeth using U-Net + CCA segmentation.
 
-        1. Batch segment all 32 teeth (~15-20s)
-        2. Flag suspicious teeth using lightweight heuristics
-        3. Run Gemini only on suspicious ~5-10 teeth (~10-15s)
+        1. Run U-Net on full image → teeth mask
+        2. CCA post-processing → individual tooth components
+        3. Return all tooth contours for frontend rendering
 
         Returns:
             {
-                "total_teeth": 32,
-                "segmented": 28,
-                "suspicious_teeth": 7,
-                "findings": [...],
-                "inference_time_ms": 25000
+                "total_teeth": N,
+                "segmented": N,
+                "suspicious_teeth": 0,
+                "findings": [],
+                "inference_time_ms": ...,
+                "segments": [...],
+                "provenance": "unet"
             }
         """
+        from app.services.tooth_segmentation import (
+            extract_all_tooth_contours, is_available as unet_available
+        )
+
         start_time = time.time()
-
-        # Generate center points for all 32 teeth using actual image dimensions
-        tooth_points, img_width, img_height = self._generate_tooth_center_points(
-            image_id=image_id,
-            image_type=image_type
-        )
-
-        # Build base64 data URI so Modal can access the image
         image_bytes = _load_image_bytes(image_id)
-        if image_bytes:
-            b64 = base64.b64encode(image_bytes).decode("utf-8")
-            image_url = f"data:image/png;base64,{b64}"
-        else:
-            image_url = f"/api/imaging/image/{image_id}"
 
-        # Batch segmentation with fallback (all teeth in one call)
-        result, status = await reliability_manager.execute_with_fallback(
-            live_fn=lambda: replicate_client.segment_teeth_batch(
-                image_url, tooth_points
-            ),
-            fallback_value=self._generate_fallback_batch_results(tooth_points),
-            timeout_seconds=settings.IMAGING_INFERENCE_TIMEOUT_SECONDS * 2,  # Double timeout for batch
-        )
-
-        prov_dict = ReliabilityManager.get_provenance(status)
-        batch_provenance = prov_dict["method"]
-
-        if status != ExecutionStatus.LIVE_SUCCESS:
-            logger.warning(f"Auto-scan using fallback: {prov_dict.get('reason', 'unavailable')}")
-
-        # Process results with HYBRID approach
-        suspicious_teeth = []
         all_segments = []
+        provenance = "fallback"
 
-        for seg_result in result.get("results", []):
-            if seg_result.get("contour_points"):
-                tooth_number = self._point_index_to_fdi(seg_result["point_index"])
+        if image_bytes and unet_available():
+            try:
+                tooth_contours = extract_all_tooth_contours(image_bytes, image_id)
+                provenance = "unet"
 
-                # Store segment data
-                segment_data = {
-                    "tooth_number": tooth_number,
-                    "contour_points": seg_result["contour_points"],
-                    "confidence": seg_result["confidence"],
-                    "area_pixels": seg_result["area_pixels"],
-                    "used_fallback": seg_result["used_fallback"]
-                }
-                all_segments.append(segment_data)
+                for i, tc in enumerate(tooth_contours):
+                    all_segments.append({
+                        "tooth_number": i + 1,  # CCA label as identifier
+                        "contour_points": tc["contour_points"],
+                        "confidence": 0.85,
+                        "area_pixels": tc["area"],
+                        "used_fallback": False,
+                    })
+            except Exception as e:
+                logger.error(f"U-Net auto-scan failed: {e}")
 
-                # Lightweight suspicious region detection
-                if self._is_tooth_suspicious(seg_result):
-                    suspicious_teeth.append(segment_data)
-
-        # Run Gemini only on suspicious teeth (parallel batch)
-        findings = []
-        if suspicious_teeth:
-            findings = await self._detect_findings_batch(
-                image_id=image_id,
-                suspicious_teeth=suspicious_teeth
+        # Fallback to bounding boxes if U-Net unavailable
+        if not all_segments:
+            tooth_points, _, _ = self._generate_tooth_center_points(
+                image_id=image_id, image_type=image_type
             )
+            fallback = self._generate_fallback_batch_results(tooth_points)
+            for seg in fallback.get("results", []):
+                tooth_number = self._point_index_to_fdi(seg["point_index"])
+                all_segments.append({
+                    "tooth_number": tooth_number,
+                    "contour_points": seg["contour_points"],
+                    "confidence": 0.0,
+                    "area_pixels": seg["area_pixels"],
+                    "used_fallback": True,
+                })
+            provenance = "fallback"
 
-        # Update patient state with findings
-        for finding in findings:
-            if finding.condition != "under_review":
-                patient_state.tooth_chart[finding.tooth_number] = finding
+        # Run Gemini full-scan diagnostic on the image
+        findings = []
+        if image_bytes:
+            try:
+                image_base64 = base64.b64encode(image_bytes).decode("utf-8")
+                async with _gemini_semaphore:
+                    findings = await detect_findings_full_scan(image_base64, image_type)
+            except Exception as e:
+                logger.error(f"Full-scan Gemini diagnostics failed: {e}")
+
+        suspicious = len(set(f.tooth_number for f in findings if f.condition != "healthy"))
 
         inference_time_ms = int((time.time() - start_time) * 1000)
 
         return {
-            "total_teeth": len(tooth_points),
-            "segmented": result.get("successful_segments", 0),
-            "suspicious_teeth": len(suspicious_teeth),
-            "findings": findings,
+            "total_teeth": len(all_segments),
+            "segmented": len(all_segments),
+            "suspicious_teeth": suspicious,
+            "findings": [
+                {
+                    "tooth_number": f.tooth_number,
+                    "condition": f.condition,
+                    "severity": f.severity,
+                    "confidence": f.confidence,
+                    "location_description": f.location_description,
+                }
+                for f in findings
+            ],
             "inference_time_ms": inference_time_ms,
-            "segments": all_segments,  # Return all segments for frontend rendering
-            "provenance": batch_provenance  # Track if fallback was used
+            "segments": all_segments,
+            "provenance": provenance,
         }
 
     def _generate_tooth_center_points(
@@ -442,6 +407,131 @@ class ImagingHandler:
             return True
 
         return False
+
+    def _generate_tooth_contour(
+        self, tooth_number: int, img_width: int, img_height: int,
+        image_bytes: bytes | None = None,
+    ) -> list[list[int]]:
+        """Generate tooth contour using OpenCV edge detection within the zone.
+
+        1. Look up the PANORAMIC_TEETH zone for this tooth
+        2. Crop the image to that zone (with padding)
+        3. Use Canny edge detection + contour finding to trace the actual tooth
+        4. Fall back to a tapered polygon if edge detection fails
+        """
+        import cv2
+        import numpy as np
+
+        # Find the zone for this tooth
+        zone = None
+        for quadrant in PANORAMIC_TEETH.values():
+            if tooth_number in quadrant:
+                zone = quadrant[tooth_number]
+                break
+
+        if not zone:
+            cx, cy = img_width // 2, img_height // 2
+            p = 30
+            return [[cx - p, cy - p], [cx + p, cy - p], [cx + p, cy + p], [cx - p, cy + p]]
+
+        # Convert normalized zone to pixel coordinates with padding
+        pad_x = int((zone["x_max"] - zone["x_min"]) * img_width * 0.15)
+        pad_y = int((zone["y_max"] - zone["y_min"]) * img_height * 0.15)
+        x1 = max(0, int(zone["x_min"] * img_width) - pad_x)
+        x2 = min(img_width, int(zone["x_max"] * img_width) + pad_x)
+        y1 = max(0, int(zone["y_min"] * img_height) - pad_y)
+        y2 = min(img_height, int(zone["y_max"] * img_height) + pad_y)
+
+        # Try OpenCV edge-based contour detection
+        if image_bytes:
+            try:
+                img_array = np.frombuffer(image_bytes, np.uint8)
+                full_img = cv2.imdecode(img_array, cv2.IMREAD_GRAYSCALE)
+
+                if full_img is not None:
+                    # Crop to zone
+                    crop = full_img[y1:y2, x1:x2]
+                    ch, cw = crop.shape
+
+                    # Enhance contrast with CLAHE
+                    clahe = cv2.createCLAHE(clipLimit=3.0, tileGridSize=(4, 4))
+                    enhanced = clahe.apply(crop)
+
+                    # Blur to reduce noise
+                    blurred = cv2.GaussianBlur(enhanced, (5, 5), 1.5)
+
+                    # Adaptive threshold to find tooth region (teeth are bright)
+                    thresh = cv2.adaptiveThreshold(
+                        blurred, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C,
+                        cv2.THRESH_BINARY, 21, -8
+                    )
+
+                    # Morphological close to fill gaps
+                    kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (5, 5))
+                    closed = cv2.morphologyEx(thresh, cv2.MORPH_CLOSE, kernel, iterations=2)
+
+                    # Find contours
+                    contours, _ = cv2.findContours(closed, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+
+                    if contours:
+                        # Pick the contour closest to the center of the crop
+                        center = np.array([cw // 2, ch // 2])
+                        best_contour = None
+                        best_score = float("inf")
+
+                        min_area = cw * ch * 0.05  # At least 5% of crop
+                        max_area = cw * ch * 0.85  # At most 85% of crop
+
+                        for c in contours:
+                            area = cv2.contourArea(c)
+                            if area < min_area or area > max_area:
+                                continue
+                            M = cv2.moments(c)
+                            if M["m00"] == 0:
+                                continue
+                            cx_c = int(M["m10"] / M["m00"])
+                            cy_c = int(M["m01"] / M["m00"])
+                            dist = np.linalg.norm(np.array([cx_c, cy_c]) - center)
+                            if dist < best_score:
+                                best_score = dist
+                                best_contour = c
+
+                        if best_contour is not None:
+                            # Simplify contour to reduce point count
+                            epsilon = 0.02 * cv2.arcLength(best_contour, True)
+                            approx = cv2.approxPolyDP(best_contour, epsilon, True)
+
+                            # Offset back to full image coordinates
+                            points = approx.reshape(-1, 2).tolist()
+                            return [[p[0] + x1, p[1] + y1] for p in points]
+
+            except Exception as e:
+                logger.warning(f"OpenCV contour detection failed: {e}")
+
+        # Fallback: tapered polygon from zone
+        is_upper = tooth_number < 30
+        zx1 = int(zone["x_min"] * img_width)
+        zx2 = int(zone["x_max"] * img_width)
+        zy1 = int(zone["y_min"] * img_height)
+        zy2 = int(zone["y_max"] * img_height)
+        cx = (zx1 + zx2) // 2
+        w = zx2 - zx1
+        h = zy2 - zy1
+        tooth_h = int(h * 0.6)
+        narrow_w = int(w * 0.6)
+
+        if is_upper:
+            crown_y, root_y = zy2, zy2 - tooth_h
+            return [
+                [cx - w // 2, crown_y], [cx - narrow_w // 2, root_y],
+                [cx, root_y - 8], [cx + narrow_w // 2, root_y], [cx + w // 2, crown_y],
+            ]
+        else:
+            crown_y, root_y = zy1, zy1 + tooth_h
+            return [
+                [cx - w // 2, crown_y], [cx + w // 2, crown_y],
+                [cx + narrow_w // 2, root_y], [cx, root_y + 8], [cx - narrow_w // 2, root_y],
+            ]
 
     async def _detect_findings_batch(
         self,

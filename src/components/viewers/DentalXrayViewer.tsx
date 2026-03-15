@@ -219,7 +219,7 @@ export default function DentalXrayViewer({
     return (
       <div
         ref={wrapperRef}
-        className="flex-1 flex items-center justify-center relative overflow-hidden"
+        className="flex-1 flex flex-col relative overflow-hidden"
         style={{ background: "#0B0B0B", minHeight: 480 }}
       >
         <canvas
@@ -235,37 +235,42 @@ export default function DentalXrayViewer({
           }}
         />
 
+        {/* Image area */}
+        <div className="flex-1 flex items-center justify-center relative min-h-0">
         {(onClose || (imageId && onAutoScan)) && (
           <div className="absolute top-3 right-3 z-20 flex items-start gap-2">
             {imageId && onAutoScan && (
               <div className="flex gap-2">
                 {autoScanResult && (
-                  <button
-                    onClick={() => setShowScanResults(!showScanResults)}
-                    className="px-3 py-2 rounded-lg font-medium text-sm transition-all bg-white/10 hover:bg-white/20 active:scale-95"
-                    style={{
-                      border: "1px solid rgba(255,255,255,0.15)",
-                      boxShadow: "0 2px 8px rgba(0,0,0,0.3)",
-                    }}
-                  >
-                    <span className="flex items-center gap-2">
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        {showScanResults ? (
-                          <>
-                            <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94" />
-                            <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19" />
-                            <line x1="1" y1="1" x2="23" y2="23" />
-                          </>
-                        ) : (
-                          <>
-                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
-                            <circle cx="12" cy="12" r="3" />
-                          </>
-                        )}
-                      </svg>
-                      {showScanResults ? "Hide" : "Show"}
-                    </span>
-                  </button>
+                  <>
+                    <button
+                      onClick={() => setShowScanResults(!showScanResults)}
+                      className="px-3 py-2 rounded-lg font-medium text-sm transition-all bg-white/10 hover:bg-white/20 active:scale-95"
+                      style={{
+                        border: "1px solid rgba(255,255,255,0.15)",
+                        boxShadow: "0 2px 8px rgba(0,0,0,0.3)",
+                      }}
+                      title={showScanResults ? "Hide contours" : "Show contours"}
+                    >
+                      <span className="flex items-center gap-2">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          {showScanResults ? (
+                            <>
+                              <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94" />
+                              <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19" />
+                              <line x1="1" y1="1" x2="23" y2="23" />
+                            </>
+                          ) : (
+                            <>
+                              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                              <circle cx="12" cy="12" r="3" />
+                            </>
+                          )}
+                        </svg>
+                        {showScanResults ? "Hide" : "Show"}
+                      </span>
+                    </button>
+                  </>
                 )}
                 <button
                   onClick={() => {
@@ -370,175 +375,155 @@ export default function DentalXrayViewer({
             />
           ))}
 
-          {/* Auto-scan results panel */}
-          {showScanResults && autoScanResult && (
-            <div className="absolute bottom-4 left-4 right-4 bg-black/80 border border-white/10 rounded-lg p-4 backdrop-blur-sm">
-              <div className="flex items-center justify-between mb-2">
-                <h3 className="text-sm font-semibold text-white">Auto-Scan Complete</h3>
-                <div className="flex items-center gap-3">
-                  <span className={`text-[9px] font-mono px-1.5 py-0.5 rounded ${
-                    autoScanResult.provenance === "live"
-                      ? "bg-green-500/20 text-green-400 border border-green-500/30"
-                      : autoScanResult.provenance === "cached"
-                      ? "bg-blue-500/20 text-blue-400 border border-blue-500/30"
-                      : "bg-yellow-500/20 text-yellow-400 border border-yellow-500/30"
-                  }`}>
-                    {autoScanResult.provenance === "live" ? "LIVE" : autoScanResult.provenance === "cached" ? "CACHED" : "FALLBACK"}
-                  </span>
-                  <span className="text-xs text-white/40">{autoScanResult.inference_time_ms}ms</span>
-                  <button
-                    onClick={() => setShowScanResults(false)}
-                    className="text-white/40 hover:text-white/80 transition-colors"
-                  >
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <line x1="18" y1="6" x2="6" y2="18" />
-                      <line x1="6" y1="6" x2="18" y2="18" />
-                    </svg>
-                  </button>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-3 gap-3 text-center mb-3">
-                <div className="bg-white/5 rounded p-2">
-                  <div className="text-lg font-bold text-white">{autoScanResult.segmented}</div>
-                  <div className="text-[10px] text-white/40">Teeth Analyzed</div>
-                </div>
-                <div className="bg-yellow-500/10 rounded p-2">
-                  <div className="text-lg font-bold text-yellow-400">{autoScanResult.suspicious_teeth}</div>
-                  <div className="text-[10px] text-white/40">Flagged</div>
-                </div>
-                <div className="bg-red-500/10 rounded p-2">
-                  <div className="text-lg font-bold text-red-400">{autoScanResult.findings.length}</div>
-                  <div className="text-[10px] text-white/40">Findings</div>
-                </div>
-              </div>
-
-              {autoScanResult.findings.length > 0 && (
-                <div className="max-h-32 overflow-y-auto space-y-1">
-                  {autoScanResult.findings.map((finding, idx) => (
-                    <div key={idx} className="text-xs bg-white/5 rounded px-2 py-1.5 flex items-center justify-between">
-                      <div>
-                        <span className="font-semibold text-blue-400">#{finding.tooth_number}</span>
-                        <span className="mx-1.5 text-white/30">·</span>
-                        <span className="text-white/70">{finding.condition.replace(/_/g, " ")}</span>
-                        <span className="mx-1.5 text-white/30">·</span>
-                        <span className={`font-medium ${
-                          finding.severity === "severe" ? "text-red-400" :
-                          finding.severity === "moderate" ? "text-yellow-400" :
-                          "text-green-400"
-                        }`}>{finding.severity}</span>
-                      </div>
-                      <span className={`text-[9px] font-mono ${
-                        finding.confidence >= 0.7 ? "text-green-400" :
-                        finding.confidence >= 0.4 ? "text-yellow-400" :
-                        "text-red-400"
-                      }`}>
-                        {Math.round(finding.confidence * 100)}%
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* Single tooth analysis panel (cmd+click result) */}
-          {showToothResult && imagingResult && !(showScanResults && autoScanResult) && (
-            <div className="absolute bottom-4 left-4 right-4 bg-black/80 border border-white/10 rounded-lg p-4 backdrop-blur-sm">
-              <div className="flex items-center justify-between mb-3">
-                <h3 className="text-sm font-semibold text-white">
-                  Tooth #{imagingResult.tooth_number} Analysis
-                </h3>
-                <div className="flex items-center gap-3">
-                  <span className={`text-[9px] font-mono px-1.5 py-0.5 rounded ${
-                    imagingResult.provenance === "live"
-                      ? "bg-green-500/20 text-green-400 border border-green-500/30"
-                      : imagingResult.provenance === "cached"
-                      ? "bg-blue-500/20 text-blue-400 border border-blue-500/30"
-                      : "bg-yellow-500/20 text-yellow-400 border border-yellow-500/30"
-                  }`}>
-                    {imagingResult.provenance === "live" ? "LIVE" : imagingResult.provenance === "cached" ? "CACHED" : "FALLBACK"}
-                  </span>
-                  {imagingResult.inference_time_ms != null && (
-                    <span className="text-xs text-white/40">{imagingResult.inference_time_ms}ms</span>
-                  )}
-                  <button
-                    onClick={() => setShowToothResult(false)}
-                    className="text-white/40 hover:text-white/80 transition-colors"
-                  >
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <line x1="18" y1="6" x2="6" y2="18" />
-                      <line x1="6" y1="6" x2="18" y2="18" />
-                    </svg>
-                  </button>
-                </div>
-              </div>
-
-              {/* Findings */}
-              {imagingResult.findings && imagingResult.findings.length > 0 && (
-                <div className="space-y-1.5 mb-3">
-                  {imagingResult.findings.map((finding, idx) => (
-                    <div key={idx} className="text-xs bg-white/5 rounded px-3 py-2 flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <span className="text-white/80 capitalize">{finding.condition.replace(/_/g, " ")}</span>
-                        <span className="text-white/20">|</span>
-                        <span className={`font-medium ${
-                          finding.severity === "severe" ? "text-red-400" :
-                          finding.severity === "moderate" ? "text-yellow-400" :
-                          "text-green-400"
-                        }`}>{finding.severity}</span>
-                        {finding.location_description && (
-                          <>
-                            <span className="text-white/20">|</span>
-                            <span className="text-white/50 text-[11px]">{finding.location_description}</span>
-                          </>
-                        )}
-                      </div>
-                      <span className={`text-[9px] font-mono ${
-                        finding.confidence >= 0.7 ? "text-green-400" :
-                        finding.confidence >= 0.4 ? "text-yellow-400" :
-                        "text-red-400"
-                      }`}>
-                        {Math.round(finding.confidence * 100)}%
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              )}
-
-              {/* Narrative */}
-              {(imagingResult.narrative || imagingResult.narrative_summary) && (
-                <p className="text-[11px] text-white/50 leading-relaxed mb-3">
-                  {imagingResult.narrative || imagingResult.narrative_summary}
-                </p>
-              )}
-
-              {/* Treatment lookup button */}
-              {imagingResult.findings && imagingResult.findings.length > 0 &&
-                imagingResult.findings[0].condition !== "under_review" && onTreatmentClick && (
-                <button
-                  onClick={() => onTreatmentClick(
-                    imagingResult.findings![0].condition,
-                    imagingResult.tooth_number
-                  )}
-                  className="text-[11px] text-blue-400 hover:text-blue-300 transition-colors flex items-center gap-1"
-                >
-                  Look up treatment
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <polyline points="9 18 15 12 9 6" />
-                  </svg>
-                </button>
-              )}
-            </div>
-          )}
-
           {/* Instruction hint */}
-          {!analyzing && !(showScanResults && autoScanResult) && !(showToothResult && imagingResult) && (
+          {!analyzing && !autoScanResult && !(showToothResult && imagingResult) && (
             <div className="absolute bottom-3 left-1/2 -translate-x-1/2 text-[10px] text-white/40 bg-black/50 px-3 py-1 rounded-full">
               Click on a tooth to analyze
             </div>
           )}
         </div>
+        </div>{/* end image area */}
+
+        {/* Auto-scan findings panel — BELOW the image */}
+        {autoScanResult && (
+          <div className="border-t border-white/10 bg-[#111] px-4 py-3 overflow-y-auto" style={{ maxHeight: 200 }}>
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-3">
+                <h3 className="text-xs font-semibold text-white">Auto-Scan Results</h3>
+                <span className={`text-[9px] font-mono px-1.5 py-0.5 rounded ${
+                  autoScanResult.provenance === "unet" || autoScanResult.provenance === "live"
+                    ? "bg-green-500/20 text-green-400 border border-green-500/30"
+                    : autoScanResult.provenance === "cached"
+                    ? "bg-blue-500/20 text-blue-400 border border-blue-500/30"
+                    : "bg-yellow-500/20 text-yellow-400 border border-yellow-500/30"
+                }`}>
+                  {autoScanResult.provenance === "unet" ? "U-NET" : autoScanResult.provenance === "live" ? "LIVE" : autoScanResult.provenance === "cached" ? "CACHED" : "FALLBACK"}
+                </span>
+                <span className="text-[10px] text-white/30">{autoScanResult.inference_time_ms}ms</span>
+              </div>
+              <div className="flex items-center gap-4 text-xs">
+                <span className="text-white/60"><span className="font-bold text-white">{autoScanResult.segmented}</span> teeth</span>
+                <span className="text-yellow-400"><span className="font-bold">{autoScanResult.suspicious_teeth}</span> flagged</span>
+                <span className="text-red-400"><span className="font-bold">{autoScanResult.findings.length}</span> findings</span>
+              </div>
+            </div>
+
+            {autoScanResult.findings.length > 0 && (
+              <div className="grid grid-cols-2 gap-1.5">
+                {autoScanResult.findings.map((finding, idx) => (
+                  <div key={idx} className="text-xs bg-white/5 rounded px-2.5 py-1.5 flex items-center justify-between">
+                    <div>
+                      <span className="font-semibold text-blue-400">#{finding.tooth_number}</span>
+                      <span className="mx-1 text-white/20">·</span>
+                      <span className="text-white/70">{finding.condition.replace(/_/g, " ")}</span>
+                      <span className="mx-1 text-white/20">·</span>
+                      <span className={`font-medium ${
+                        finding.severity === "severe" ? "text-red-400" :
+                        finding.severity === "moderate" ? "text-yellow-400" :
+                        "text-green-400"
+                      }`}>{finding.severity}</span>
+                    </div>
+                    <span className={`text-[9px] font-mono ${
+                      finding.confidence >= 0.7 ? "text-green-400" :
+                      finding.confidence >= 0.4 ? "text-yellow-400" :
+                      "text-red-400"
+                    }`}>
+                      {Math.round(finding.confidence * 100)}%
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {autoScanResult.findings.length === 0 && (
+              <p className="text-[11px] text-white/30">No pathology detected — all teeth appear healthy.</p>
+            )}
+          </div>
+        )}
+
+        {/* Single tooth analysis panel — BELOW the image */}
+        {showToothResult && imagingResult && !autoScanResult && (
+          <div className="border-t border-white/10 bg-[#111] px-4 py-3">
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-3">
+                <h3 className="text-xs font-semibold text-white">
+                  Tooth #{imagingResult.tooth_number} Analysis
+                </h3>
+                <span className={`text-[9px] font-mono px-1.5 py-0.5 rounded ${
+                  imagingResult.provenance === "unet" || imagingResult.provenance === "live"
+                    ? "bg-green-500/20 text-green-400 border border-green-500/30"
+                    : imagingResult.provenance === "cached"
+                    ? "bg-blue-500/20 text-blue-400 border border-blue-500/30"
+                    : "bg-yellow-500/20 text-yellow-400 border border-yellow-500/30"
+                }`}>
+                  {imagingResult.provenance === "unet" ? "U-NET" : imagingResult.provenance === "live" ? "LIVE" : imagingResult.provenance === "cached" ? "CACHED" : "FALLBACK"}
+                </span>
+              </div>
+              <button
+                onClick={() => setShowToothResult(false)}
+                className="text-white/40 hover:text-white/80 transition-colors"
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <line x1="18" y1="6" x2="6" y2="18" />
+                  <line x1="6" y1="6" x2="18" y2="18" />
+                </svg>
+              </button>
+            </div>
+
+            {imagingResult.findings && imagingResult.findings.length > 0 && (
+              <div className="space-y-1 mb-2">
+                {imagingResult.findings.map((finding, idx) => (
+                  <div key={idx} className="text-xs bg-white/5 rounded px-3 py-1.5 flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span className="text-white/80 capitalize">{finding.condition.replace(/_/g, " ")}</span>
+                      <span className="text-white/20">|</span>
+                      <span className={`font-medium ${
+                        finding.severity === "severe" ? "text-red-400" :
+                        finding.severity === "moderate" ? "text-yellow-400" :
+                        "text-green-400"
+                      }`}>{finding.severity}</span>
+                      {finding.location_description && (
+                        <>
+                          <span className="text-white/20">|</span>
+                          <span className="text-white/50 text-[11px]">{finding.location_description}</span>
+                        </>
+                      )}
+                    </div>
+                    <span className={`text-[9px] font-mono ${
+                      finding.confidence >= 0.7 ? "text-green-400" :
+                      finding.confidence >= 0.4 ? "text-yellow-400" :
+                      "text-red-400"
+                    }`}>
+                      {Math.round(finding.confidence * 100)}%
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {(imagingResult.narrative || imagingResult.narrative_summary) && (
+              <p className="text-[11px] text-white/50 leading-relaxed mb-2">
+                {imagingResult.narrative || imagingResult.narrative_summary}
+              </p>
+            )}
+
+            {imagingResult.findings && imagingResult.findings.length > 0 &&
+              imagingResult.findings[0].condition !== "under_review" && onTreatmentClick && (
+              <button
+                onClick={() => onTreatmentClick(
+                  imagingResult.findings![0].condition,
+                  imagingResult.tooth_number
+                )}
+                className="text-[11px] text-blue-400 hover:text-blue-300 transition-colors flex items-center gap-1"
+              >
+                Look up treatment
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <polyline points="9 18 15 12 9 6" />
+                </svg>
+              </button>
+            )}
+          </div>
+        )}
       </div>
     );
   }

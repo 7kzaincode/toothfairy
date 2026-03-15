@@ -79,7 +79,7 @@ export default function Home() {
   };
 
   const handleTextHighlight = (text: string) => {
-    copilot.triggerClinicalNotes(text);
+    copilot.triggerClinicalNotes(text, profile?.clinical_notes);
   };
 
   const handleTreatmentClick = (condition: string, toothNumber?: number) => {

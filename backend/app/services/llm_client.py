@@ -10,10 +10,12 @@ Uses raw httpx async calls with base64 image encoding.
 Requests JSON responses via generationConfig to avoid parsing markdown.
 """
 
+import asyncio
 import base64
 import json
 import logging
 import os
+import time
 from typing import Optional
 
 import httpx
@@ -21,6 +23,23 @@ import httpx
 from app.core.config import settings
 
 logger = logging.getLogger(__name__)
+
+
+class RateLimiter:
+    """Enforces minimum interval between API calls to avoid 429s."""
+
+    def __init__(self, requests_per_minute: int = 4):
+        self.min_interval = 60.0 / requests_per_minute
+        self.last_request_time = 0.0
+
+    async def acquire(self):
+        now = time.time()
+        elapsed = now - self.last_request_time
+        if elapsed < self.min_interval:
+            wait = self.min_interval - elapsed
+            logger.info(f"Rate limiting: waiting {wait:.1f}s before Gemini call")
+            await asyncio.sleep(wait)
+        self.last_request_time = time.time()
 
 GEMINI_MODEL = "gemini-2.5-flash"
 GEMINI_BASE_URL = "https://generativelanguage.googleapis.com/v1beta/models"
@@ -59,6 +78,7 @@ class LLMClient:
     def __init__(self):
         self.api_key = settings.GOOGLE_API_KEY
         self.model_name = GEMINI_MODEL
+        self.rate_limiter = RateLimiter(requests_per_minute=5)  # Match Gemini free tier limit
 
     @property
     def is_available(self) -> bool:
@@ -79,8 +99,6 @@ class LLMClient:
             RuntimeError: If API key is not configured.
             httpx.HTTPStatusError: If the API returns a non-2xx status.
         """
-        import asyncio
-
         if not self.api_key:
             raise RuntimeError("GOOGLE_API_KEY is not set. Cannot use Gemini.")
 
@@ -88,16 +106,22 @@ class LLMClient:
 
         max_retries = 3
         for attempt in range(max_retries):
+            # Proactive rate limiting — wait before each request
+            await self.rate_limiter.acquire()
+
             async with httpx.AsyncClient(timeout=timeout) as client:
                 r = await client.post(url, json=payload)
+
                 if r.status_code == 429 and attempt < max_retries - 1:
-                    wait = 2 ** attempt + 1  # 2s, 3s, 5s
+                    # Exponential backoff: 8s, 16s, 32s
+                    wait = 2 ** (attempt + 3)
                     logger.warning(
                         f"Gemini 429 rate limited, retrying in {wait}s "
                         f"(attempt {attempt + 1}/{max_retries})"
                     )
                     await asyncio.sleep(wait)
                     continue
+
                 r.raise_for_status()
                 return r.json()
 
