@@ -1,28 +1,102 @@
-/**
- * useCopilot Hook
- * Triggers copilot actions: imaging, clinical notes, treatment
- * TODO: Implement API calls + state refresh after each action
- */
-
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
+import { apiClient } from "@/lib/api/client";
+import type {
+  ClinicalNotesActionResponse,
+  ImagingActionResponse,
+  TreatmentActionResponse,
+} from "@/types/api";
 
-export function useCopilot(sessionId: string | null) {
+export function useCopilot(
+  sessionId: string | null,
+  refreshState: () => Promise<void>
+) {
   const [activeCopilot, setActiveCopilot] = useState<string | null>(null);
   const [processing, setProcessing] = useState(false);
+  const [lastClinicalNotesResult, setLastClinicalNotesResult] =
+    useState<ClinicalNotesActionResponse | null>(null);
+  const [lastImagingResult, setLastImagingResult] =
+    useState<ImagingActionResponse | null>(null);
+  const [lastTreatmentResult, setLastTreatmentResult] =
+    useState<TreatmentActionResponse | null>(null);
 
-  const triggerImaging = async (imageId: string, x: number, y: number) => {
-    // TODO: implement
-  };
+  const triggerImaging = useCallback(
+    async (imageId: string, x: number, y: number) => {
+      if (!sessionId) return;
+      setProcessing(true);
+      setActiveCopilot("imaging");
+      try {
+        const response = await apiClient.triggerImagingAction({
+          session_id: sessionId,
+          image_id: imageId,
+          x,
+          y,
+        });
+        setLastImagingResult(response);
+        await refreshState();
+        return response;
+      } catch (error) {
+        console.error("Imaging copilot error:", error);
+      } finally {
+        setProcessing(false);
+        setActiveCopilot(null);
+      }
+    },
+    [sessionId, refreshState]
+  );
 
-  const triggerClinicalNotes = async (highlightedText: string, fullNotes?: string) => {
-    // TODO: implement
-  };
+  const triggerClinicalNotes = useCallback(
+    async (highlightedText: string, fullNotes?: string) => {
+      if (!sessionId) return;
+      setProcessing(true);
+      setActiveCopilot("clinical_notes");
+      try {
+        const response = await apiClient.triggerClinicalNotesAction({
+          session_id: sessionId,
+          highlighted_text: highlightedText,
+          full_notes: fullNotes,
+        });
+        setLastClinicalNotesResult(response);
+        await refreshState();
+        return response;
+      } catch (error) {
+        console.error("Clinical notes copilot error:", error);
+      } finally {
+        setProcessing(false);
+        setActiveCopilot(null);
+      }
+    },
+    [sessionId, refreshState]
+  );
 
-  const triggerTreatment = async (condition: string, toothNumber?: number) => {
-    // TODO: implement
-  };
+  const triggerTreatment = useCallback(
+    async (condition: string, toothNumber?: number) => {
+      if (!sessionId) return;
+      setProcessing(true);
+      setActiveCopilot("treatment");
+      try {
+        const response = await apiClient.triggerTreatmentAction({
+          session_id: sessionId,
+          condition,
+          tooth_number: toothNumber,
+        });
+        setLastTreatmentResult(response);
+        await refreshState();
+        return response;
+      } catch (error) {
+        console.error("Treatment copilot error:", error);
+      } finally {
+        setProcessing(false);
+        setActiveCopilot(null);
+      }
+    },
+    [sessionId, refreshState]
+  );
+
+  const clearTreatmentResult = useCallback(() => {
+    setLastTreatmentResult(null);
+  }, []);
 
   return {
     activeCopilot,
@@ -30,5 +104,9 @@ export function useCopilot(sessionId: string | null) {
     triggerImaging,
     triggerClinicalNotes,
     triggerTreatment,
+    clearTreatmentResult,
+    lastClinicalNotesResult,
+    lastImagingResult,
+    lastTreatmentResult,
   };
 }
