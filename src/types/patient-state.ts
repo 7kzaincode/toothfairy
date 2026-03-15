@@ -12,7 +12,7 @@ export interface SessionIdentifiers {
 export interface ToothFinding {
   tooth_number: number; // FDI numbering (11-48)
   condition: string;
-  severity: "mild" | "moderate" | "severe";
+  severity: string;
   confidence: number;
   location_description: string;
 }
@@ -21,7 +21,7 @@ export interface TreatmentProtocol {
   condition: string;
   tooth_number: number;
   recommended_treatment: string;
-  urgency: "immediate" | "soon" | "routine" | "monitor";
+  urgency: string;
   estimated_visits: number;
   patient_explanation: string;
   cdt_code?: string;

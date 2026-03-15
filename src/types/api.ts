@@ -58,7 +58,7 @@ export interface ClinicalNotesActionResponse {
     confidence: number;
     location_description: string;
   }>;
-  protocols: Array<{
+  treatment_protocols: Array<{
     condition: string;
     tooth_number: number;
     recommended_treatment: string;
@@ -68,7 +68,7 @@ export interface ClinicalNotesActionResponse {
     cdt_code?: string;
     estimated_cost?: string;
   }>;
-  timeline: Array<{
+  treatment_timeline: Array<{
     order: number;
     tooth_number: number;
     condition: string;
@@ -82,7 +82,7 @@ export interface ClinicalNotesActionResponse {
   patient_summary?: string;
   dentist_summary?: string;
   provenance: string;
-  inference_time_ms: number;
+  inference_time_ms?: number;
 }
 
 export interface ClinicalNotesChatRequest {
@@ -93,8 +93,8 @@ export interface ClinicalNotesChatRequest {
 
 export interface ClinicalNotesChatResponse {
   session_id: string;
-  reply: string;
-  inference_time_ms: number;
+  response: string;
+  sources?: string[];
 }
 
 // Treatment

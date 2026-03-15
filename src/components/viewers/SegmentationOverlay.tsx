@@ -1,8 +1,3 @@
-/**
- * SegmentationOverlay - SVG contour rendering on top of X-ray
- * TODO: Implement SVG path rendering from contour points
- */
-
 "use client";
 
 interface SegmentationOverlayProps {
@@ -18,6 +13,13 @@ export default function SegmentationOverlay({
   height,
   color = "#2BD4A7",
 }: SegmentationOverlayProps) {
+  if (!contourPoints || contourPoints.length < 3) return null;
+
+  const pathData =
+    contourPoints
+      .map((p, i) => `${i === 0 ? "M" : "L"}${p[0]},${p[1]}`)
+      .join(" ") + " Z";
+
   return (
     <svg
       className="absolute inset-0 pointer-events-none"
@@ -25,7 +27,13 @@ export default function SegmentationOverlay({
       height={height}
       viewBox={`0 0 ${width} ${height}`}
     >
-      {/* TODO: Render contour path */}
+      <path
+        d={pathData}
+        fill={`${color}33`}
+        stroke={color}
+        strokeWidth={2}
+        strokeLinejoin="round"
+      />
     </svg>
   );
 }

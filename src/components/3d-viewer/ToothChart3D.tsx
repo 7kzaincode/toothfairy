@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useState, useEffect, useRef } from "react";
+import { Suspense, useState, useEffect, useMemo, useRef } from "react";
 import * as THREE from "three";
 import { Canvas } from "@react-three/fiber";
 import { OrbitControls } from "@react-three/drei";
@@ -23,6 +23,20 @@ interface ToothChart3DProps {
   onToothSelect?: (toothNumber: number) => void;
 }
 
+// FDI (11-48) → Universal (1-32) mapping
+const FDI_TO_UNIVERSAL: Record<number, number> = {
+  18: 1, 17: 2, 16: 3, 15: 4, 14: 5, 13: 6, 12: 7, 11: 8,
+  21: 9, 22: 10, 23: 11, 24: 12, 25: 13, 26: 14, 27: 15, 28: 16,
+  38: 17, 37: 18, 36: 19, 35: 20, 34: 21, 33: 22, 32: 23, 31: 24,
+  41: 25, 42: 26, 43: 27, 44: 28, 45: 29, 46: 30, 47: 31, 48: 32,
+};
+
+// Universal (1-32) → FDI (11-48) mapping
+const UNIVERSAL_TO_FDI: Record<number, number> = {};
+for (const [fdi, uni] of Object.entries(FDI_TO_UNIVERSAL)) {
+  UNIVERSAL_TO_FDI[uni] = Number(fdi);
+}
+
 export default function ToothChart3D({
   toothChart,
   onToothSelect,
@@ -35,10 +49,25 @@ export default function ToothChart3D({
     setMounted(true);
   }, []);
 
-  const handleToothSelect = (toothNumber: number, worldPos: THREE.Vector3) => {
-    setSelectedTooth(toothNumber);
+  // Build Universal-numbered color map from FDI-numbered toothChart
+  const toothColors = useMemo(() => {
+    const colors: Record<number, string> = {};
+    for (const [fdiStr, finding] of Object.entries(toothChart)) {
+      const fdi = Number(fdiStr);
+      const universal = FDI_TO_UNIVERSAL[fdi];
+      if (universal && CONDITION_COLORS[finding.condition]) {
+        colors[universal] = CONDITION_COLORS[finding.condition];
+      }
+    }
+    return colors;
+  }, [toothChart]);
+
+  const handleToothSelect = (universalNum: number, worldPos: THREE.Vector3) => {
+    setSelectedTooth(universalNum);
     setZoomTarget(worldPos.clone());
-    onToothSelect?.(toothNumber);
+    // Convert Universal → FDI for the rest of the app
+    const fdiNum = UNIVERSAL_TO_FDI[universalNum] || universalNum;
+    onToothSelect?.(fdiNum);
   };
 
   const [resetView, setResetView] = useState(false);
@@ -49,7 +78,9 @@ export default function ToothChart3D({
     setResetView(true);
   };
 
-  const selectedFinding = selectedTooth ? toothChart[selectedTooth] : null;
+  const selectedFinding = selectedTooth
+    ? toothChart[UNIVERSAL_TO_FDI[selectedTooth] || selectedTooth]
+    : null;
 
   if (!mounted) {
     return (
@@ -78,7 +109,7 @@ export default function ToothChart3D({
             <TeethModel
               onToothSelect={handleToothSelect}
               selectedTooth={selectedTooth}
-              toothColors={{}}
+              toothColors={toothColors}
             />
           </Suspense>
 
@@ -105,7 +136,7 @@ export default function ToothChart3D({
               Selected Tooth
             </div>
             <div className="text-sm font-mono text-ide-text">
-              #{selectedTooth}
+              #{UNIVERSAL_TO_FDI[selectedTooth] || selectedTooth}
             </div>
             {selectedFinding && (
               <div className="mt-1">
