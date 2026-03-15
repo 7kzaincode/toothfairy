@@ -176,7 +176,7 @@ export default function LeftPane({
               </div>
             </button>
             <button
-              onClick={handleUploadClick}
+              onClick={() => onSelectArtifact?.("tooth-chart")}
               className="w-full flex items-start gap-3 text-ide-text text-xs py-3 px-2 rounded transition-colors duration-150 hover:text-ide-accent text-left"
             >
               <span className="text-2xl flex-shrink-0">🎯</span>
