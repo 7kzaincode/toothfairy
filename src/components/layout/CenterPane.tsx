@@ -1,5 +1,6 @@
 "use client";
 
+import { useRef } from "react";
 import dynamic from "next/dynamic";
 import type { PatientState, ClinicalNotesOutput } from "@/types/patient-state";
 import type { TreatmentActionResponse, ImagingActionResponse } from "@/types/api";
@@ -63,6 +64,9 @@ interface CenterPaneProps {
   onFileUpload?: (file: File) => void;
   onToothSelect?: (toothNumber: number) => void;
   onClearTreatment?: () => void;
+  onClearImage?: () => void;
+  onToggleLeftPane?: () => void;
+  onToggleRightPane?: () => void;
   imageId?: string | null;
   imageUrl?: string | null;
   imagingResult?: ImagingActionResponse | null;
@@ -80,6 +84,9 @@ export default function CenterPane({
   onTreatmentClick,
   onFileUpload,
   onClearTreatment,
+  onClearImage,
+  onToggleLeftPane,
+  onToggleRightPane,
   onToothSelect,
   imageId,
   imageUrl,
@@ -88,6 +95,7 @@ export default function CenterPane({
   treatmentResult,
   processing,
 }: CenterPaneProps) {
+  const fileInputRef = useRef<HTMLInputElement>(null);
   return (
     <div className="flex-1 min-w-0 flex flex-col bg-ide-panel">
       {/* Tab Bar */}
@@ -108,17 +116,19 @@ export default function CenterPane({
       </div>
 
       {/* Viewer Content */}
-      <div className="flex-1 min-h-0 overflow-auto scrollbar-ide relative">
+      <div className="flex-1 min-h-0 overflow-hidden relative">
         {activeTab === "clinical-notes" && (
-          <ClinicalNotesViewer
-            notesText={patientState?.clinical_notes_artifact?.notes_text || DEMO_NOTES}
-            output={clinicalNotesOutput || patientState?.clinical_notes_output || undefined}
-            onTextHighlight={onTextHighlight}
-            onTimelineEntryClick={(entry) =>
-              onTreatmentClick?.(entry.condition, entry.tooth_number)
-            }
-            processing={processing}
-          />
+          <div className="absolute inset-0">
+            <ClinicalNotesViewer
+              notesText={patientState?.clinical_notes_artifact?.notes_text || DEMO_NOTES}
+              output={clinicalNotesOutput || patientState?.clinical_notes_output || undefined}
+              onTextHighlight={onTextHighlight}
+              onTimelineEntryClick={(entry) =>
+                onTreatmentClick?.(entry.condition, entry.tooth_number)
+              }
+              processing={processing}
+            />
+          </div>
         )}
 
         {activeTab === "tooth-chart" && (
@@ -128,13 +138,15 @@ export default function CenterPane({
         )}
 
         {activeTab === "treatment" && (
-          <TreatmentView
-            patientState={patientState}
-            clinicalNotesOutput={clinicalNotesOutput || patientState?.clinical_notes_output || undefined}
-            treatmentResult={treatmentResult}
-            onRowClick={onTreatmentClick}
-            onBack={onClearTreatment}
-          />
+          <div className="absolute inset-0 overflow-auto scrollbar-ide">
+            <TreatmentView
+              patientState={patientState}
+              clinicalNotesOutput={clinicalNotesOutput || patientState?.clinical_notes_output || undefined}
+              treatmentResult={treatmentResult}
+              onRowClick={onTreatmentClick}
+              onBack={onClearTreatment}
+            />
+          </div>
         )}
 
         {activeTab === "xray" && (
@@ -146,19 +158,30 @@ export default function CenterPane({
                 onToothClick={onImagingClick}
                 segmentationOverlay={imagingResult?.contour_points}
                 onFileUpload={onFileUpload}
+                onClose={onClearImage}
               />
             </div>
           ) : (
             <div className="flex flex-col items-center justify-center h-full gap-3">
               <Image src="/logo.png" alt="Logo" width={170} height={170} className="opacity-40 transition-opacity duration-300 hover:opacity-100 cursor-pointer" />
               <div className="flex flex-col w-80">
-                <ShortcutRow label="Open AI Agent" keys={["⇧", "⌘", "L"]} />
-                <ShortcutRow label="Show Agent Stream" keys={["⇧", "⌘", "J"]} />
-                <ShortcutRow label="Hide Artifacts" keys={["⌘", "B"]} />
-                <ShortcutRow label="Search X-Rays" keys={["⌘", "P"]} />
-                <ShortcutRow label="Upload Files" keys={["⇧", "⌘", "U"]} />
-                <ShortcutRow label="Open X-Ray" keys={["⌘", "O"]} />
+                <ShortcutRow label="Open AI Agent" keys={["⇧", "⌘", "L"]} onClick={onToggleRightPane} />
+                <ShortcutRow label="Clinical Notes" keys={["⇧", "⌘", "N"]} onClick={() => onTabChange("clinical-notes")} />
+                <ShortcutRow label="Hide Artifacts" keys={["⌘", "B"]} onClick={onToggleLeftPane} />
+                <ShortcutRow label="Tooth Chart" keys={["⌘", "T"]} onClick={() => onTabChange("tooth-chart")} />
+                <ShortcutRow label="Upload X-Ray" keys={["⇧", "⌘", "U"]} onClick={() => fileInputRef.current?.click()} />
+                <ShortcutRow label="Treatment Plan" keys={["⌘", "P"]} onClick={() => onTabChange("treatment")} />
               </div>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".dcm,.jpg,.jpeg,.png,.tiff,.tif"
+                className="hidden"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) onFileUpload?.(file);
+                }}
+              />
             </div>
           )
         )}
@@ -167,20 +190,22 @@ export default function CenterPane({
   );
 }
 
-function ShortcutRow({ label, keys }: { label: string; keys: string[] }) {
+function ShortcutRow({ label, keys, onClick }: { label: string; keys: string[]; onClick?: () => void }) {
   return (
-    <div
-      className="flex items-center justify-between px-3 py-1.5 rounded transition-colors text-[#4c4c4c] hover:text-white hover:bg-[#242424] cursor-pointer"
+    <button
+      type="button"
+      onClick={onClick}
+      className="flex items-center justify-between w-full px-3 py-2 rounded-md transition-all duration-100 text-[#5c5c5c] hover:text-white/90 hover:bg-white/[0.06] active:scale-[0.98] active:bg-white/[0.09] cursor-pointer text-left group"
     >
-      <span>{label}</span>
-      <div className="flex gap-1.5 text-xs">
+      <span className="text-[13px]">{label}</span>
+      <div className="flex gap-1 text-xs">
         {keys.map((k) => (
-          <span key={k} className="border border-[#6b6b6b] px-2 py-0.5 rounded text-[10px]">
+          <span key={k} className="border border-white/10 group-hover:border-white/20 px-1.5 py-0.5 rounded text-[10px] min-w-[22px] text-center transition-colors">
             {k}
           </span>
         ))}
       </div>
-    </div>
+    </button>
   );
 }
 

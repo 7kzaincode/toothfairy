@@ -9,6 +9,7 @@ interface LeftPaneProps {
   onSelectArtifact?: (type: string) => void;
   collapsed: boolean;
   onToggle: () => void;
+  width?: number;
 }
 
 export default function LeftPane({
@@ -17,6 +18,7 @@ export default function LeftPane({
   onUploadImage,
   collapsed,
   onToggle,
+  width = 240,
 }: LeftPaneProps) {
   const findings = patientState ? Object.values(patientState.tooth_chart) : [];
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -68,7 +70,7 @@ export default function LeftPane({
   }
 
   return (
-    <div className="w-[240px] flex-shrink-0 border-r border-ide-border bg-ide-panel flex flex-col h-full">
+    <div className="flex-shrink-0 border-r border-ide-border bg-ide-panel flex flex-col h-full" style={{ width }}>
       {/* Header */}
       <div className="h-9 flex items-center justify-between px-3 border-b border-ide-border shrink-0">
         <span className="text-[11px] font-semibold uppercase tracking-[0.05em] text-ide-text-2">
