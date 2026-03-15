@@ -1,0 +1,13 @@
+# Dependencies for the Modal inference container.
+# NOT used by the FastAPI backend — kept separate intentionally.
+# Modal installs these inside the remote GPU container via modal_medsam2.py.
+
+torch==2.3.1
+torchvision==0.18.1
+numpy
+Pillow
+opencv-python-headless
+requests
+scipy
+gdown
+modal
