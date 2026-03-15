@@ -33,8 +33,8 @@ class ClinicalNotesHandler:
 
         await log_emitter.emit_info(session_id, copilot, "Clinical notes copilot activated")
 
-        # Step 1: Extract diagnoses (LLM or regex)
-        use_llm = not settings.DEMO_MODE and settings.GOOGLE_API_KEY
+        # Step 1: Extract diagnoses (regex only — LLM reserved for imaging)
+        use_llm = False
         extraction_method = "Gemini LLM" if use_llm else "regex patterns"
         await log_emitter.emit_progress(
             session_id, copilot,

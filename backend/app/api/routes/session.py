@@ -8,18 +8,20 @@ from pydantic import BaseModel, Field
 from typing import Optional
 
 from app.core import session_manager, log_emitter
+from app.core.profile_manager import profile_manager
 from app.models import PatientState
 
 
 class CreateSessionRequest(BaseModel):
-    case_id: str = Field(default="demo-dental-001")
-    patient_id: str = Field(default="sarsh-chen")
+    case_id: str = Field(default="dental-001")
+    patient_id: str = Field(default="aidan-jeon")
 
 
 class SessionResponse(BaseModel):
     session_id: str
     status: str
     patient_state: Optional[PatientState] = None
+    profile: Optional[dict] = None
 
 
 class SessionInfoResponse(BaseModel):
@@ -50,10 +52,13 @@ async def create_session(request: CreateSessionRequest = CreateSessionRequest())
         case_id=request.case_id,
         patient_id=request.patient_id,
     )
+    # Load profile data if available
+    profile = profile_manager.get_profile(request.patient_id)
     return SessionResponse(
         session_id=patient_state.identifiers.session_id,
         status="created",
         patient_state=patient_state,
+        profile=profile,
     )
 
 
