@@ -6,6 +6,10 @@
 
 [**CHECK IT OUT**](https://devpost.com/software/tooth-fairy)
 
+![image1](https://github.com/7kzaincode/toothfairy/issues/4#issue-4078276482)
+![image2](https://github.com/7kzaincode/toothfairy/issues/5#issue-4078277127)
+![image3](https://github.com/7kzaincode/toothfairy/issues/6#issue-4078277488)
+
 ## What it Does
 
 Dentists deal with way too many disconnected tools every day: practice management software, separate imaging viewers, static paper charts, CDT code references, insurance portals. None of them talk to each other and none of them remember the patient properly. There's no way to quickly see "tooth #36 had a cavity six months ago, we filled it, and now there's a periapical lesion forming."
