@@ -8,7 +8,6 @@ import { apiClient } from "@/lib/api/client";
 import LeftPane from "@/components/layout/LeftPane";
 import CenterPane from "@/components/layout/CenterPane";
 import RightPane from "@/components/layout/RightPane";
-import ResizeHandle from "@/components/layout/ResizeHandle";
 import LandingPopup from "@/components/layout/LandingPopup";
 import type { ViewerTab } from "@/components/layout/CenterPane";
 
@@ -23,18 +22,6 @@ export default function Home() {
   // Collapse state for sidebars
   const [leftCollapsed, setLeftCollapsed] = useState(false);
   const [rightCollapsed, setRightCollapsed] = useState(false);
-
-  // Resizable pane widths
-  const [leftWidth, setLeftWidth] = useState(240);
-  const [rightWidth, setRightWidth] = useState(300);
-
-  const handleLeftResize = useCallback((delta: number) => {
-    setLeftWidth((w) => Math.max(180, Math.min(400, w + delta)));
-  }, []);
-
-  const handleRightResize = useCallback((delta: number) => {
-    setRightWidth((w) => Math.max(220, Math.min(500, w - delta)));
-  }, []);
 
   // SSE logs from backend
   const { logs, connected } = useSSE(sessionId);
@@ -123,9 +110,7 @@ export default function Home() {
         onProfileSelect={handleProfileSelect}
         collapsed={leftCollapsed}
         onToggle={() => setLeftCollapsed((v) => !v)}
-        width={leftWidth}
       />
-      {!leftCollapsed && <ResizeHandle direction="horizontal" onResize={handleLeftResize} />}
       <CenterPane
         activeTab={activeTab}
         onTabChange={setActiveTab}
@@ -159,7 +144,6 @@ export default function Home() {
         onClearTreatment={copilot.clearTreatmentResult}
         processing={copilot.processing}
       />
-      {!rightCollapsed && <ResizeHandle direction="horizontal" onResize={handleRightResize} />}
       <RightPane
         logs={logs}
         connected={connected}
@@ -167,7 +151,6 @@ export default function Home() {
         sessionId={sessionId}
         collapsed={rightCollapsed}
         onToggle={() => setRightCollapsed((v) => !v)}
-        width={rightWidth}
       />
     </main>
   );

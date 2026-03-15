@@ -80,23 +80,24 @@ export default function CenterPane({
   const fileInputRef = useRef<HTMLInputElement>(null);
   return (
     <div className="flex-1 min-w-0 flex flex-col bg-ide-panel">
-      {/* Tab Bar */}
-      <div className="flex items-center justify-center py-2.5 bg-ide-bg shrink-0 border-b border-ide-border">
-        <div className="flex items-center gap-1 bg-white/[0.04] border border-white/[0.08] rounded-full px-1.5 py-1">
-          {TABS.map((tab) => (
-            <button
-              key={tab.key}
-              onClick={() => onTabChange(tab.key)}
-              className={`px-4 py-1.5 text-[11px] font-medium rounded-full transition-all duration-200 ${
-                activeTab === tab.key
-                  ? "bg-white text-black shadow-sm"
-                  : "text-ide-muted hover:text-ide-text"
-              }`}
-            >
-              {tab.label}
-            </button>
-          ))}
-        </div>
+      {/* Tab Bar — v0 square style, full width */}
+      <div className="flex items-stretch bg-ide-bg shrink-0 border-b border-ide-border">
+        {TABS.map((tab) => (
+          <button
+            key={tab.key}
+            onClick={() => onTabChange(tab.key)}
+            className={`flex-1 py-2.5 text-[12px] font-medium transition-colors relative text-center ${
+              activeTab === tab.key
+                ? "text-white bg-white/[0.06]"
+                : "text-ide-muted hover:text-ide-text hover:bg-white/[0.02]"
+            }`}
+          >
+            {tab.label}
+            {activeTab === tab.key && (
+              <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-white" />
+            )}
+          </button>
+        ))}
       </div>
 
       {/* Viewer Content */}
