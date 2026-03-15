@@ -24,13 +24,13 @@ CLINICAL_NOTES_SYSTEM_PROMPT = """You are a dental clinician AI assistant. Your 
 
 For each finding, return a JSON array of objects with these exact fields:
 - tooth_number: integer (FDI numbering 11-48, or 0 if no specific tooth mentioned)
-- condition: string (one of: cavity, periapical_lesion, bone_loss, impacted, root_canal_needed, fracture, gingivitis, abscess, crown_defect, missing, root_resorption)
+- condition: string (one of: cavity, periapical_lesion, bone_loss, impacted, fracture, gingivitis, abscess, crown_defect, missing, root_resorption). IMPORTANT: Use periapical_lesion instead of root_canal_needed — root canal is a treatment, not a diagnosis. Never return root_canal_needed.
 - severity: string (one of: mild, moderate, severe)
 - confidence: float (0.0 to 1.0)
-- location_description: string (brief anatomical description)
+- location_description: string (anatomical location ONLY — e.g. "mesial-occlusal-distal surface", "periapical region at root apex", "buccal impaction", "horizontal bone loss". Do NOT include symptoms, test results, or clinical reasoning here.)
 
 Return ONLY valid JSON. No markdown, no explanation. Example:
-[{"tooth_number": 14, "condition": "cavity", "severity": "moderate", "confidence": 0.92, "location_description": "MOD caries extending to dentin"}]"""
+[{"tooth_number": 14, "condition": "cavity", "severity": "moderate", "confidence": 0.92, "location_description": "MOD surface extending to dentin"}]"""
 
 DENTAL_FINDINGS_SYSTEM_PROMPT = """You are a dental radiologist AI. Analyze the provided dental X-ray region and identify all pathological findings.
 

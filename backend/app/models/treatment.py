@@ -16,7 +16,7 @@ class TreatmentActionResponse(BaseModel):
     session_id: str
     condition: str
     evidence_summary: Optional[str] = None
-    success_rate: Optional[float] = None
+    success_rate: Optional[str] = None
     risk_factors: Optional[list[str]] = None
     alternatives: Optional[list[str]] = None
     referral_summary: Optional[str] = None

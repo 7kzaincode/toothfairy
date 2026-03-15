@@ -1,6 +1,7 @@
 "use client";
 
-import { useRef, useEffect, useCallback } from "react";
+import { useRef, useEffect, useCallback, useState } from "react";
+import SegmentationOverlay from "./SegmentationOverlay";
 
 interface DentalXrayViewerProps {
   imageUrl?: string;
@@ -25,6 +26,10 @@ export default function DentalXrayViewer({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const dropzoneRef = useRef<HTMLDivElement>(null);
   const dropLabelRef = useRef<HTMLParagraphElement>(null);
+  const imgRef = useRef<HTMLImageElement>(null);
+  const [imgSize, setImgSize] = useState({ width: 0, height: 0 });
+  const [clickMarker, setClickMarker] = useState<{ x: number; y: number } | null>(null);
+  const [analyzing, setAnalyzing] = useState(false);
 
   const drawGrid = useCallback(() => {
     const canvas = canvasRef.current;
@@ -59,6 +64,25 @@ export default function DentalXrayViewer({
   }, [drawGrid]);
 
   useEffect(() => {
+    if (!imageUrl) return;
+    const wrapper = wrapperRef.current;
+    const card = cardRef.current;
+    const spotlight = spotlightRef.current;
+    if (!wrapper || !card || !spotlight) return;
+
+    const handleMouseMove = (e: MouseEvent) => {
+      const wr = wrapper.getBoundingClientRect();
+      spotlight.style.left = e.clientX - wr.left + "px";
+      spotlight.style.top = e.clientY - wr.top + "px";
+    };
+
+    wrapper.addEventListener("mousemove", handleMouseMove);
+    return () => wrapper.removeEventListener("mousemove", handleMouseMove);
+  }, [imageUrl]);
+
+  // Upload-only 3D tilt effect
+  useEffect(() => {
+    if (imageUrl) return; // disable tilt when viewing image
     const wrapper = wrapperRef.current;
     const card = cardRef.current;
     const glare = glareRef.current;
@@ -92,7 +116,14 @@ export default function DentalXrayViewer({
       wrapper.removeEventListener("mousemove", handleMouseMove);
       wrapper.removeEventListener("mouseleave", handleMouseLeave);
     };
-  }, []);
+  }, [imageUrl]);
+
+  // Clear analyzing state when segmentation result arrives
+  useEffect(() => {
+    if (segmentationOverlay && segmentationOverlay.length > 0) {
+      setAnalyzing(false);
+    }
+  }, [segmentationOverlay]);
 
   const showFile = (name: string) => {
     if (dropLabelRef.current) {
@@ -131,57 +162,123 @@ export default function DentalXrayViewer({
     onFileUpload?.(file);
   };
 
+  const handleImageClick = (e: React.MouseEvent<HTMLImageElement>) => {
+    if (!imageId || !imgRef.current) return;
+    const rect = imgRef.current.getBoundingClientRect();
+    const x = (e.clientX - rect.left) / rect.width;
+    const y = (e.clientY - rect.top) / rect.height;
+    setClickMarker({ x: e.clientX - rect.left, y: e.clientY - rect.top });
+    setAnalyzing(true);
+    onToothClick?.(imageId, x, y);
+  };
+
+  const handleImageLoad = () => {
+    if (imgRef.current) {
+      setImgSize({
+        width: imgRef.current.clientWidth,
+        height: imgRef.current.clientHeight,
+      });
+    }
+  };
+
+  // ——— Image viewer mode ———
+  if (imageUrl) {
+    return (
+      <div
+        ref={wrapperRef}
+        className="flex-1 flex items-center justify-center relative overflow-hidden"
+        style={{ background: "#0B0B0B", minHeight: 480 }}
+      >
+        <canvas
+          ref={canvasRef}
+          style={{ position: "absolute", inset: 0, width: "100%", height: "100%", pointerEvents: "none" }}
+        />
+        <div
+          ref={spotlightRef}
+          style={{
+            position: "absolute", width: 600, height: 600, borderRadius: "50%",
+            background: "radial-gradient(circle, rgba(80,120,255,0.10) 0%, transparent 70%)",
+            pointerEvents: "none", transform: "translate(-50%, -50%)", left: "50%", top: "50%",
+          }}
+        />
+
+        <div className="relative" style={{ maxWidth: "90%", maxHeight: "90%" }}>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            ref={imgRef}
+            src={imageUrl}
+            alt="Dental X-Ray"
+            onLoad={handleImageLoad}
+            onClick={handleImageClick}
+            className="max-w-full max-h-[80vh] rounded-lg cursor-crosshair"
+            style={{ display: "block", border: "1px solid rgba(255,255,255,0.1)" }}
+          />
+
+          {/* Click marker */}
+          {clickMarker && (
+            <div
+              className="absolute pointer-events-none"
+              style={{
+                left: clickMarker.x - 12,
+                top: clickMarker.y - 12,
+                width: 24,
+                height: 24,
+              }}
+            >
+              <div className={`w-6 h-6 rounded-full border-2 ${analyzing ? "border-blue-400 animate-ping" : "border-teal-400"}`} />
+              <div className={`absolute inset-0 w-6 h-6 rounded-full border-2 ${analyzing ? "border-blue-400" : "border-teal-400"}`} />
+            </div>
+          )}
+
+          {/* Segmentation overlay */}
+          {segmentationOverlay && segmentationOverlay.length >= 3 && imgSize.width > 0 && (
+            <SegmentationOverlay
+              contourPoints={segmentationOverlay}
+              width={imgSize.width}
+              height={imgSize.height}
+            />
+          )}
+
+          {/* Instruction hint */}
+          <div className="absolute bottom-3 left-1/2 -translate-x-1/2 text-[10px] text-white/40 bg-black/50 px-3 py-1 rounded-full">
+            Click on a tooth to analyze
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // ——— Upload mode ———
   return (
     <div
       ref={wrapperRef}
       className="flex-1 flex items-center justify-center relative overflow-hidden"
       style={{ background: "#0B0B0B", minHeight: 480 }}
     >
-      {/* Grid background */}
       <canvas
         ref={canvasRef}
         style={{ position: "absolute", inset: 0, width: "100%", height: "100%", pointerEvents: "none" }}
       />
-
-      {/* Spotlight */}
       <div
         ref={spotlightRef}
         style={{
-          position: "absolute",
-          width: 600,
-          height: 600,
-          borderRadius: "50%",
+          position: "absolute", width: 600, height: 600, borderRadius: "50%",
           background: "radial-gradient(circle, rgba(80,120,255,0.18) 0%, rgba(80,120,255,0.06) 40%, transparent 70%)",
-          pointerEvents: "none",
-          transform: "translate(-50%, -50%)",
-          left: "50%",
-          top: "50%",
+          pointerEvents: "none", transform: "translate(-50%, -50%)", left: "50%", top: "50%",
         }}
       />
 
-      {/* Content wrapper */}
       <div
         ref={cardRef}
-        style={{
-          position: "relative",
-          zIndex: 2,
-          width: 380,
-          padding: "40px 32px",
-          textAlign: "center",
-        }}
+        style={{ position: "relative", zIndex: 2, width: 380, padding: "40px 32px", textAlign: "center" }}
       >
+        <div ref={glareRef} style={{ position: "absolute", inset: 0, borderRadius: 16, pointerEvents: "none" }} />
 
-        {/* Icon */}
         <div
           style={{
-            width: 52,
-            height: 52,
-            borderRadius: 14,
-            background: "rgba(255,255,255,0.07)",
-            border: "1px solid rgba(255,255,255,0.12)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
+            width: 52, height: 52, borderRadius: 14,
+            background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.12)",
+            display: "flex", alignItems: "center", justifyContent: "center",
             margin: "0 auto 20px",
           }}
         >
@@ -199,7 +296,6 @@ export default function DentalXrayViewer({
           Upload a radiograph to begin AI-assisted<br />analysis and segmentation
         </p>
 
-        {/* Drop zone */}
         <div
           ref={dropzoneRef}
           onClick={() => fileInputRef.current?.click()}
@@ -207,11 +303,8 @@ export default function DentalXrayViewer({
           onDragLeave={handleDragLeave}
           onDrop={handleDrop}
           style={{
-            border: "1.5px dashed rgba(255,255,255,0.15)",
-            borderRadius: 12,
-            padding: "28px 20px",
-            marginBottom: 20,
-            cursor: "pointer",
+            border: "1.5px dashed rgba(255,255,255,0.15)", borderRadius: 12,
+            padding: "28px 20px", marginBottom: 20, cursor: "pointer",
             transition: "border-color 0.2s, background 0.2s",
           }}
           onMouseEnter={e => {
@@ -247,17 +340,10 @@ export default function DentalXrayViewer({
         <button
           onClick={() => fileInputRef.current?.click()}
           style={{
-            width: "100%",
-            padding: "12px",
-            borderRadius: 10,
-            background: "rgba(80,130,255,0.85)",
-            border: "none",
-            color: "#fff",
-            fontSize: 14,
-            fontWeight: 500,
-            cursor: "pointer",
-            letterSpacing: "-0.1px",
-            transition: "background 0.2s, transform 0.1s",
+            width: "100%", padding: "12px", borderRadius: 10,
+            background: "rgba(80,130,255,0.85)", border: "none",
+            color: "#fff", fontSize: 14, fontWeight: 500, cursor: "pointer",
+            letterSpacing: "-0.1px", transition: "background 0.2s, transform 0.1s",
           }}
           onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = "rgba(100,150,255,1)"; }}
           onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = "rgba(80,130,255,0.85)"; }}
