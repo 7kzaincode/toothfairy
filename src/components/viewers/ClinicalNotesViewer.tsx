@@ -1,9 +1,26 @@
 "use client";
 
+import { useState } from "react";
 import type { ClinicalNotesOutput } from "@/types/patient-state";
 import NotesHighlighter from "./NotesHighlighter";
-import TreatmentTimeline from "./TreatmentTimeline";
-import FindingsPanel from "./FindingsPanel";
+import ResizeHandle from "@/components/layout/ResizeHandle";
+
+const SEVERITY_COLORS: Record<string, string> = {
+  mild: "#F4C152",
+  moderate: "#FF9F4A",
+  severe: "#FF5C7A",
+};
+
+const URGENCY_LABELS: Record<string, { color: string; bg: string }> = {
+  IMMEDIATE: { color: "#FF5C7A", bg: "rgba(255,92,122,0.15)" },
+  immediate: { color: "#FF5C7A", bg: "rgba(255,92,122,0.15)" },
+  SOON: { color: "#FF9F4A", bg: "rgba(255,159,74,0.15)" },
+  soon: { color: "#FF9F4A", bg: "rgba(255,159,74,0.15)" },
+  ROUTINE: { color: "#4A9EF5", bg: "rgba(74,158,245,0.15)" },
+  routine: { color: "#4A9EF5", bg: "rgba(74,158,245,0.15)" },
+};
+
+type ResultsTab = "plan" | "findings" | "summary";
 
 interface ClinicalNotesViewerProps {
   notesText?: string;
@@ -20,79 +37,212 @@ export default function ClinicalNotesViewer({
   onTimelineEntryClick,
   processing,
 }: ClinicalNotesViewerProps) {
+  const [resultsTab, setResultsTab] = useState<ResultsTab>("plan");
+  const [bottomHeight, setBottomHeight] = useState(280);
+  const hasResults = output && (output.timeline?.length || output.diagnoses?.length || output.patient_summary);
+  const timeline = output?.timeline ? [...output.timeline].sort((a, b) => a.order - b.order) : [];
+
   return (
-    <div className="flex h-full">
-      {/* Notes side */}
-      <div className="flex-1 border-r border-ide-hairline overflow-auto scrollbar-ide flex flex-col">
-        <div className="h-8 flex items-center px-3 border-b border-ide-hairline bg-ide-bg shrink-0">
+    <div className="flex flex-col h-full">
+      {/* Clinical Notes — full width, scrollable */}
+      <div className="flex-1 min-h-0 overflow-auto scrollbar-ide border-b border-ide-border">
+        <div className="h-8 flex items-center px-3 border-b border-ide-hairline bg-ide-bg shrink-0 sticky top-0 z-5">
           <span className="text-[10px] font-semibold uppercase tracking-[0.05em] text-ide-muted">
             Clinical Notes
           </span>
-          <span className="ml-2 text-[9px] text-ide-muted bg-ide-surface px-1.5 py-0.5 rounded">
-            {processing ? "Analyzing..." : "Highlight text to analyze"}
-          </span>
         </div>
-        <div className="flex-1 overflow-auto scrollbar-ide">
-          {notesText ? (
-            <NotesHighlighter text={notesText} onHighlight={onTextHighlight} />
-          ) : (
-            <div className="flex items-center justify-center h-full text-[11px] text-ide-muted">
-              No clinical notes available
-            </div>
-          )}
-        </div>
-
-        {/* Patient & Dentist Summaries */}
-        {output?.patient_summary && (
-          <div className="border-t border-ide-hairline p-3 shrink-0">
-            <div className="text-[10px] font-semibold uppercase tracking-[0.05em] text-ide-muted mb-1">
-              Patient Summary
-            </div>
-            <p className="text-xs text-ide-text-2 leading-relaxed">
-              {output.patient_summary}
-            </p>
-          </div>
-        )}
-      </div>
-
-      {/* Treatment plan side */}
-      <div className="w-[280px] overflow-auto scrollbar-ide flex flex-col">
-        <div className="h-8 flex items-center px-3 border-b border-ide-hairline bg-ide-bg shrink-0">
-          <span className="text-[10px] font-semibold uppercase tracking-[0.05em] text-ide-muted">
-            Treatment Timeline
-          </span>
-        </div>
-
-        {output?.timeline && output.timeline.length > 0 ? (
-          <TreatmentTimeline
-            timeline={output.timeline}
-            onEntryClick={(entry) =>
-              onTimelineEntryClick?.({
-                condition: entry.condition,
-                tooth_number: entry.tooth_number,
-              })
-            }
-          />
+        {notesText ? (
+          <NotesHighlighter text={notesText} onHighlight={onTextHighlight} processing={processing} />
         ) : (
-          <div className="text-[11px] text-ide-muted text-center py-8 px-3">
-            {processing
-              ? "Processing clinical notes..."
-              : "Highlight clinical text to generate treatment timeline"}
+          <div className="flex items-center justify-center h-full text-[11px] text-ide-muted">
+            No clinical notes available
           </div>
         )}
-
-        {/* Findings section */}
-        {output?.diagnoses && output.diagnoses.length > 0 && (
-          <>
-            <div className="h-8 flex items-center px-3 border-t border-b border-ide-hairline bg-ide-bg shrink-0">
-              <span className="text-[10px] font-semibold uppercase tracking-[0.05em] text-ide-muted">
-                Diagnoses ({output.diagnoses.length})
-              </span>
-            </div>
-            <FindingsPanel findings={output.diagnoses} />
-          </>
-        )}
       </div>
+
+      {/* Results Panel — bottom, like an IDE terminal */}
+      {hasResults && (
+        <>
+        <ResizeHandle direction="vertical" onResize={(delta) => setBottomHeight((h) => Math.max(120, Math.min(500, h - delta)))} />
+        <div className="shrink-0 flex flex-col bg-ide-bg" style={{ height: bottomHeight }}>
+          {/* Results tab bar */}
+          <div className="h-8 flex items-center px-2 border-b border-ide-hairline shrink-0 gap-0.5">
+            <ResultsTabButton
+              label="Treatment Plan"
+              count={timeline.length}
+              active={resultsTab === "plan"}
+              onClick={() => setResultsTab("plan")}
+            />
+            <ResultsTabButton
+              label="Findings"
+              count={output?.diagnoses?.length}
+              active={resultsTab === "findings"}
+              onClick={() => setResultsTab("findings")}
+            />
+            <ResultsTabButton
+              label="Summary"
+              active={resultsTab === "summary"}
+              onClick={() => setResultsTab("summary")}
+            />
+          </div>
+
+          {/* Results content */}
+          <div className="flex-1 min-h-0 overflow-auto scrollbar-ide">
+            {resultsTab === "plan" && (
+              <div className="p-3">
+                {timeline.length > 0 ? (
+                  <table className="w-full text-xs">
+                    <thead>
+                      <tr className="text-[10px] uppercase tracking-[0.04em] text-ide-muted border-b border-ide-hairline">
+                        <th className="text-left py-1.5 pr-3 font-medium">#</th>
+                        <th className="text-left py-1.5 pr-3 font-medium">Tooth</th>
+                        <th className="text-left py-1.5 pr-3 font-medium">Condition</th>
+                        <th className="text-left py-1.5 pr-3 font-medium">Treatment</th>
+                        <th className="text-left py-1.5 pr-3 font-medium">Priority</th>
+                        <th className="text-left py-1.5 pr-3 font-medium">CDT</th>
+                        <th className="text-right py-1.5 font-medium">Est. Cost</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {timeline.map((entry) => {
+                        const urgency = URGENCY_LABELS[entry.urgency] || URGENCY_LABELS.routine;
+                        return (
+                          <tr
+                            key={`${entry.order}-${entry.tooth_number}`}
+                            onClick={() => onTimelineEntryClick?.({ condition: entry.condition, tooth_number: entry.tooth_number })}
+                            className="border-b border-ide-hairline/50 hover:bg-ide-surface cursor-pointer transition-colors group"
+                          >
+                            <td className="py-2 pr-3 text-ide-muted">{entry.order}</td>
+                            <td className="py-2 pr-3 font-mono text-ide-text">#{entry.tooth_number}</td>
+                            <td className="py-2 pr-3 text-ide-text capitalize">{entry.condition.replace(/_/g, " ")}</td>
+                            <td className="py-2 pr-3 text-ide-text-2">{entry.treatment}</td>
+                            <td className="py-2 pr-3">
+                              <span
+                                className="text-[9px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded"
+                                style={{ color: urgency.color, background: urgency.bg }}
+                              >
+                                {entry.urgency}
+                              </span>
+                            </td>
+                            <td className="py-2 pr-3 font-mono text-ide-muted">{entry.cdt_code || "—"}</td>
+                            <td className="py-2 text-right text-ide-text-2">{entry.estimated_cost || "—"}</td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                ) : (
+                  <div className="text-[11px] text-ide-muted text-center py-6">
+                    No treatment plan generated yet
+                  </div>
+                )}
+              </div>
+            )}
+
+            {resultsTab === "findings" && (
+              <div className="p-3">
+                {output?.diagnoses && output.diagnoses.length > 0 ? (
+                  <div className="grid grid-cols-2 gap-2">
+                    {output.diagnoses.map((f) => {
+                      const color = SEVERITY_COLORS[f.severity] || "#6E7A92";
+                      return (
+                        <div
+                          key={`${f.tooth_number}-${f.condition}`}
+                          className="bg-ide-surface border border-ide-border rounded-md p-2.5 hover:border-ide-accent transition-colors cursor-pointer"
+                          onClick={() => onTimelineEntryClick?.({ condition: f.condition, tooth_number: f.tooth_number })}
+                        >
+                          <div className="flex items-center justify-between mb-1">
+                            <span className="text-xs font-semibold text-ide-text font-mono">
+                              #{f.tooth_number}
+                            </span>
+                            <span
+                              className="text-[9px] font-semibold uppercase px-1.5 py-0.5 rounded"
+                              style={{ color, background: `${color}20` }}
+                            >
+                              {f.severity}
+                            </span>
+                          </div>
+                          <div className="text-[11px] text-ide-text capitalize">
+                            {f.condition.replace(/_/g, " ")}
+                          </div>
+                          {f.location_description && (
+                            <div className="text-[10px] text-ide-muted mt-0.5 truncate">
+                              {f.location_description}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <div className="text-[11px] text-ide-muted text-center py-6">
+                    No diagnoses extracted yet
+                  </div>
+                )}
+              </div>
+            )}
+
+            {resultsTab === "summary" && (
+              <div className="p-4 space-y-4">
+                {output?.patient_summary && (
+                  <div>
+                    <div className="text-[10px] font-semibold uppercase tracking-[0.05em] text-ide-muted mb-1.5">
+                      Patient Summary
+                    </div>
+                    <p className="text-xs text-ide-text-2 leading-relaxed">
+                      {output.patient_summary}
+                    </p>
+                  </div>
+                )}
+                {output?.dentist_summary && (
+                  <div>
+                    <div className="text-[10px] font-semibold uppercase tracking-[0.05em] text-ide-muted mb-1.5">
+                      Clinical Assessment
+                    </div>
+                    <p className="text-xs text-ide-text-2 leading-relaxed font-mono">
+                      {output.dentist_summary}
+                    </p>
+                  </div>
+                )}
+                {!output?.patient_summary && !output?.dentist_summary && (
+                  <div className="text-[11px] text-ide-muted text-center py-6">
+                    No summary available yet
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+        </>
+      )}
     </div>
+  );
+}
+
+function ResultsTabButton({
+  label,
+  count,
+  active,
+  onClick,
+}: {
+  label: string;
+  count?: number;
+  active: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      className={`px-3 h-full text-[10px] font-medium transition-colors border-b-2 ${
+        active
+          ? "text-ide-text border-ide-accent"
+          : "text-ide-muted border-transparent hover:text-ide-text-2"
+      }`}
+    >
+      {label}
+      {count !== undefined && count > 0 && (
+        <span className="ml-1 text-[9px] text-ide-muted">({count})</span>
+      )}
+    </button>
   );
 }

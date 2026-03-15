@@ -9,6 +9,7 @@ interface DentalXrayViewerProps {
   onToothClick?: (imageId: string, x: number, y: number) => void;
   segmentationOverlay?: number[][];
   onFileUpload?: (file: File) => void;
+  onClose?: () => void;
 }
 
 export default function DentalXrayViewer({
@@ -17,6 +18,7 @@ export default function DentalXrayViewer({
   onToothClick,
   segmentationOverlay,
   onFileUpload,
+  onClose,
 }: DentalXrayViewerProps) {
   const wrapperRef = useRef<HTMLDivElement>(null);
   const cardRef = useRef<HTMLDivElement>(null);
@@ -201,6 +203,20 @@ export default function DentalXrayViewer({
             pointerEvents: "none", transform: "translate(-50%, -50%)", left: "50%", top: "50%",
           }}
         />
+
+        {/* Close button */}
+        {onClose && (
+          <button
+            onClick={onClose}
+            className="absolute top-3 right-3 z-20 w-8 h-8 flex items-center justify-center rounded-md bg-white/[0.06] border border-white/10 text-white/40 hover:text-white hover:bg-white/[0.12] hover:border-white/20 active:scale-95 transition-all"
+            title="Close X-Ray"
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="18" y1="6" x2="6" y2="18" />
+              <line x1="6" y1="6" x2="18" y2="18" />
+            </svg>
+          </button>
+        )}
 
         <div className="relative" style={{ maxWidth: "90%", maxHeight: "90%" }}>
           {/* eslint-disable-next-line @next/next/no-img-element */}

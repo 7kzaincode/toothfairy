@@ -213,7 +213,7 @@ async def extract_diagnoses(text: str, use_llm: bool = True) -> tuple[list[Tooth
     Returns:
         Tuple of (findings, provenance) where provenance is "gemini", "regex", or "fallback-regex"
     """
-    if False:  # LLM disabled — saving quota for treatment+MCP
+    if use_llm and llm_client.is_available:
         try:
             findings = await extract_dental_diagnoses_llm(text)
             if findings:

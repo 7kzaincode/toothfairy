@@ -7,6 +7,7 @@ evidence-based treatment guidelines. Falls back to cached data.
 import json
 import time
 import logging
+from app.core.config import settings
 from app.core.log_emitter import log_emitter
 from app.api.dependencies import cache_manager
 from app.models.logs import CopilotType
@@ -53,7 +54,7 @@ class TreatmentHandler:
         await log_emitter.emit_info(session_id, copilot, f"Looking up evidence for: {request.condition}")
 
         # Try LLM + MCP first
-        if llm_client.is_available:
+        if not settings.DEMO_MODE and llm_client.is_available:
             try:
                 logger.info("Starting LLM+MCP treatment lookup...")
                 response = await self._llm_mcp_lookup(request, session_id, copilot, start_time)
@@ -73,11 +74,15 @@ class TreatmentHandler:
 
         if evidence:
             await log_emitter.emit_success(session_id, copilot, "Found cached evidence data")
+            # Coerce success_rate to string (cache files may store it as float)
+            raw_rate = evidence.get("success_rate")
+            if raw_rate is not None and not isinstance(raw_rate, str):
+                raw_rate = f"{float(raw_rate) * 100:.0f}%" if isinstance(raw_rate, (int, float)) and raw_rate <= 1 else str(raw_rate)
             response = TreatmentActionResponse(
                 session_id=session_id,
                 condition=request.condition,
                 evidence_summary=evidence.get("summary"),
-                success_rate=evidence.get("success_rate"),
+                success_rate=raw_rate,
                 risk_factors=evidence.get("risk_factors"),
                 alternatives=evidence.get("alternatives"),
                 referral_summary=evidence.get("referral_summary"),
