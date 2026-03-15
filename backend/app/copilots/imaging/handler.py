@@ -7,6 +7,7 @@ Processes tooth clicks on dental X-rays:
 4. Update patient state
 """
 
+import asyncio
 import base64
 import logging
 import time
@@ -24,6 +25,9 @@ from app.copilots.imaging.finding_detector import detect_findings_with_llm
 from app.services.replicate_client import replicate_client
 
 logger = logging.getLogger(__name__)
+
+# Limit concurrent Gemini calls to avoid 429 rate limiting
+_gemini_semaphore = asyncio.Semaphore(3)
 
 XRAY_DIR = settings.ASSETS_ROOT_DIR / "xrays"
 
@@ -54,7 +58,7 @@ class ImagingHandler:
 
         await log_emitter.emit_info(session_id, copilot, f"Imaging copilot activated at ({request.x}, {request.y})")
 
-        # Step 1: Map click to tooth number
+        # Step 1: Map click to tooth number (handles both normalized and pixel coords)
         await log_emitter.emit_progress(session_id, copilot, "Mapping click position to tooth number...")
         tooth_number = map_click_to_tooth(request.x, request.y, request.image_type)
         await log_emitter.emit_info(session_id, copilot, f"Identified FDI tooth #{tooth_number}")
@@ -66,12 +70,33 @@ class ImagingHandler:
         live_attempted = False
         live_succeeded = False
 
-        # Build fallback bounding box
+        # Load image to get dimensions + base64
+        image_bytes = _load_image_bytes(request.image_id)
+        img_width, img_height = 1200, 800  # defaults
+
+        if image_bytes:
+            from PIL import Image
+            import io
+            img = Image.open(io.BytesIO(image_bytes))
+            img_width, img_height = img.size
+
+        # Convert normalized (0-1) coordinates to pixel coordinates
+        click_x = request.x
+        click_y = request.y
+        if 0.0 <= click_x <= 1.0 and 0.0 <= click_y <= 1.0:
+            pixel_x = int(click_x * img_width)
+            pixel_y = int(click_y * img_height)
+        else:
+            pixel_x = int(click_x)
+            pixel_y = int(click_y)
+
+        # Build fallback bounding box (in pixel coordinates)
+        pad = 40
         bounding_box_estimate = [
-            [request.x - 30, request.y - 40],
-            [request.x + 30, request.y - 40],
-            [request.x + 30, request.y + 40],
-            [request.x - 30, request.y + 40],
+            [max(0, pixel_x - pad), max(0, pixel_y - pad)],
+            [min(img_width, pixel_x + pad), max(0, pixel_y - pad)],
+            [min(img_width, pixel_x + pad), min(img_height, pixel_y + pad)],
+            [max(0, pixel_x - pad), min(img_height, pixel_y + pad)],
         ]
 
         # Check cache first
@@ -85,13 +110,17 @@ class ImagingHandler:
             contour_points = cached_seg.get("contour_points", [])
             await log_emitter.emit_fallback(session_id, copilot, "Using cached segmentation mask")
         else:
-            # Attempt live segmentation via ReliabilityManager
-            image_url = f"/api/imaging/image/{request.image_id}"
+            # Build base64 data URI so Modal can access the image
+            if image_bytes:
+                b64 = base64.b64encode(image_bytes).decode("utf-8")
+                image_url = f"data:image/png;base64,{b64}"
+            else:
+                image_url = f"/api/imaging/image/{request.image_id}"
             live_attempted = True
 
             result, status = await reliability_manager.execute_with_fallback(
                 live_fn=lambda: replicate_client.segment_tooth(
-                    image_url, request.x, request.y
+                    image_url, pixel_x, pixel_y
                 ),
                 fallback_value=bounding_box_estimate,
                 timeout_seconds=settings.IMAGING_INFERENCE_TIMEOUT_SECONDS,
@@ -235,7 +264,13 @@ class ImagingHandler:
             image_type=image_type
         )
 
-        image_url = f"/api/imaging/image/{image_id}"
+        # Build base64 data URI so Modal can access the image
+        image_bytes = _load_image_bytes(image_id)
+        if image_bytes:
+            b64 = base64.b64encode(image_bytes).decode("utf-8")
+            image_url = f"data:image/png;base64,{b64}"
+        else:
+            image_url = f"/api/imaging/image/{image_id}"
 
         # Batch segmentation with fallback (all teeth in one call)
         result, status = await reliability_manager.execute_with_fallback(
@@ -401,20 +436,19 @@ class ImagingHandler:
     ) -> list[ToothFinding]:
         """Detect findings for batch of suspicious teeth using Gemini.
 
-        Run Gemini calls in parallel for speed.
+        Uses a semaphore to limit concurrent Gemini calls and avoid 429 rate limiting.
         """
-        import asyncio
+        async def _rate_limited_detect(tooth_data: dict) -> list[ToothFinding]:
+            async with _gemini_semaphore:
+                return await self._detect_findings_for_segment(
+                    image_id=image_id,
+                    tooth_number=tooth_data["tooth_number"],
+                    confidence=tooth_data["confidence"]
+                )
 
-        tasks = []
-        for tooth_data in suspicious_teeth:
-            task = self._detect_findings_for_segment(
-                image_id=image_id,
-                tooth_number=tooth_data["tooth_number"],
-                confidence=tooth_data["confidence"]
-            )
-            tasks.append(task)
+        tasks = [_rate_limited_detect(td) for td in suspicious_teeth]
 
-        # Run all Gemini calls in parallel
+        # Run with semaphore limiting concurrency
         results = await asyncio.gather(*tasks, return_exceptions=True)
 
         # Flatten results

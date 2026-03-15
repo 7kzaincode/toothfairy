@@ -6,7 +6,7 @@ Endpoints for dental X-ray upload and analysis.
 import uuid
 import shutil
 from pathlib import Path
-from fastapi import APIRouter, HTTPException, UploadFile, File, Form
+from fastapi import APIRouter, HTTPException, UploadFile, File, Form, Body
 from typing import Optional
 
 from app.core.config import settings
@@ -100,9 +100,9 @@ async def imaging_action(request: ImagingActionRequest):
 
 @router.post("/auto-scan")
 async def auto_scan_xray(
-    session_id: str,
-    image_id: str,
-    image_type: str = "panoramic"
+    session_id: str = Body(...),
+    image_id: str = Body(...),
+    image_type: str = Body(default="panoramic")
 ):
     """Auto-scan all teeth in panoramic X-ray using HYBRID approach.
 

@@ -66,7 +66,7 @@ class LLMClient:
         return bool(self.api_key)
 
     async def _call_gemini(self, payload: dict, timeout: int = 30) -> dict:
-        """Make a raw POST to the Gemini REST API.
+        """Make a raw POST to the Gemini REST API with retry on 429.
 
         Args:
             payload: The full request body (contents, generationConfig, etc.)
@@ -79,15 +79,31 @@ class LLMClient:
             RuntimeError: If API key is not configured.
             httpx.HTTPStatusError: If the API returns a non-2xx status.
         """
+        import asyncio
+
         if not self.api_key:
             raise RuntimeError("GOOGLE_API_KEY is not set. Cannot use Gemini.")
 
         url = f"{GEMINI_BASE_URL}/{self.model_name}:generateContent?key={self.api_key}"
 
-        async with httpx.AsyncClient(timeout=timeout) as client:
-            r = await client.post(url, json=payload)
-            r.raise_for_status()
-            return r.json()
+        max_retries = 3
+        for attempt in range(max_retries):
+            async with httpx.AsyncClient(timeout=timeout) as client:
+                r = await client.post(url, json=payload)
+                if r.status_code == 429 and attempt < max_retries - 1:
+                    wait = 2 ** attempt + 1  # 2s, 3s, 5s
+                    logger.warning(
+                        f"Gemini 429 rate limited, retrying in {wait}s "
+                        f"(attempt {attempt + 1}/{max_retries})"
+                    )
+                    await asyncio.sleep(wait)
+                    continue
+                r.raise_for_status()
+                return r.json()
+
+        # Should not reach here, but just in case
+        r.raise_for_status()
+        return r.json()
 
     def _extract_text(self, response: dict) -> str:
         """Extract the text content from a Gemini API response.

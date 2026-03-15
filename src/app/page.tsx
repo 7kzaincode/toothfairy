@@ -132,6 +132,12 @@ export default function Home() {
     setActiveTab("treatment");
   };
 
+  const handleAutoScan = (imageId: string) => {
+    if (sessionId) {
+      copilot.triggerAutoScan(imageId, "panoramic");
+    }
+  };
+
   return (
     <main className="flex h-screen w-screen overflow-hidden bg-ide-bg">
       {showLanding && (
@@ -180,9 +186,11 @@ export default function Home() {
         }}
         onToggleLeftPane={() => setLeftCollapsed((v) => !v)}
         onToggleRightPane={() => setRightCollapsed((v) => !v)}
+        onAutoScan={handleAutoScan}
         imageId={uploadedImageId}
         imageUrl={uploadedImageUrl}
         imagingResult={copilot.lastImagingResult}
+        autoScanResult={copilot.lastAutoScanResult}
         clinicalNotesOutput={copilot.lastClinicalNotesResult ? {
           diagnoses: copilot.lastClinicalNotesResult.diagnoses,
           protocols: copilot.lastClinicalNotesResult.treatment_protocols,

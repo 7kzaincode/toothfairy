@@ -88,10 +88,15 @@ class ModalClient:
         if not self.endpoint_url:
             raise RuntimeError("MODAL_ENDPOINT_URL is not configured")
 
-        # Use /segment-teeth-batch endpoint
-        # Construct batch URL by replacing the last path segment
-        # This works regardless of whether URL ends with /segment-tooth or has a different format
-        if "/segment-tooth" in self.endpoint_url:
+        # Construct batch URL from the single-tooth endpoint URL
+        # Modal gives each @fastapi_endpoint its own URL in the hostname:
+        #   single: https://user--app-class-segment-tooth.modal.run
+        #   batch:  https://user--app-class-segment-teeth-batch.modal.run
+        if "-segment-tooth." in self.endpoint_url:
+            # Modal URL format: endpoint name is in the hostname
+            batch_url = self.endpoint_url.replace("-segment-tooth.", "-segment-teeth-batch.")
+        elif "/segment-tooth" in self.endpoint_url:
+            # Path-based URL format (Replicate, self-hosted)
             batch_url = self.endpoint_url.replace("/segment-tooth", "/segment-teeth-batch")
         else:
             # Fallback: append to base URL
