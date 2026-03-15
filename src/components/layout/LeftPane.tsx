@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState, useEffect } from "react";
+import Image from "next/image";
 import type { PatientState } from "@/types/patient-state";
 import type { PatientProfile, ProfileListItem } from "@/lib/api/client";
 import { apiClient } from "@/lib/api/client";
@@ -26,13 +27,24 @@ export default function LeftPane({
   onToggle,
   width = 240,
 }: LeftPaneProps) {
-  const findings = patientState ? Object.values(patientState.tooth_chart) : [];
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [profiles, setProfiles] = useState<ProfileListItem[]>([]);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
-  // Load profile list
   useEffect(() => {
     apiClient.listProfiles().then((res) => setProfiles(res.profiles)).catch(() => {});
+  }, []);
+
+  // Close dropdown on outside click
+  useEffect(() => {
+    const handleClick = (e: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setDropdownOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
   }, []);
 
   const handleUploadClick = () => {
@@ -49,7 +61,6 @@ export default function LeftPane({
     }
   };
 
-  // Collapsed state
   if (collapsed) {
     return (
       <div className="w-[36px] flex-shrink-0 border-r border-ide-border bg-ide-bg flex flex-col items-center h-full">
@@ -83,156 +94,107 @@ export default function LeftPane({
 
   return (
     <div className="flex-shrink-0 border-r border-ide-border bg-ide-panel flex flex-col h-full" style={{ width }}>
-      {/* Header */}
-      <div className="h-9 flex items-center justify-between px-3 border-b border-ide-border shrink-0">
-        <span className="text-[11px] font-semibold uppercase tracking-[0.05em] text-ide-text-2">
-          Tooth Fairy
-        </span>
-        <div className="flex items-center gap-1">
-          {patientState && (
-            <span className="text-[9px] font-mono text-ide-muted bg-ide-surface px-1.5 py-0.5 rounded">
-              {patientState.identifiers.session_id.slice(0, 13)}
-            </span>
-          )}
+      {/* Header — logo / patient selector / collapse */}
+      <div className="h-9 flex items-center justify-between px-3 border-b border-ide-border shrink-0" ref={dropdownRef}>
+        <div className="flex items-center gap-1.5 flex-1 min-w-0 relative">
+          <Image src="/logo.png" alt="Logo" width={20} height={20} className="opacity-80 shrink-0 invert" />
+          <span className="text-ide-border text-sm">/</span>
+          <div className="w-6 h-6 rounded-full bg-ide-surface flex items-center justify-center shrink-0">
+            <svg className="w-3.5 h-3.5 text-ide-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+              <path d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z" />
+            </svg>
+          </div>
           <button
-            onClick={onToggle}
-            className="p-1 hover:bg-ide-surface rounded transition-colors text-ide-muted hover:text-ide-text"
-            title="Collapse"
+            onClick={() => setDropdownOpen(!dropdownOpen)}
+            className="flex items-center gap-1 text-[13px] font-medium text-ide-text hover:text-ide-text-2 transition-colors truncate"
           >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <polyline points="15 18 9 12 15 6" />
+            <span className="truncate">{profile?.name || "Select patient"}</span>
+            <svg className="w-3 h-3 text-ide-muted shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M8 10l4 4 4-4" />
             </svg>
           </button>
-        </div>
-      </div>
 
-      {/* Patient Info — from profile */}
-      <div className="px-3 py-3 border-b border-ide-hairline">
-        <div className="text-[10px] font-semibold uppercase tracking-[0.05em] text-ide-muted mb-2">
-          Patient
-        </div>
-        {profile ? (
-          <>
-            <div className="flex items-center gap-2 mb-3">
-              <div className="w-8 h-8 rounded-full bg-ide-accent/20 border border-ide-accent/30 flex items-center justify-center text-[11px] font-semibold text-ide-accent shrink-0">
-                {profile.name.split(" ").map((n) => n[0]).join("")}
+          {/* Custom Dropdown */}
+          {dropdownOpen && profiles.length > 0 && (
+            <div className="absolute top-full left-0 mt-1 w-64 bg-white border border-ide-border rounded-xl shadow-lg z-50 py-2 overflow-hidden">
+              <div className="px-4 py-2 text-[11px] font-semibold text-ide-muted uppercase tracking-wider">
+                Patients
               </div>
-              <div className="min-w-0">
-                <div className="text-sm font-medium text-ide-text truncate">{profile.name}</div>
-                <div className="text-[10px] text-ide-muted">{profile.patient_id}</div>
-              </div>
+              {profiles.map((p) => (
+                <button
+                  key={p.patient_id}
+                  onClick={() => {
+                    onProfileSelect?.(p.patient_id);
+                    setDropdownOpen(false);
+                  }}
+                  className={`w-full flex items-center gap-3 px-4 py-3 hover:bg-ide-surface transition-colors text-left ${
+                    profile?.patient_id === p.patient_id ? "bg-ide-surface" : ""
+                  }`}
+                >
+                  <div className="w-8 h-8 rounded-full bg-ide-surface border border-ide-border flex items-center justify-center shrink-0">
+                    <svg className="w-4 h-4 text-ide-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                      <path d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <div className="text-[14px] font-medium text-ide-text">{p.name}</div>
+                    <div className="text-[11px] text-ide-muted">{p.patient_id}</div>
+                  </div>
+                </button>
+              ))}
             </div>
-            <div className="space-y-2 text-[10px]">
-              {profile.age && <InfoRow label="Age" value={`${profile.age} years`} />}
-              {profile.gender && <InfoRow label="Gender" value={profile.gender === "M" ? "Male" : profile.gender === "F" ? "Female" : profile.gender} />}
-              {profile.allergies && <InfoRow label="Allergies" value={profile.allergies.join(", ")} />}
-              {profile.last_visit && <InfoRow label="Last Visit" value={profile.last_visit} />}
-              {profile.insurance && <InfoRow label="Insurance" value={profile.insurance} />}
-            </div>
-          </>
-        ) : (
-          <div className="text-xs text-ide-muted">No profile loaded</div>
-        )}
-      </div>
-
-      {/* Profile Switcher */}
-      {profiles.length > 0 && (
-        <div className="px-3 py-2 border-b border-ide-hairline">
-          <label className="text-[10px] font-semibold uppercase tracking-[0.05em] text-ide-muted block mb-1.5">
-            {profile ? "Switch Patient" : "Select Patient"}
-          </label>
-          <select
-            value={profile?.patient_id || ""}
-            onChange={(e) => {
-              if (e.target.value) onProfileSelect?.(e.target.value);
-            }}
-            className="w-full bg-ide-surface border border-ide-border text-ide-text text-xs py-1.5 px-2 rounded hover:border-ide-accent transition-colors cursor-pointer"
-          >
-            {!profile && <option value="">— Select —</option>}
-            {profiles.map((p) => (
-              <option key={p.patient_id} value={p.patient_id}>
-                {p.name}
-              </option>
-            ))}
-          </select>
+          )}
         </div>
-      )}
-
-      {/* Scan Type Dropdown */}
-      <div className="px-3 py-3 border-b border-ide-hairline">
-        <label className="text-[10px] font-semibold uppercase tracking-[0.05em] text-ide-muted block mb-2">
-          Scan Type
-        </label>
-        <select
-          defaultValue="dental-xray"
-          onChange={(e) => {
-            if (e.target.value === "dental-xray") {
-              onSelectArtifact?.("imaging");
-            }
-          }}
-          className="w-full bg-ide-surface border border-ide-border text-ide-text text-xs py-2 px-2 rounded hover:border-ide-accent transition-colors cursor-pointer"
+        <button
+          onClick={onToggle}
+          className="p-1 hover:bg-ide-surface rounded transition-colors text-ide-muted hover:text-ide-text shrink-0"
+          title="Collapse"
         >
-          <option value="dental-xray">Dental X-ray</option>
-        </select>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <polyline points="15 18 9 12 15 6" />
+          </svg>
+        </button>
       </div>
 
-      {/* Upload */}
-      <div className="px-2 py-2 border-b border-ide-hairline">
+      {/* Upload X-Ray Button */}
+      <div className="px-3 py-3">
         <button
           onClick={handleUploadClick}
-          className="w-full border border-[#8e8e8e] hover:border-white text-[#8e8e8e] hover:text-white text-xs font-medium py-2 px-2 rounded transition-colors duration-150"
+          className="w-full bg-ide-text text-ide-bg text-[13px] font-semibold py-2.5 px-4 rounded-lg transition-all hover:opacity-90 active:scale-[0.98]"
         >
-          ↑ Upload Dental X-Ray
+          Upload X-Ray
         </button>
         <input
           ref={fileInputRef}
           type="file"
-          accept="image/*"
+          accept=".dcm,.jpg,.jpeg,.png,.tiff,.tif"
           onChange={handleFileSelect}
           className="hidden"
         />
       </div>
 
-      {/* X-ray History */}
-      {profile?.xrays && profile.xrays.length > 0 && (
-        <div className="px-3 py-2 border-b border-ide-hairline">
-          <div className="text-[10px] font-semibold uppercase tracking-[0.05em] text-ide-muted mb-2">
-            X-ray History
+      {/* Patient Info */}
+      {profile && (
+        <div className="px-4 py-4 border-t border-ide-hairline">
+          <div className="text-[11px] font-bold uppercase tracking-[0.08em] text-ide-text mb-4">
+            Patient Info
           </div>
-          <div className="space-y-1.5 max-h-[120px] overflow-y-auto">
-            {profile.xrays.map((xray) => (
-              <div
-                key={xray.image_id}
-                className="flex items-center justify-between text-[10px] px-1.5 py-1 rounded bg-ide-surface/50 hover:bg-ide-surface transition-colors cursor-pointer"
-                onClick={() => onSelectArtifact?.("imaging")}
-              >
-                <span className="text-ide-text-2 truncate">{xray.image_id}</span>
-                <span className="text-ide-muted shrink-0 ml-2">{xray.date}</span>
-              </div>
-            ))}
+          <div className="space-y-4 text-[13px]">
+            {profile.age && <InfoRow label="Age" value={`${profile.age} years`} />}
+            {profile.gender && <InfoRow label="Gender" value={profile.gender === "M" ? "Male" : profile.gender === "F" ? "Female" : profile.gender} />}
+            {profile.allergies && <InfoRow label="Allergies" value={profile.allergies.join(", ")} />}
+            {profile.last_visit && <InfoRow label="Last Visit" value={profile.last_visit} />}
+            {profile.insurance && <InfoRow label="Insurance" value={profile.insurance} />}
           </div>
         </div>
       )}
 
-      {/* Dental History */}
+      {/* Previous Procedures */}
       {profile?.dental_history?.previous_procedures && profile.dental_history.previous_procedures.length > 0 && (
-        <div className="px-3 py-2 flex-1 overflow-y-auto">
-          <div className="text-[10px] font-semibold uppercase tracking-[0.05em] text-ide-muted mb-2">
-            Previous Procedures
-          </div>
-          <div className="space-y-1.5">
-            {profile.dental_history.previous_procedures.map((proc, i) => (
-              <div key={i} className="text-[10px] text-ide-text-2">
-                <div className="flex justify-between">
-                  <span className="truncate">{proc.procedure}</span>
-                  {proc.tooth && <span className="text-ide-muted shrink-0 ml-1">#{proc.tooth}</span>}
-                </div>
-                <div className="text-ide-muted">{proc.date}</div>
-              </div>
-            ))}
-          </div>
-        </div>
+        <ProceduresSection procedures={profile.dental_history.previous_procedures} />
       )}
+
+      <div className="flex-1" />
     </div>
   );
 }
@@ -240,8 +202,44 @@ export default function LeftPane({
 function InfoRow({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex items-start justify-between">
-      <span className="text-ide-muted">{label}:</span>
-      <span className="text-ide-text-2 text-right">{value}</span>
+      <span className="text-ide-muted">{label}</span>
+      <span className="text-ide-text font-medium text-right truncate ml-3">{value}</span>
+    </div>
+  );
+}
+
+function ProceduresSection({ procedures }: { procedures: Array<{ procedure: string; date: string; tooth?: string }> }) {
+  const [open, setOpen] = useState(true);
+
+  return (
+    <div className="px-4 py-4 border-t border-ide-hairline flex-1 overflow-hidden flex flex-col">
+      <button
+        onClick={() => setOpen(!open)}
+        className="flex items-center justify-between w-full mb-3"
+      >
+        <span className="text-[11px] font-bold uppercase tracking-[0.08em] text-ide-text">
+          Previous Procedures
+        </span>
+        <svg
+          className={`w-4 h-4 text-ide-muted transition-transform ${open ? "rotate-0" : "-rotate-90"}`}
+          viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
+        >
+          <path d="M6 9l6 6 6-6" />
+        </svg>
+      </button>
+      {open && (
+        <div className="space-y-4 overflow-y-auto flex-1" style={{ scrollbarWidth: "none" }}>
+          {procedures.map((proc, i) => (
+            <div key={i}>
+              <div className="flex justify-between items-start">
+                <span className="text-[13px] font-semibold text-ide-text truncate">{proc.procedure}</span>
+                {proc.tooth && <span className="text-[13px] text-ide-muted shrink-0 ml-2">#{proc.tooth}</span>}
+              </div>
+              <div className="text-[12px] text-ide-muted mt-0.5">{proc.date}</div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

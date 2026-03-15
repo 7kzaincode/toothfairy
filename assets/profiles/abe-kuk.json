@@ -207,6 +207,24 @@
       "image_type": "panoramic",
       "date": "2026-03-15",
       "notes": ""
+    },
+    {
+      "image_id": "xray-e40ec0cb",
+      "image_type": "panoramic",
+      "date": "2026-03-15",
+      "notes": ""
+    },
+    {
+      "image_id": "xray-5f5dcf3b",
+      "image_type": "panoramic",
+      "date": "2026-03-15",
+      "notes": ""
+    },
+    {
+      "image_id": "xray-0de8ec18",
+      "image_type": "panoramic",
+      "date": "2026-03-15",
+      "notes": ""
     }
   ],
   "known_conditions": {},

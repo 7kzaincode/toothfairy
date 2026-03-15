@@ -83,18 +83,21 @@ export default function CenterPane({
   return (
     <div className="flex-1 min-w-0 flex flex-col bg-ide-panel">
       {/* Tab Bar */}
-      <div className="h-9 flex items-end border-b border-ide-border bg-ide-bg px-2 shrink-0">
+      <div className="h-9 flex items-stretch border-b border-ide-border bg-ide-bg px-2 shrink-0">
         {TABS.map((tab) => (
           <button
             key={tab.key}
             onClick={() => onTabChange(tab.key)}
-            className={`flex-1 h-8 px-3 text-[10px] font-medium rounded-t-md border border-b-0 transition-colors duration-150 text-center ${
+            className={`flex-1 px-4 text-[11px] font-medium transition-colors duration-150 text-center relative ${
               activeTab === tab.key
-                ? "bg-ide-panel text-ide-text border-ide-border"
-                : "bg-transparent text-ide-muted border-transparent hover:bg-ide-surface hover:text-ide-text-2"
+                ? "text-ide-text bg-ide-surface"
+                : "text-ide-muted hover:text-ide-text-2"
             }`}
           >
             {tab.label}
+            {activeTab === tab.key && (
+              <div className="absolute bottom-0 left-2 right-2 h-[2px] bg-ide-text rounded-full" />
+            )}
           </button>
         ))}
       </div>
@@ -152,7 +155,7 @@ export default function CenterPane({
             </div>
           ) : (
             <div className="flex flex-col items-center justify-center h-full gap-3">
-              <Image src="/logo.png" alt="Logo" width={170} height={170} className="opacity-40 transition-opacity duration-300 hover:opacity-100 cursor-pointer" />
+              <Image src="/logo.png" alt="Logo" width={170} height={170} className="opacity-40 transition-opacity duration-300 hover:opacity-100 cursor-pointer invert" />
               <div className="flex flex-col w-80">
                 <ShortcutRow label="Open AI Agent" keys={["⇧", "⌘", "L"]} onClick={onToggleRightPane} />
                 <ShortcutRow label="Clinical Notes" keys={["⇧", "⌘", "N"]} onClick={() => onTabChange("clinical-notes")} />
@@ -184,12 +187,12 @@ function ShortcutRow({ label, keys, onClick }: { label: string; keys: string[]; 
     <button
       type="button"
       onClick={onClick}
-      className="flex items-center justify-between w-full px-3 py-2 rounded-md transition-all duration-100 text-[#5c5c5c] hover:text-white/90 hover:bg-white/[0.06] active:scale-[0.98] active:bg-white/[0.09] cursor-pointer text-left group"
+      className="flex items-center justify-between w-full px-3 py-2 rounded-md transition-all duration-100 text-ide-muted hover:text-ide-text hover:bg-ide-surface active:scale-[0.98] active:bg-ide-selected cursor-pointer text-left group"
     >
       <span className="text-[13px]">{label}</span>
       <div className="flex gap-1 text-xs">
         {keys.map((k) => (
-          <span key={k} className="border border-white/10 group-hover:border-white/20 px-1.5 py-0.5 rounded text-[10px] min-w-[22px] text-center transition-colors">
+          <span key={k} className="border border-ide-border group-hover:border-ide-muted px-1.5 py-0.5 rounded text-[10px] min-w-[22px] text-center transition-colors">
             {k}
           </span>
         ))}

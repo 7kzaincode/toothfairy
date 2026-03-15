@@ -6,7 +6,7 @@ Endpoints for dental X-ray upload and analysis.
 import uuid
 import shutil
 from pathlib import Path
-from fastapi import APIRouter, HTTPException, UploadFile, File, Form, Body
+from fastapi import APIRouter, BackgroundTasks, HTTPException, UploadFile, File, Form, Body
 from typing import Optional
 
 from app.core.config import settings
@@ -75,7 +75,7 @@ async def get_image(image_id: str):
 
 
 @router.post("/action", response_model=ImagingActionResponse)
-async def imaging_action(request: ImagingActionRequest):
+async def imaging_action(request: ImagingActionRequest, background_tasks: BackgroundTasks):
     """Process a tooth click on a dental X-ray.
 
     This triggers the imaging copilot pipeline:
@@ -95,11 +95,26 @@ async def imaging_action(request: ImagingActionRequest):
 
     # Update session
     session_manager.update_session(request.session_id, patient_state)
+
+    # Ingest into Moorcheh for longitudinal memory
+    try:
+        from app.services.moorcheh_client import moorcheh_service
+        if moorcheh_service.is_available:
+            background_tasks.add_task(
+                moorcheh_service.ingest_session,
+                patient_id=patient_state.identifiers.patient_id,
+                session_data=patient_state.model_dump(),
+                session_date=patient_state.last_updated_at,
+            )
+    except ImportError:
+        pass
+
     return response
 
 
 @router.post("/auto-scan")
 async def auto_scan_xray(
+    background_tasks: BackgroundTasks,
     session_id: str = Body(...),
     image_id: str = Body(...),
     image_type: str = Body(default="panoramic")
@@ -139,5 +154,18 @@ async def auto_scan_xray(
 
     # Update session with new findings
     session_manager.update_session(session_id, session)
+
+    # Ingest into Moorcheh for longitudinal memory
+    try:
+        from app.services.moorcheh_client import moorcheh_service
+        if moorcheh_service.is_available:
+            background_tasks.add_task(
+                moorcheh_service.ingest_session,
+                patient_id=session.identifiers.patient_id,
+                session_data=session.model_dump(),
+                session_date=session.last_updated_at,
+            )
+    except ImportError:
+        pass
 
     return result
