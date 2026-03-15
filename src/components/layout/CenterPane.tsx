@@ -302,7 +302,16 @@ function TreatmentView({
     return (
       <div className="flex-1 flex flex-col items-center justify-center h-full text-center p-8">
         <div className="w-16 h-16 rounded-lg bg-ide-surface flex items-center justify-center mb-4">
-          <span className="text-2xl">💊</span>
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#737373" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+              {/* Briefcase */}
+              <rect x="4" y="5" width="16" height="11" rx="2" />
+              <path d="M9 5V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v1" />
+              <path d="M12 8v5M9.5 10.5h5" />
+              {/* Hand */}
+              <path d="M3 21c0-2 2-4 5-5h8c3 1 5 3 5 5" />
+              <path d="M7 16l-3 1c-1 .5-1.5 1.5-1 2.5" />
+              <path d="M17 16l3 1c1 .5 1.5 1.5 1 2.5" />
+            </svg>
         </div>
         <h3 className="text-sm font-medium text-ide-text mb-1">Treatment & Evidence</h3>
         <p className="text-[11px] text-ide-muted max-w-xs">
