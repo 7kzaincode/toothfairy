@@ -70,7 +70,7 @@ export default function Home() {
     try {
       const result = await apiClient.uploadImage(file);
       setUploadedImageId(result.image_id);
-      setUploadedImageUrl(`http://localhost:8000/api/imaging/image/${result.image_id}`);
+      setUploadedImageUrl(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8001"}/api/imaging/image/${result.image_id}`);
       setPatientState(DEMO_STATE);
       setHasUploaded(true);
       setActiveTab("xray");

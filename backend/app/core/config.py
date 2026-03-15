@@ -7,10 +7,15 @@ import os
 from typing import Optional
 from pathlib import Path
 
+from dotenv import load_dotenv
+
 # Project root = backend/ directory (where uvicorn runs from)
 _BACKEND_DIR = Path(__file__).resolve().parent.parent.parent
 # Default assets at project root (one level above backend/)
 _PROJECT_ROOT = _BACKEND_DIR.parent
+
+# Load .env BEFORE class attributes are evaluated
+load_dotenv(_BACKEND_DIR / ".env", override=True)
 
 
 class Settings:
@@ -26,6 +31,9 @@ class Settings:
 
     # Modal/Replicate Configuration (for MedSAM2)
     MODAL_ENDPOINT_URL: str = os.getenv("MODAL_ENDPOINT_URL", "")
+
+    # Moorcheh AI Configuration (patient memory / MUMLA)
+    MOORCHEH_API_KEY: str = os.getenv("MOORCHEH_API_KEY", "")
 
     # Timeout Configuration (seconds)
     IMAGING_INFERENCE_TIMEOUT_SECONDS: int = int(

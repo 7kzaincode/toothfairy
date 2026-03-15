@@ -9,6 +9,7 @@ Wraps google-genai for dental AI tasks:
 
 import json
 import logging
+import os
 from typing import Optional
 
 from google import genai
@@ -52,21 +53,25 @@ class LLMClient:
     """Wrapper around Google Gemini API."""
 
     def __init__(self):
-        self.api_key = settings.GOOGLE_API_KEY
         self._client = None
+
+    @property
+    def _api_key(self) -> str:
+        """Read API key dynamically so it picks up .env values."""
+        return settings.GOOGLE_API_KEY or os.getenv("GOOGLE_API_KEY", "")
 
     def _ensure_client(self):
         """Lazily create the Gemini client."""
         if self._client:
             return
-        if not self.api_key:
+        if not self._api_key:
             raise RuntimeError("GOOGLE_API_KEY is not set. Cannot use Gemini.")
-        self._client = genai.Client(api_key=self.api_key)
+        self._client = genai.Client(api_key=self._api_key)
 
     @property
     def is_available(self) -> bool:
         """Check if Gemini is configured and usable."""
-        return bool(self.api_key)
+        return bool(self._api_key)
 
     async def parse_clinical_notes(self, text: str) -> list[dict]:
         """Parse clinical notes into structured diagnoses."""
