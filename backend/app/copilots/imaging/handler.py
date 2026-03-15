@@ -19,7 +19,7 @@ from app.api.dependencies import cache_manager
 from app.models.logs import CopilotType
 from app.models.imaging import ImagingActionRequest, ImagingActionResponse
 from app.models.patient_state import PatientState, ImagingOutput, ImagingProvenance, ToothFinding
-from app.copilots.imaging.tooth_mapper import map_click_to_tooth
+from app.copilots.imaging.tooth_mapper import map_click_to_tooth, PANORAMIC_TEETH
 from app.copilots.imaging.finding_detector import detect_findings_with_llm
 from app.services.replicate_client import replicate_client
 
@@ -205,3 +205,299 @@ class ImagingHandler:
             image_url=image_url,
             inference_time_ms=elapsed_ms,
         )
+
+    async def handle_auto_scan(
+        self,
+        image_id: str,
+        patient_state: PatientState,
+        image_type: str = "panoramic"
+    ) -> dict:
+        """Auto-scan all teeth in panoramic X-ray using HYBRID approach.
+
+        1. Batch segment all 32 teeth (~15-20s)
+        2. Flag suspicious teeth using lightweight heuristics
+        3. Run Gemini only on suspicious ~5-10 teeth (~10-15s)
+
+        Returns:
+            {
+                "total_teeth": 32,
+                "segmented": 28,
+                "suspicious_teeth": 7,
+                "findings": [...],
+                "inference_time_ms": 25000
+            }
+        """
+        start_time = time.time()
+
+        # Generate center points for all 32 teeth using actual image dimensions
+        tooth_points, img_width, img_height = self._generate_tooth_center_points(
+            image_id=image_id,
+            image_type=image_type
+        )
+
+        image_url = f"/api/imaging/image/{image_id}"
+
+        # Batch segmentation with fallback (all teeth in one call)
+        result, status = await reliability_manager.execute_with_fallback(
+            live_fn=lambda: replicate_client.segment_teeth_batch(
+                image_url, tooth_points
+            ),
+            fallback_value=self._generate_fallback_batch_results(tooth_points),
+            timeout_seconds=settings.IMAGING_INFERENCE_TIMEOUT_SECONDS * 2,  # Double timeout for batch
+        )
+
+        prov_dict = ReliabilityManager.get_provenance(status)
+        batch_provenance = prov_dict["method"]
+
+        if status != ExecutionStatus.LIVE_SUCCESS:
+            logger.warning(f"Auto-scan using fallback: {prov_dict.get('reason', 'unavailable')}")
+
+        # Process results with HYBRID approach
+        suspicious_teeth = []
+        all_segments = []
+
+        for seg_result in result.get("results", []):
+            if seg_result.get("contour_points"):
+                tooth_number = self._point_index_to_fdi(seg_result["point_index"])
+
+                # Store segment data
+                segment_data = {
+                    "tooth_number": tooth_number,
+                    "contour_points": seg_result["contour_points"],
+                    "confidence": seg_result["confidence"],
+                    "area_pixels": seg_result["area_pixels"],
+                    "used_fallback": seg_result["used_fallback"]
+                }
+                all_segments.append(segment_data)
+
+                # Lightweight suspicious region detection
+                if self._is_tooth_suspicious(seg_result):
+                    suspicious_teeth.append(segment_data)
+
+        # Run Gemini only on suspicious teeth (parallel batch)
+        findings = []
+        if suspicious_teeth:
+            findings = await self._detect_findings_batch(
+                image_id=image_id,
+                suspicious_teeth=suspicious_teeth
+            )
+
+        # Update patient state with findings
+        for finding in findings:
+            if finding.condition != "under_review":
+                patient_state.tooth_chart[finding.tooth_number] = finding
+
+        inference_time_ms = int((time.time() - start_time) * 1000)
+
+        return {
+            "total_teeth": len(tooth_points),
+            "segmented": result.get("successful_segments", 0),
+            "suspicious_teeth": len(suspicious_teeth),
+            "findings": findings,
+            "inference_time_ms": inference_time_ms,
+            "segments": all_segments,  # Return all segments for frontend rendering
+            "provenance": batch_provenance  # Track if fallback was used
+        }
+
+    def _generate_tooth_center_points(
+        self,
+        image_id: str,
+        image_type: str = "panoramic"
+    ) -> tuple[list[tuple[int, int]], int, int]:
+        """Generate approximate center points for all 32 teeth.
+
+        Uses PANORAMIC_TEETH zones from tooth_mapper.py to calculate centers.
+
+        Args:
+            image_id: X-ray image ID to get actual dimensions
+            image_type: Type of X-ray (default: panoramic)
+
+        Returns:
+            tuple: (points, width, height)
+                - points: List of (x, y) center coordinates for each tooth
+                - width: Actual image width in pixels
+                - height: Actual image height in pixels
+        """
+        from PIL import Image
+
+        # Load actual image dimensions
+        image_bytes = _load_image_bytes(image_id)
+        if image_bytes:
+            import io
+            img = Image.open(io.BytesIO(image_bytes))
+            width, height = img.size
+        else:
+            # Fallback to typical panoramic dimensions
+            width, height = 1200, 800
+            logger.warning(f"Could not load image {image_id}, using default dimensions {width}x{height}")
+
+        points = []
+
+        # FDI tooth order: upper right (18-11), upper left (21-28), lower left (31-38), lower right (41-48)
+        for quadrant in ["upper_right", "upper_left", "lower_left", "lower_right"]:
+            teeth = PANORAMIC_TEETH.get(quadrant, {})
+            for tooth_number in sorted(teeth.keys()):
+                zone = teeth[tooth_number]
+                # Zone has x_min, x_max, y_min, y_max in normalized coordinates (0-1)
+                x_center = int(width * (zone["x_min"] + zone["x_max"]) / 2)
+                y_center = int(height * (zone["y_min"] + zone["y_max"]) / 2)
+                points.append((x_center, y_center))
+
+        return points, width, height
+
+    def _point_index_to_fdi(self, point_index: int) -> int:
+        """Map batch point index to FDI tooth number.
+
+        FDI order: 18-11 (upper right), 21-28 (upper left), 31-38 (lower left), 41-48 (lower right)
+        """
+        # Upper right (18-11): indices 0-7
+        if point_index < 8:
+            return 18 - point_index
+        # Upper left (21-28): indices 8-15
+        elif point_index < 16:
+            return 21 + (point_index - 8)
+        # Lower left (31-38): indices 16-23
+        elif point_index < 24:
+            return 31 + (point_index - 16)
+        # Lower right (41-48): indices 24-31
+        else:
+            return 48 - (point_index - 24)
+
+    def _is_tooth_suspicious(self, seg_result: dict) -> bool:
+        """Lightweight heuristics to flag suspicious teeth.
+
+        Returns True if tooth should be analyzed by Gemini.
+
+        Heuristics:
+        - Low confidence score (< 0.7)
+        - Unusual area (too small/large compared to average tooth)
+        - Used fallback bounding box
+        """
+        confidence = seg_result.get("confidence", 0)
+        area = seg_result.get("area_pixels", 0)
+        used_fallback = seg_result.get("used_fallback", False)
+
+        # Flag if low confidence
+        if confidence < 0.7:
+            seg_result["suspicion_reason"] = "low_confidence"
+            return True
+
+        # Flag if fallback was used (segmentation failed)
+        if used_fallback:
+            seg_result["suspicion_reason"] = "segmentation_failed"
+            return True
+
+        # Flag if area is unusual (< 500px² or > 10000px²)
+        if area < 500 or area > 10000:
+            seg_result["suspicion_reason"] = "unusual_size"
+            return True
+
+        return False
+
+    async def _detect_findings_batch(
+        self,
+        image_id: str,
+        suspicious_teeth: list[dict]
+    ) -> list[ToothFinding]:
+        """Detect findings for batch of suspicious teeth using Gemini.
+
+        Run Gemini calls in parallel for speed.
+        """
+        import asyncio
+
+        tasks = []
+        for tooth_data in suspicious_teeth:
+            task = self._detect_findings_for_segment(
+                image_id=image_id,
+                tooth_number=tooth_data["tooth_number"],
+                confidence=tooth_data["confidence"]
+            )
+            tasks.append(task)
+
+        # Run all Gemini calls in parallel
+        results = await asyncio.gather(*tasks, return_exceptions=True)
+
+        # Flatten results
+        findings = []
+        for result in results:
+            if isinstance(result, list):
+                findings.extend(result)
+            elif isinstance(result, Exception):
+                logger.error(f"Finding detection failed: {result}")
+
+        return findings
+
+    async def _detect_findings_for_segment(
+        self,
+        image_id: str,
+        tooth_number: int,
+        confidence: float
+    ) -> list[ToothFinding]:
+        """Detect findings for a single tooth segment.
+
+        Args:
+            image_id: X-ray image ID
+            tooth_number: FDI tooth number
+            confidence: Segmentation confidence score
+
+        Returns:
+            List of ToothFinding objects (may be empty or placeholder)
+        """
+        # Load image and detect findings
+        image_bytes = _load_image_bytes(image_id)
+        if not image_bytes:
+            return []
+
+        image_base64 = base64.b64encode(image_bytes).decode("utf-8")
+        findings = await detect_findings_with_llm(
+            image_base64, tooth_number, image_type="panoramic"
+        )
+
+        # If no findings, add placeholder
+        if not findings:
+            findings = [ToothFinding(
+                tooth_number=tooth_number,
+                condition="under_review",
+                severity="mild",
+                confidence=confidence,
+                location_description="Flagged for review by auto-scan"
+            )]
+
+        return findings
+
+    def _generate_fallback_batch_results(self, tooth_points: list[tuple[int, int]]) -> dict:
+        """Generate fallback bounding box results for batch segmentation.
+
+        Used when Modal endpoint is unavailable or times out.
+        Creates simple bounding boxes around each tooth center point.
+
+        Args:
+            tooth_points: List of (x, y) center points for each tooth
+
+        Returns:
+            dict: Batch result structure with fallback bounding boxes
+        """
+        results = []
+        pad = 40  # Bounding box padding in pixels
+
+        for idx, (x, y) in enumerate(tooth_points):
+            results.append({
+                "point_index": idx,
+                "point": [x, y],
+                "contour_points": [
+                    [x - pad, y - pad],
+                    [x + pad, y - pad],
+                    [x + pad, y + pad],
+                    [x - pad, y + pad]
+                ],
+                "confidence": 0.0,
+                "area_pixels": (pad * 2) * (pad * 2),
+                "used_fallback": True
+            })
+
+        return {
+            "success": True,
+            "results": results,
+            "total_points": len(tooth_points),
+            "successful_segments": len(tooth_points)
+        }
