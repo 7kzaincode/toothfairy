@@ -35,7 +35,7 @@ function ShimmerLight() {
       4 + Math.cos(t * 0.7) * 4
     );
   });
-  return <pointLight ref={lightRef} intensity={12} color="#ffffff" distance={22} decay={2} />;
+  return <pointLight ref={lightRef} intensity={8} color="#e0e0e0" distance={22} decay={2} />;
 }
 
 function TeethDisplay() {
@@ -69,13 +69,13 @@ function TeethDisplay() {
           {[nodes.Object_3, nodes.Object_4, nodes.Object_5].map((node, i) => (
             <mesh key={`gum-${i}`} geometry={node.geometry}>
               <meshPhysicalMaterial
-                color="#4a7aaa"
+                color="#c4a6b8"
                 transparent
-                opacity={0.3}
-                roughness={0.2}
-                metalness={0.6}
-                emissive="#5a90c0"
-                emissiveIntensity={0.4}
+                opacity={0.35}
+                roughness={0.3}
+                metalness={0.2}
+                emissive="#b08ea0"
+                emissiveIntensity={0.15}
                 side={THREE.DoubleSide}
               />
             </mesh>
@@ -83,30 +83,30 @@ function TeethDisplay() {
           {[nodes.Object_6, nodes.Object_7].map((node, i) => (
             <mesh key={`tooth-${i}`} geometry={node.geometry}>
               <meshPhysicalMaterial
-                color="#9adcff"
-                emissive="#5ab8f0"
-                emissiveIntensity={0.5}
+                color="#e8e8e8"
+                emissive="#d0d0d0"
+                emissiveIntensity={0.1}
                 transparent
-                opacity={0.72}
-                roughness={0.02}
-                metalness={0.1}
+                opacity={0.85}
+                roughness={0.05}
+                metalness={0.05}
                 clearcoat={1}
                 clearcoatRoughness={0.0}
-                ior={1.65}
-                reflectivity={1}
+                ior={1.5}
+                reflectivity={0.8}
                 side={THREE.DoubleSide}
               />
             </mesh>
           ))}
           <mesh geometry={nodes.Object_8.geometry}>
             <meshPhysicalMaterial
-              color="#3a6090"
+              color="#b0a0a8"
               transparent
-              opacity={0.15}
-              roughness={0.3}
-              metalness={0.6}
-              emissive="#4a80b0"
-              emissiveIntensity={0.2}
+              opacity={0.12}
+              roughness={0.4}
+              metalness={0.2}
+              emissive="#a090a0"
+              emissiveIntensity={0.05}
             />
           </mesh>
         </group>
@@ -132,7 +132,7 @@ export default function LandingPopup({ onDismiss }: LandingPopupProps) {
   if (!mounted) return null;
 
   return (
-    <div className={`fixed inset-0 z-50 flex items-center justify-center overflow-hidden bg-[#181818] ${dmSans.className}`}>
+    <div className={`fixed inset-0 z-50 flex items-center justify-center overflow-hidden bg-white ${dmSans.className}`}>
 
       {/* Top Spotlight Beam */}
       <div
@@ -140,17 +140,17 @@ export default function LandingPopup({ onDismiss }: LandingPopupProps) {
         style={{
           height: "65vh",
           background:
-            "radial-gradient(ellipse 38% 75% at 50% -8%, rgba(140, 190, 255, 0.48) 0%, rgba(100, 155, 235, 0.18) 45%, transparent 70%)",
+            "radial-gradient(ellipse 38% 75% at 50% -8%, rgba(0, 0, 0, 0.04) 0%, rgba(0, 0, 0, 0.01) 45%, transparent 70%)",
         }}
       />
 
       {/* Grid Pattern Background */}
       <div
-        className="absolute inset-0 z-0 opacity-20 pointer-events-none"
+        className="absolute inset-0 z-0 opacity-40 pointer-events-none"
         style={{
           backgroundImage: `
-            linear-gradient(to right, rgba(255, 255, 255, 0.05) 1px, transparent 1px),
-            linear-gradient(to bottom, rgba(255, 255, 255, 0.05) 1px, transparent 1px)
+            linear-gradient(to right, rgba(0, 0, 0, 0.03) 1px, transparent 1px),
+            linear-gradient(to bottom, rgba(0, 0, 0, 0.03) 1px, transparent 1px)
           `,
           backgroundSize: "40px 40px",
         }}
@@ -181,10 +181,10 @@ export default function LandingPopup({ onDismiss }: LandingPopupProps) {
               style={{ background: "transparent" }}
               onCreated={({ camera }) => camera.lookAt(0, 20, 0)}
             >
-              <ambientLight intensity={0.4} />
-              <pointLight position={[6, 26, 6]} intensity={4} color="#ffffff" />
-              <pointLight position={[-6, 18, 4]} intensity={2} color="#88ccff" />
-              <pointLight position={[0, 24, -4]} intensity={1.5} color="#4466bb" />
+              <ambientLight intensity={0.8} />
+              <pointLight position={[6, 26, 6]} intensity={3} color="#ffffff" />
+              <pointLight position={[-6, 18, 4]} intensity={1.5} color="#d0d0d0" />
+              <pointLight position={[0, 24, -4]} intensity={1} color="#c0c0c0" />
               <Suspense fallback={null}>
                 <ShimmerLight />
                 <TeethDisplay />
@@ -211,25 +211,25 @@ export default function LandingPopup({ onDismiss }: LandingPopupProps) {
         >
           <div className="flex flex-col items-center text-center mx-4 max-w-[440px]">
 
-            <div className="w-14 h-14 mb-8 rounded-2xl bg-white/5 border border-white/[0.08] flex items-center justify-center p-2">
-              <Image src="/logo.png" alt="Tooth Fairy Logo" width={44} height={44} className="opacity-90" />
+            <div className="w-14 h-14 mb-8 rounded-2xl bg-[#f5f5f5] border border-[#e5e5e5] flex items-center justify-center p-2">
+              <Image src="/logo.png" alt="Tooth Fairy Logo" width={44} height={44} className="opacity-90 invert" />
             </div>
 
-            <h1 className={`text-[56px] leading-[1.1] font-normal text-white/90 tracking-tight ${dmSerif.className}`}>
+            <h1 className={`text-[56px] leading-[1.1] font-normal text-[#171717] tracking-tight ${dmSerif.className}`}>
               Reimagine your
             </h1>
-            <h1 className={`text-[56px] leading-[1.1] font-normal italic text-white/90 tracking-tight mb-5 ${dmSerif.className}`}>
+            <h1 className={`text-[56px] leading-[1.1] font-normal italic text-[#171717] tracking-tight mb-5 ${dmSerif.className}`}>
               dental workflow.
             </h1>
 
-            <p className="text-[17px] leading-relaxed text-white/45 mb-10 max-w-[340px]">
+            <p className="text-[17px] leading-relaxed text-[#737373] mb-10 max-w-[340px]">
               Your AI-powered dental IDE for X-ray analysis, clinical notes, and treatment planning.
             </p>
 
             <button
               type="button"
               onClick={() => onDismiss(false)}
-              className="bg-white text-black rounded-xl px-10 py-3.5 text-[15px] font-semibold transition-all hover:bg-white/90 active:scale-[0.97] shadow-lg shadow-white/10"
+              className="bg-[#171717] text-white rounded-xl px-10 py-3.5 text-[15px] font-semibold transition-all hover:bg-[#2a2a2a] active:scale-[0.97] shadow-lg shadow-black/10"
             >
               Jump in!
             </button>
@@ -240,7 +240,7 @@ export default function LandingPopup({ onDismiss }: LandingPopupProps) {
 
       {/* Footer */}
       <div className="absolute bottom-0 left-0 right-0 z-20 pb-6 flex flex-col items-center gap-4 pointer-events-none">
-        <p className="text-[13px] text-white/30">
+        <p className="text-[13px] text-[#a3a3a3]">
           By continuing, you agree to Tooth Fairy&apos;s{" "}
           <span className="underline cursor-pointer pointer-events-auto">Terms of Service</span>{" "}
           and{" "}
@@ -248,24 +248,24 @@ export default function LandingPopup({ onDismiss }: LandingPopupProps) {
         </p>
         <div className="flex items-center gap-8">
           <div className="flex items-center gap-2">
-            <svg className="w-4 h-4 text-white/30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M9.813 15.904 9 18.75l-.813-2.846a4.5 4.5 0 0 0-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 0 0 3.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 0 0 3.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 0 0-3.09 3.09ZM18.259 8.715 18 9.75l-.259-1.035a3.375 3.375 0 0 0-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 0 0 2.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 0 0 2.455 2.456L21.75 6l-1.036.259a3.375 3.375 0 0 0-2.455 2.456Z" /></svg>
+            <svg className="w-4 h-4 text-[#a3a3a3]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M9.813 15.904 9 18.75l-.813-2.846a4.5 4.5 0 0 0-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 0 0 3.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 0 0 3.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 0 0-3.09 3.09ZM18.259 8.715 18 9.75l-.259-1.035a3.375 3.375 0 0 0-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 0 0 2.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 0 0 2.455 2.456L21.75 6l-1.036.259a3.375 3.375 0 0 0-2.455 2.456Z" /></svg>
             <div className="flex flex-col">
-              <span className="text-[11px] font-semibold text-white/40 tracking-wider uppercase">AI Powered</span>
-              <span className="text-[10px] text-white/25 uppercase tracking-wider">Gemini</span>
+              <span className="text-[11px] font-semibold text-[#737373] tracking-wider uppercase">AI Powered</span>
+              <span className="text-[10px] text-[#a3a3a3] uppercase tracking-wider">Gemini</span>
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <svg className="w-4 h-4 text-white/30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M9 12.75 11.25 15 15 9.75m-3-7.036A11.959 11.959 0 0 1 3.598 6 11.99 11.99 0 0 0 3 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285Z" /></svg>
+            <svg className="w-4 h-4 text-[#a3a3a3]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M9 12.75 11.25 15 15 9.75m-3-7.036A11.959 11.959 0 0 1 3.598 6 11.99 11.99 0 0 0 3 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285Z" /></svg>
             <div className="flex flex-col">
-              <span className="text-[11px] font-semibold text-white/40 tracking-wider uppercase">Privacy First</span>
-              <span className="text-[10px] text-white/25 uppercase tracking-wider">Secure</span>
+              <span className="text-[11px] font-semibold text-[#737373] tracking-wider uppercase">Privacy First</span>
+              <span className="text-[10px] text-[#a3a3a3] uppercase tracking-wider">Secure</span>
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <svg className="w-4 h-4 text-white/30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M17.25 6.75 22.5 12l-5.25 5.25m-10.5 0L1.5 12l5.25-5.25m7.5-3-4.5 16.5" /></svg>
+            <svg className="w-4 h-4 text-[#a3a3a3]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M17.25 6.75 22.5 12l-5.25 5.25m-10.5 0L1.5 12l5.25-5.25m7.5-3-4.5 16.5" /></svg>
             <div className="flex flex-col">
-              <span className="text-[11px] font-semibold text-white/40 tracking-wider uppercase">Open Source</span>
-              <span className="text-[10px] text-white/25 uppercase tracking-wider">MIT</span>
+              <span className="text-[11px] font-semibold text-[#737373] tracking-wider uppercase">Open Source</span>
+              <span className="text-[10px] text-[#a3a3a3] uppercase tracking-wider">MIT</span>
             </div>
           </div>
         </div>

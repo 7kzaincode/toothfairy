@@ -9,13 +9,13 @@ import CameraAnimator from "./CameraAnimator";
 import type { ToothFinding } from "@/types/patient-state";
 
 const CONDITION_COLORS: Record<string, string> = {
-  cavity: "#F4C152",
-  periapical_lesion: "#FF5C7A",
-  bone_loss: "#A78BFA",
-  impacted: "#4C9AFF",
-  root_canal_needed: "#FF5C7A",
-  fracture: "#FF9F4A",
-  gingivitis: "#F4C152",
+  cavity: "#d97706",
+  periapical_lesion: "#dc2626",
+  bone_loss: "#7c3aed",
+  impacted: "#2563eb",
+  root_canal_needed: "#dc2626",
+  fracture: "#ea580c",
+  gingivitis: "#d97706",
 };
 
 interface ToothChart3DProps {
@@ -84,7 +84,7 @@ export default function ToothChart3D({
 
   if (!mounted) {
     return (
-      <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", background: "#000000" }}>
+      <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", background: "#232323", borderRadius: 8 }}>
         <span style={{ color: "#888", fontSize: 12 }}>Initializing 3D viewer...</span>
       </div>
     );
@@ -96,7 +96,7 @@ export default function ToothChart3D({
         <Canvas
           camera={{ position: [-3, 21, 5], fov: 45 }}
           gl={{ antialias: true }}
-          style={{ position: "absolute", inset: 0, background: "#000000" }}
+          style={{ position: "absolute", inset: 0, background: "#232323", borderRadius: 8 }}
           onPointerMissed={handleCanvasMiss}
         >
           <ambientLight intensity={0.3} color="#4488ff" />

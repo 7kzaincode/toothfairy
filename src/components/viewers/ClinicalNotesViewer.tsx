@@ -6,18 +6,18 @@ import NotesHighlighter from "./NotesHighlighter";
 import ResizeHandle from "@/components/layout/ResizeHandle";
 
 const SEVERITY_COLORS: Record<string, string> = {
-  mild: "#F4C152",
-  moderate: "#FF9F4A",
-  severe: "#FF5C7A",
+  mild: "#d97706",
+  moderate: "#ea580c",
+  severe: "#dc2626",
 };
 
 const URGENCY_LABELS: Record<string, { color: string; bg: string }> = {
-  IMMEDIATE: { color: "#FF5C7A", bg: "rgba(255,92,122,0.15)" },
-  immediate: { color: "#FF5C7A", bg: "rgba(255,92,122,0.15)" },
-  SOON: { color: "#FF9F4A", bg: "rgba(255,159,74,0.15)" },
-  soon: { color: "#FF9F4A", bg: "rgba(255,159,74,0.15)" },
-  ROUTINE: { color: "#4A9EF5", bg: "rgba(74,158,245,0.15)" },
-  routine: { color: "#4A9EF5", bg: "rgba(74,158,245,0.15)" },
+  IMMEDIATE: { color: "#dc2626", bg: "rgba(220,38,38,0.08)" },
+  immediate: { color: "#dc2626", bg: "rgba(220,38,38,0.08)" },
+  SOON: { color: "#ea580c", bg: "rgba(234,88,12,0.08)" },
+  soon: { color: "#ea580c", bg: "rgba(234,88,12,0.08)" },
+  ROUTINE: { color: "#2563eb", bg: "rgba(37,99,235,0.08)" },
+  routine: { color: "#2563eb", bg: "rgba(37,99,235,0.08)" },
 };
 
 type ResultsTab = "plan" | "findings" | "summary";

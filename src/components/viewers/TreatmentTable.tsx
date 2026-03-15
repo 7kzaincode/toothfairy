@@ -3,10 +3,10 @@
 import type { TreatmentProtocol } from "@/types/patient-state";
 
 const URGENCY_COLORS: Record<string, string> = {
-  immediate: "#FF5C7A",
-  soon: "#F4C152",
-  routine: "#2BD4A7",
-  monitor: "#4C9AFF",
+  immediate: "#dc2626",
+  soon: "#d97706",
+  routine: "#16a34a",
+  monitor: "#2563eb",
 };
 
 interface TreatmentTableProps {

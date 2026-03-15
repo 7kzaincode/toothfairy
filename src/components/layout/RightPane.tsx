@@ -171,7 +171,7 @@ export default function RightPane({
             </span>
             <div className={`flex items-start gap-2 ${msg.role === "user" ? "flex-row-reverse" : ""}`}>
               {msg.role === "agent" && (
-                <div className="mt-1 w-5 h-5 rounded-full shrink-0 overflow-hidden"><Image src="/logo.png" alt="TF" width={20} height={20} className="w-full h-full object-cover" /></div>
+                <div className="mt-1 w-5 h-5 rounded-full shrink-0 overflow-hidden"><Image src="/logo.png" alt="TF" width={20} height={20} className="w-full h-full object-cover invert" /></div>
               )}
               {msg.role === "user" && (
                 <div className="mt-1 w-5 h-5 rounded-full bg-ide-surface shadow-sm shrink-0 border border-ide-border flex items-center justify-center text-ide-text overflow-hidden">
@@ -188,7 +188,7 @@ export default function RightPane({
         ))}
         {chatLoading && (
           <div className="flex items-start gap-2">
-            <div className="mt-1 w-5 h-5 rounded-full shrink-0 overflow-hidden"><Image src="/logo.png" alt="TF" width={20} height={20} className="w-full h-full object-cover" /></div>
+            <div className="mt-1 w-5 h-5 rounded-full shrink-0 overflow-hidden"><Image src="/logo.png" alt="TF" width={20} height={20} className="w-full h-full object-cover invert" /></div>
             <div className="py-1 text-[13px] text-ide-muted animate-pulse">Thinking...</div>
           </div>
         )}
@@ -210,7 +210,7 @@ export default function RightPane({
           />
           <button
             onClick={handleSend}
-            className="absolute right-2 p-1.5 text-ide-muted hover:text-white transition-colors rounded-md hover:bg-ide-panel"
+            className="absolute right-2 p-1.5 text-ide-muted hover:text-[#171717] transition-colors rounded-md hover:bg-[#f5f5f5]"
             disabled={!inputValue.trim() || chatLoading}
           >
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">

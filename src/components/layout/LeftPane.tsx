@@ -69,7 +69,7 @@ function PatientSwitcher({
       <button
         type="button"
         onClick={() => setOpen(!open)}
-        className="flex items-center gap-2 px-1.5 py-1 rounded-md hover:bg-white/5 transition-colors cursor-pointer"
+        className="flex items-center gap-2 px-1.5 py-1 rounded-md hover:bg-black/[0.04] transition-colors cursor-pointer"
       >
         <div className="w-6 h-6 rounded-md bg-ide-surface border border-ide-border flex items-center justify-center shrink-0">
           <UserIcon size={14} className="text-ide-muted" />
@@ -81,7 +81,7 @@ function PatientSwitcher({
       </button>
 
       {open && (
-        <div className="absolute z-50 left-0 mt-1 w-64 bg-[#1a1a1a] border border-ide-border rounded-lg shadow-2xl overflow-hidden">
+        <div className="absolute z-50 left-0 mt-1 w-64 bg-white border border-[#e5e5e5] rounded-lg shadow-lg overflow-hidden">
           <div className="px-3 py-2 border-b border-ide-border">
             <span className="text-[11px] text-ide-muted font-medium">Patients</span>
           </div>
@@ -90,7 +90,7 @@ function PatientSwitcher({
               key={p.patient_id}
               type="button"
               onClick={() => { onSelect(p.patient_id); setOpen(false); }}
-              className={`w-full flex items-center gap-2.5 px-3 py-2.5 transition-colors hover:bg-white/5 ${p.patient_id === selectedId ? "bg-white/[0.03]" : ""}`}
+              className={`w-full flex items-center gap-2.5 px-3 py-2.5 transition-colors hover:bg-[#f5f5f5] ${p.patient_id === selectedId ? "bg-[#f5f5f5]" : ""}`}
             >
               <div className="w-7 h-7 rounded-md bg-ide-surface border border-ide-border flex items-center justify-center shrink-0">
                 <UserIcon size={14} className="text-ide-muted" />
@@ -177,7 +177,7 @@ export default function LeftPane({
       {/* Header — v0 style: logo / patient switcher */}
       <div className="h-11 flex items-center px-3 border-b border-ide-border shrink-0">
         <div className="flex items-center gap-1.5 flex-1 min-w-0">
-          <Image src="/logo.png" alt="TF" width={20} height={20} className="shrink-0" />
+          <Image src="/logo.png" alt="TF" width={20} height={20} className="shrink-0 invert" />
           <span className="text-[13px] font-bold tracking-tight text-ide-text shrink-0">/</span>
           {profiles.length > 0 ? (
             <PatientSwitcher
@@ -207,7 +207,7 @@ export default function LeftPane({
       <div className="px-3 py-4 border-b border-ide-border">
         <button
           onClick={() => fileInputRef.current?.click()}
-          className="w-full flex items-center justify-center gap-2 bg-white text-black text-[13px] font-medium py-2 px-3 rounded-lg hover:bg-white/90 active:scale-[0.98] transition-all"
+          className="w-full flex items-center justify-center gap-2 bg-[#171717] text-white text-[13px] font-medium py-2 px-3 rounded-lg hover:bg-[#2a2a2a] active:scale-[0.98] transition-all"
         >
           Upload X-Ray
         </button>
@@ -273,7 +273,7 @@ export default function LeftPane({
                 {profile!.dental_history!.previous_procedures!.map((proc, i) => (
                   <div
                     key={i}
-                    className="flex items-center gap-2.5 px-2.5 py-2.5 rounded-md text-[12px] text-ide-text-2 hover:bg-white/[0.04] transition-colors cursor-default"
+                    className="flex items-center gap-2.5 px-2.5 py-2.5 rounded-md text-[12px] text-ide-text-2 hover:bg-[#f5f5f5] transition-colors cursor-default"
                   >
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between">

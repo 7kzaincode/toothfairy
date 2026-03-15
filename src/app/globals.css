@@ -1,33 +1,33 @@
 @import "tailwindcss";
 
 :root {
-  --bg: #141414;
-  --panel: #141414;
-  --surface: #101725;
-  --hover: #0F1623;
-  --selected: #121B2B;
+  --bg: #ffffff;
+  --panel: #ffffff;
+  --surface: #f5f5f5;
+  --hover: #fafafa;
+  --selected: #f0f0f0;
 
-  --border: #232323;
-  --hairline: #141B28;
+  --border: #e5e5e5;
+  --hairline: #ebebeb;
 
-  --text: #E7ECF5;
-  --text-2: #AAB4C5;
-  --muted: #6E7A92;
+  --text: #171717;
+  --text-2: #404040;
+  --muted: #737373;
 
-  --accent: #F4C152;
-  --link: #4C9AFF;
+  --accent: #171717;
+  --link: #171717;
 
   /* log severities */
-  --info: #4C9AFF;
-  --warn: #F4C152;
-  --success: #2BD4A7;
-  --fallback: #FF9F4A;
-  --error: #FF5C7A;
+  --info: #2563eb;
+  --warn: #d97706;
+  --success: #16a34a;
+  --fallback: #ea580c;
+  --error: #dc2626;
 
   /* dental copilot colors */
-  --imaging: #a371f7;
-  --clinical-notes: #f778ba;
-  --treatment: #7ee787;
+  --imaging: #7c3aed;
+  --clinical-notes: #db2777;
+  --treatment: #16a34a;
 }
 
 @theme inline {
@@ -82,12 +82,12 @@ body {
 }
 
 .scrollbar-ide::-webkit-scrollbar-thumb {
-  background: var(--surface);
+  background: #d4d4d4;
   border-radius: 4px;
 }
 
 .scrollbar-ide::-webkit-scrollbar-thumb:hover {
-  background: var(--border);
+  background: #a3a3a3;
 }
 
 /* Terminal log lines */

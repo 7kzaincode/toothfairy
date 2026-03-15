@@ -88,13 +88,13 @@ export default function CenterPane({
             onClick={() => onTabChange(tab.key)}
             className={`flex-1 py-2.5 text-[12px] font-medium transition-colors relative text-center ${
               activeTab === tab.key
-                ? "text-white bg-white/[0.06]"
-                : "text-ide-muted hover:text-ide-text hover:bg-white/[0.02]"
+                ? "text-[#171717] bg-black/[0.03]"
+                : "text-ide-muted hover:text-ide-text hover:bg-black/[0.02]"
             }`}
           >
             {tab.label}
             {activeTab === tab.key && (
-              <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-white" />
+              <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-[#171717]" />
             )}
           </button>
         ))}
@@ -152,7 +152,7 @@ export default function CenterPane({
             </div>
           ) : (
             <div className="flex flex-col items-center justify-center h-full gap-3">
-              <Image src="/logo.png" alt="Logo" width={170} height={170} className="opacity-40 transition-opacity duration-300 hover:opacity-100 cursor-pointer" />
+              <Image src="/logo.png" alt="Logo" width={170} height={170} className="opacity-40 transition-opacity duration-300 hover:opacity-100 cursor-pointer invert" />
               <div className="flex flex-col w-80">
                 <ShortcutRow label="Open AI Agent" keys={["⇧", "⌘", "L"]} onClick={onToggleRightPane} />
                 <ShortcutRow label="Clinical Notes" keys={["⇧", "⌘", "N"]} onClick={() => onTabChange("clinical-notes")} />
@@ -184,12 +184,12 @@ function ShortcutRow({ label, keys, onClick }: { label: string; keys: string[]; 
     <button
       type="button"
       onClick={onClick}
-      className="flex items-center justify-between w-full px-3 py-2 rounded-md transition-all duration-100 text-[#5c5c5c] hover:text-white/90 hover:bg-white/[0.06] active:scale-[0.98] active:bg-white/[0.09] cursor-pointer text-left group"
+      className="flex items-center justify-between w-full px-3 py-2 rounded-md transition-all duration-100 text-[#737373] hover:text-[#171717] hover:bg-[#f5f5f5] active:scale-[0.98] active:bg-[#ebebeb] cursor-pointer text-left group"
     >
       <span className="text-[13px]">{label}</span>
       <div className="flex gap-1 text-xs">
         {keys.map((k) => (
-          <span key={k} className="border border-white/10 group-hover:border-white/20 px-1.5 py-0.5 rounded text-[10px] min-w-[22px] text-center transition-colors">
+          <span key={k} className="border border-[#e5e5e5] group-hover:border-[#d4d4d4] px-1.5 py-0.5 rounded text-[10px] min-w-[22px] text-center transition-colors">
             {k}
           </span>
         ))}

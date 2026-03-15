@@ -3,9 +3,9 @@
 import type { ToothFinding } from "@/types/patient-state";
 
 const SEVERITY_COLORS: Record<string, string> = {
-  mild: "#F4C152",
-  moderate: "#FF9F4A",
-  severe: "#FF5C7A",
+  mild: "#d97706",
+  moderate: "#ea580c",
+  severe: "#dc2626",
 };
 
 interface FindingsPanelProps {
