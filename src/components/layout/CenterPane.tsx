@@ -81,20 +81,22 @@ export default function CenterPane({
   return (
     <div className="flex-1 min-w-0 flex flex-col bg-ide-panel">
       {/* Tab Bar */}
-      <div className="h-9 flex items-end border-b border-ide-border bg-ide-bg px-2 shrink-0">
-        {TABS.map((tab) => (
-          <button
-            key={tab.key}
-            onClick={() => onTabChange(tab.key)}
-            className={`flex-1 h-8 px-3 text-[10px] font-medium rounded-t-md border border-b-0 transition-colors duration-150 text-center ${
-              activeTab === tab.key
-                ? "bg-ide-panel text-ide-text border-ide-border"
-                : "bg-transparent text-ide-muted border-transparent hover:bg-ide-surface hover:text-ide-text-2"
-            }`}
-          >
-            {tab.label}
-          </button>
-        ))}
+      <div className="flex items-center justify-center py-2.5 bg-ide-bg shrink-0 border-b border-ide-border">
+        <div className="flex items-center gap-1 bg-white/[0.04] border border-white/[0.08] rounded-full px-1.5 py-1">
+          {TABS.map((tab) => (
+            <button
+              key={tab.key}
+              onClick={() => onTabChange(tab.key)}
+              className={`px-4 py-1.5 text-[11px] font-medium rounded-full transition-all duration-200 ${
+                activeTab === tab.key
+                  ? "bg-white text-black shadow-sm"
+                  : "text-ide-muted hover:text-ide-text"
+              }`}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* Viewer Content */}

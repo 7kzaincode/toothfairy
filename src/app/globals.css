@@ -54,7 +54,7 @@
   --color-cop-clinical: var(--clinical-notes);
   --color-cop-treatment: var(--treatment);
 
-  --font-sans: var(--font-geist-sans);
+  --font-sans: var(--font-inter);
   --font-mono: var(--font-geist-mono);
 }
 
@@ -66,7 +66,7 @@ body {
   margin: 0;
   background: var(--bg);
   color: var(--text);
-  font-family: var(--font-geist-sans, system-ui), -apple-system, BlinkMacSystemFont, sans-serif;
+  font-family: var(--font-inter, system-ui), -apple-system, BlinkMacSystemFont, sans-serif;
   -webkit-font-smoothing: antialiased;
   font-feature-settings: "rlig" 1, "calt" 1;
 }

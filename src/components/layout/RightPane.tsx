@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+import Image from "next/image";
 import { apiClient } from "@/lib/api/client";
 import type { LogEvent } from "@/types/logs";
 import type { PatientState } from "@/types/patient-state";
@@ -166,11 +167,11 @@ export default function RightPane({
             className={`flex flex-col ${msg.role === "user" ? "items-end" : "items-start"}`}
           >
             <span className="text-[10px] text-ide-muted mb-1 px-1">
-              {msg.role === "user" ? "You" : "ToothFairy AI"}
+              {msg.role === "user" ? "You" : "toothfairy AI"}
             </span>
             <div className={`flex items-start gap-2 ${msg.role === "user" ? "flex-row-reverse" : ""}`}>
               {msg.role === "agent" && (
-                <div className="mt-1 w-5 h-5 rounded-full bg-blue-500/20 shadow-sm shrink-0 border border-blue-500/30" />
+                <div className="mt-1 w-5 h-5 rounded-full shrink-0 overflow-hidden"><Image src="/logo.png" alt="TF" width={20} height={20} className="w-full h-full object-cover" /></div>
               )}
               {msg.role === "user" && (
                 <div className="mt-1 w-5 h-5 rounded-full bg-ide-surface shadow-sm shrink-0 border border-ide-border flex items-center justify-center text-ide-text overflow-hidden">
@@ -187,7 +188,7 @@ export default function RightPane({
         ))}
         {chatLoading && (
           <div className="flex items-start gap-2">
-            <div className="mt-1 w-5 h-5 rounded-full bg-blue-500/20 shadow-sm shrink-0 border border-blue-500/30" />
+            <div className="mt-1 w-5 h-5 rounded-full shrink-0 overflow-hidden"><Image src="/logo.png" alt="TF" width={20} height={20} className="w-full h-full object-cover" /></div>
             <div className="py-1 text-[13px] text-ide-muted animate-pulse">Thinking...</div>
           </div>
         )}
