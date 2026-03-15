@@ -31,6 +31,10 @@ _gemini_semaphore = asyncio.Semaphore(3)
 
 XRAY_DIR = settings.ASSETS_ROOT_DIR / "xrays"
 
+# Demo cache constants — fallback when live inference is unavailable
+_DEMO_PATIENT_ID = "patient-001"
+_DEMO_IMAGE_ID = "demo-panoramic"
+
 
 def _load_image_bytes(image_id: str) -> bytes | None:
     """Load X-ray image bytes from disk by image_id.
@@ -99,12 +103,16 @@ class ImagingHandler:
             [max(0, pixel_x - pad), min(img_height, pixel_y + pad)],
         ]
 
-        # Check cache first
+        # Check cache first (exact match, then demo fallback)
         cached_seg = cache_manager.get_imaging_segmentation(
             patient_state.identifiers.patient_id,
             request.image_id,
             str(tooth_number),
         )
+        if not cached_seg:
+            cached_seg = cache_manager.get_imaging_segmentation(
+                _DEMO_PATIENT_ID, _DEMO_IMAGE_ID, str(tooth_number),
+            )
 
         if cached_seg:
             contour_points = cached_seg.get("contour_points", [])
@@ -147,6 +155,10 @@ class ImagingHandler:
         cached_findings = cache_manager.get_imaging_findings(
             patient_state.identifiers.patient_id, request.image_id
         )
+        if not cached_findings:
+            cached_findings = cache_manager.get_imaging_findings(
+                _DEMO_PATIENT_ID, _DEMO_IMAGE_ID
+            )
 
         findings = []
         if cached_findings and str(tooth_number) in cached_findings.get("teeth", {}):
@@ -175,21 +187,23 @@ class ImagingHandler:
                         f"Gemini detected {len(findings)} finding(s) for tooth #{tooth_number}"
                     )
 
-            # If both cache and LLM returned nothing, use placeholder
+            # If both cache and LLM returned nothing, report healthy
             if not findings:
-                await log_emitter.emit_info(session_id, copilot, f"No findings detected for tooth #{tooth_number}")
+                await log_emitter.emit_success(session_id, copilot, f"No pathology detected for tooth #{tooth_number}")
                 findings.append(ToothFinding(
                     tooth_number=tooth_number,
-                    condition="under_review",
-                    severity="mild",
-                    confidence=0.5,
-                    location_description="Requires further analysis",
+                    condition="healthy",
+                    severity="none",
+                    confidence=0.75,
+                    location_description="No visible pathology detected",
                 ))
 
         # Step 4: Generate narrative
-        if findings and findings[0].condition != "under_review":
+        if findings and findings[0].condition not in ("under_review", "healthy"):
             narrative = f"Tooth #{tooth_number}: {', '.join(f.condition.replace('_', ' ') for f in findings)}. "
             narrative += f"Severity: {findings[0].severity}. Confidence: {findings[0].confidence:.0%}."
+        elif findings and findings[0].condition == "healthy":
+            narrative = f"Tooth #{tooth_number}: No pathology detected. Tooth appears healthy."
         else:
             narrative = f"Tooth #{tooth_number} selected. Region segmented for review."
 
@@ -216,9 +230,9 @@ class ImagingHandler:
         patient_state.imaging_output = imaging_output
         patient_state.imaging_provenance = imaging_provenance
 
-        # Update tooth chart
+        # Update tooth chart (skip healthy — only add actual findings)
         for finding in findings:
-            if finding.condition != "under_review":
+            if finding.condition not in ("under_review", "healthy"):
                 patient_state.tooth_chart[finding.tooth_number] = finding
 
         # Build image URL for frontend

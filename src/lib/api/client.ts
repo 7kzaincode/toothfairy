@@ -20,14 +20,67 @@ import type {
 } from "@/types/api";
 import type { PatientState } from "@/types/patient-state";
 
+export interface PatientProfile {
+  patient_id: string;
+  name: string;
+  date_of_birth?: string;
+  age?: number;
+  gender?: string;
+  allergies?: string[];
+  last_visit?: string;
+  insurance?: string;
+  dental_history?: {
+    notes?: string;
+    previous_procedures?: { date: string; procedure: string; tooth: number | null }[];
+  };
+  xrays?: { image_id: string; image_type: string; date: string; notes?: string }[];
+  known_conditions?: Record<string, unknown>;
+  clinical_notes?: string;
+}
+
+export interface ProfileListItem {
+  patient_id: string;
+  name: string;
+  age?: number;
+  last_visit?: string;
+  insurance?: string;
+  xray_count: number;
+}
+
 export class APIClient {
+  // Profiles
+  async listProfiles(): Promise<{ profiles: ProfileListItem[]; count: number }> {
+    const response = await fetch(ENDPOINTS.PROFILES_LIST);
+    if (!response.ok) throw new Error(`Failed to list profiles: ${response.statusText}`);
+    return response.json();
+  }
+
+  async getProfile(patientId: string): Promise<PatientProfile> {
+    const response = await fetch(ENDPOINTS.PROFILE_GET(patientId));
+    if (!response.ok) throw new Error(`Failed to get profile: ${response.statusText}`);
+    return response.json();
+  }
+
+  async linkXrayToProfile(patientId: string, imageId: string, imageType: string = "panoramic"): Promise<void> {
+    const response = await fetch(ENDPOINTS.PROFILE_LINK_XRAY(patientId), {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ image_id: imageId, image_type: imageType }),
+    });
+    if (!response.ok) throw new Error(`Failed to link X-ray: ${response.statusText}`);
+  }
+
   // Session
-  async createSession(): Promise<SessionResponse> {
+  async createSession(patientId?: string): Promise<SessionResponse> {
     const response = await fetch(ENDPOINTS.SESSION_CREATE, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
+      body: JSON.stringify({
+        patient_id: patientId || "aidan-jeon",
+        case_id: "dental-001",
+      }),
     });
 
     if (!response.ok) {

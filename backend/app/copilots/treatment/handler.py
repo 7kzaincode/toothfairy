@@ -53,8 +53,8 @@ class TreatmentHandler:
 
         await log_emitter.emit_info(session_id, copilot, f"Looking up evidence for: {request.condition}")
 
-        # Try LLM + MCP first
-        if not settings.DEMO_MODE and llm_client.is_available:
+        # Skip LLM — use cache only (LLM tokens reserved for imaging)
+        if False:
             try:
                 logger.info("Starting LLM+MCP treatment lookup...")
                 response = await self._llm_mcp_lookup(request, session_id, copilot, start_time)
