@@ -1,7 +1,7 @@
 {
   "condition": "abscess",
-  "summary": "Dental abscesses are acute bacterial infections requiring urgent intervention. Periapical abscesses originate from pulp necrosis; periodontal abscesses from deep periodontal pockets. Treatment involves establishing drainage (incision or through root canal access), antibiotic therapy for systemic involvement, and definitive treatment of the underlying cause. Untreated abscesses can lead to cellulitis, Ludwig's angina, or mediastinitis — potentially life-threatening complications.",
-  "success_rate": 0.90,
+  "summary": "Dental abscesses are acute bacterial infections requiring urgent intervention. Periapical abscesses originate from pulp necrosis; periodontal abscesses from deep periodontal pockets. Treatment involves establishing drainage (incision or through root canal access), antibiotic therapy for systemic involvement, and definitive treatment of the underlying cause. Untreated abscesses can lead to cellulitis, Ludwig's angina, or mediastinitis \u2014 potentially life-threatening complications.",
+  "success_rate": 0.9,
   "risk_factors": [
     "Immunocompromised status (diabetes, HIV, chemotherapy)",
     "Delayed treatment allowing spread to fascial spaces",
@@ -15,6 +15,29 @@
     "Extraction with socket debridement (if tooth is non-restorable)",
     "Hospital admission with IV antibiotics (for severe fascial space infections)"
   ],
-  "referral_summary": "Urgent referral to oral surgeon or emergency department for: trismus (limited mouth opening), dysphagia (difficulty swallowing), fever >101°F, rapid spread of swelling, or immunocompromised patients. Refer to endodontist for complex root canal therapy after acute phase.",
-  "patient_education": "A dental abscess is a serious infection — a collection of pus caused by bacteria. It needs treatment right away to prevent the infection from spreading. Treatment usually involves draining the infection and taking antibiotics. Once the acute infection is controlled, we'll treat the underlying problem — either a root canal to save the tooth or extraction if the tooth can't be saved. Warning signs to go to the ER: difficulty breathing or swallowing, fever, or swelling spreading to your eye or neck."
+  "referral_summary": "Urgent referral to oral surgeon or emergency department for: trismus (limited mouth opening), dysphagia (difficulty swallowing), fever >101\u00b0F, rapid spread of swelling, or immunocompromised patients. Refer to endodontist for complex root canal therapy after acute phase.",
+  "patient_education": "A dental abscess is a serious infection \u2014 a collection of pus caused by bacteria. It needs treatment right away to prevent the infection from spreading. Treatment usually involves draining the infection and taking antibiotics. Once the acute infection is controlled, we'll treat the underlying problem \u2014 either a root canal to save the tooth or extraction if the tooth can't be saved. Warning signs to go to the ER: difficulty breathing or swallowing, fever, or swelling spreading to your eye or neck.",
+  "pharmacy_medications": [
+    {
+      "drug_name": "Amoxicillin/Clavulanate",
+      "brand_name": "Augmentin",
+      "din": "02243660",
+      "form": "Tablet 875mg/125mg",
+      "schedule": "Prescription"
+    },
+    {
+      "drug_name": "Metronidazole",
+      "brand_name": "Flagyl",
+      "din": "02230474",
+      "form": "Tablet 500mg",
+      "schedule": "Prescription"
+    },
+    {
+      "drug_name": "Acetaminophen/Codeine",
+      "brand_name": "Tylenol #3",
+      "din": "02163934",
+      "form": "Tablet 300mg/30mg",
+      "schedule": "Prescription (Scheduled)"
+    }
+  ]
 }

@@ -16,5 +16,28 @@
     "Extraction with bridge or removable partial denture"
   ],
   "referral_summary": "Refer to endodontist for complex cases: retreatment, calcified canals, teeth with posts, or lesions not responding to initial treatment. Refer to oral surgeon if apicoectomy or extraction with immediate implant is planned.",
-  "patient_education": "A periapical lesion is an infection at the tip of your tooth's root, usually caused by bacteria reaching the nerve through a deep cavity or crack. Root canal treatment removes the infected nerve tissue, cleans the canals, and seals them to prevent reinfection. The tooth is then restored with a crown for protection. Most teeth treated this way last many years. You may need a follow-up X-ray in 6-12 months to confirm healing."
+  "patient_education": "A periapical lesion is an infection at the tip of your tooth's root, usually caused by bacteria reaching the nerve through a deep cavity or crack. Root canal treatment removes the infected nerve tissue, cleans the canals, and seals them to prevent reinfection. The tooth is then restored with a crown for protection. Most teeth treated this way last many years. You may need a follow-up X-ray in 6-12 months to confirm healing.",
+  "pharmacy_medications": [
+    {
+      "drug_name": "Clindamycin",
+      "brand_name": "Dalacin C",
+      "din": "02241707",
+      "form": "Capsule 300mg",
+      "schedule": "Prescription"
+    },
+    {
+      "drug_name": "Ibuprofen",
+      "brand_name": "Advil",
+      "din": "02242918",
+      "form": "Tablet 400mg",
+      "schedule": "OTC"
+    },
+    {
+      "drug_name": "Calcium Hydroxide",
+      "brand_name": "Dycal",
+      "din": "02095432",
+      "form": "Paste/Base",
+      "schedule": "Professional Use"
+    }
+  ]
 }
