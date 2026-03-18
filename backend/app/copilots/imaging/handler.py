@@ -313,6 +313,15 @@ class ImagingHandler:
             except Exception as e:
                 logger.error(f"Cached findings fallback failed: {e}")
 
+        # Filter out "missing" findings — if U-Net segmented the tooth, it's not missing
+        segmented_count = len(all_segments)
+        if segmented_count > 0:
+            before = len(findings)
+            findings = [f for f in findings if f.condition != "missing"]
+            dropped = before - len(findings)
+            if dropped:
+                logger.info(f"Dropped {dropped} 'missing' findings — U-Net segmented {segmented_count} teeth")
+
         suspicious = len(set(f.tooth_number for f in findings if f.condition != "healthy"))
 
         # Write findings to patient_state.tooth_chart (don't overwrite existing notes-based findings)

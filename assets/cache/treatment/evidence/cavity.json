@@ -16,5 +16,28 @@
     "Silver diamine fluoride (non-invasive arrest for elderly or pediatric patients)"
   ],
   "referral_summary": "Standard restorative procedure performed by general dentists. Referral to prosthodontist recommended for complex multi-surface restorations or when significant occlusal rehabilitation is needed.",
-  "patient_education": "A cavity is a hole in your tooth caused by bacteria and acid. The dentist removes the decayed area and fills it with a tooth-colored material. After treatment, maintain good brushing habits (twice daily with fluoride toothpaste) and floss daily. Limit sugary snacks and drinks. Regular 6-month checkups help catch new cavities early when they're easier to treat."
+  "patient_education": "A cavity is a hole in your tooth caused by bacteria and acid. The dentist removes the decayed area and fills it with a tooth-colored material. After treatment, maintain good brushing habits (twice daily with fluoride toothpaste) and floss daily. Limit sugary snacks and drinks. Regular 6-month checkups help catch new cavities early when they're easier to treat.",
+  "pharmacy_medications": [
+    {
+      "drug_name": "Amoxicillin",
+      "brand_name": "Amoxil",
+      "din": "02237682",
+      "form": "Capsule 500mg",
+      "schedule": "Prescription"
+    },
+    {
+      "drug_name": "Ibuprofen",
+      "brand_name": "Advil",
+      "din": "02242918",
+      "form": "Tablet 400mg",
+      "schedule": "OTC"
+    },
+    {
+      "drug_name": "Chlorhexidine Gluconate",
+      "brand_name": "Peridex",
+      "din": "02241893",
+      "form": "Oral Rinse 0.12%",
+      "schedule": "Prescription"
+    }
+  ]
 }

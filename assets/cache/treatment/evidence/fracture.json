@@ -1,0 +1,43 @@
+{
+  "condition": "fracture",
+  "summary": "Dental fractures range from minor enamel cracks to vertical root fractures. Treatment depends on fracture type and extent: craze lines require monitoring, horizontal fractures may be splinted and stabilized, while vertical root fractures typically necessitate extraction. Crown fractures exposing dentin require bonding or crown restoration. Fractures involving pulp exposure need endodontic treatment followed by full-coverage restoration.",
+  "success_rate": 0.85,
+  "risk_factors": [
+    "History of bruxism or teeth grinding",
+    "Previous endodontic treatment (brittle tooth structure)",
+    "Trauma from sports or accidents",
+    "Large amalgam restorations creating stress concentrators",
+    "Age-related loss of tooth elasticity"
+  ],
+  "alternatives": [
+    "Composite bonding for minor enamel-dentin fractures",
+    "Full-coverage crown for significant coronal fractures",
+    "Root canal therapy with post-core and crown if pulp is involved",
+    "Extraction with implant replacement for vertical root fractures"
+  ],
+  "referral_summary": "General dentists manage most coronal fractures. Endodontist referral is needed for complicated crown fractures with pulp exposure or horizontal root fractures requiring splinting. Oral surgery referral for extraction of vertically fractured teeth and implant planning.",
+  "patient_education": "A tooth fracture is a crack or break in your tooth. Small cracks in the enamel are usually harmless and just need monitoring. Deeper fractures that reach the inner part of the tooth may cause sensitivity to hot, cold, or biting pressure. Depending on the severity, treatment can range from a simple bonding to a crown or root canal. If you notice sharp pain when biting or releasing, let your dentist know right away.",
+  "pharmacy_medications": [
+    {
+      "drug_name": "Ibuprofen",
+      "brand_name": "Advil",
+      "din": "02242918",
+      "form": "Tablet 400mg",
+      "schedule": "OTC"
+    },
+    {
+      "drug_name": "Acetaminophen with Codeine",
+      "brand_name": "Tylenol No. 3",
+      "din": "02163926",
+      "form": "Tablet 300mg/30mg",
+      "schedule": "Prescription (Schedule I)"
+    },
+    {
+      "drug_name": "Amoxicillin",
+      "brand_name": "Amoxil",
+      "din": "02237682",
+      "form": "Capsule 500mg",
+      "schedule": "Prescription"
+    }
+  ]
+}

@@ -16,5 +16,28 @@
     "Marsupialization (for large associated cysts before definitive extraction)"
   ],
   "referral_summary": "Refer to oral and maxillofacial surgeon for: deeply impacted teeth close to the inferior alveolar nerve, impactions requiring bone removal, patients requiring sedation or general anesthesia, and cases with associated pathology (cysts, tumors).",
-  "patient_education": "An impacted tooth is one that hasn't fully come through the gum, usually because there isn't enough room. If left untreated, impacted teeth can cause pain, infection, damage to neighboring teeth, or cyst formation. Surgical removal involves numbing the area (or sedation if preferred), making a small incision in the gum, removing any bone covering the tooth, and extracting the tooth. Recovery typically takes 3-7 days. Apply ice packs, eat soft foods, and follow your post-operative instructions carefully."
+  "patient_education": "An impacted tooth is one that hasn't fully come through the gum, usually because there isn't enough room. If left untreated, impacted teeth can cause pain, infection, damage to neighboring teeth, or cyst formation. Surgical removal involves numbing the area (or sedation if preferred), making a small incision in the gum, removing any bone covering the tooth, and extracting the tooth. Recovery typically takes 3-7 days. Apply ice packs, eat soft foods, and follow your post-operative instructions carefully.",
+  "pharmacy_medications": [
+    {
+      "drug_name": "Amoxicillin/Clavulanate",
+      "brand_name": "Augmentin",
+      "din": "02243660",
+      "form": "Tablet 875mg/125mg",
+      "schedule": "Prescription"
+    },
+    {
+      "drug_name": "Dexamethasone",
+      "brand_name": "Decadron",
+      "din": "02240982",
+      "form": "Tablet 4mg",
+      "schedule": "Prescription"
+    },
+    {
+      "drug_name": "Acetaminophen/Codeine",
+      "brand_name": "Tylenol #3",
+      "din": "02163934",
+      "form": "Tablet 300mg/30mg",
+      "schedule": "Prescription (Scheduled)"
+    }
+  ]
 }
