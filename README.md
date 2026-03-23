@@ -95,7 +95,29 @@ cd backend
 pip install -r requirements.txt
 ```
 
-### 2. Set up environment variables
+### 2. Download the segmentation model
+
+The U-Net model weights (~154 MB) are not included in the repo (excluded via `.gitignore`). Download them with:
+
+```bash
+pip install huggingface_hub
+python -c "
+from huggingface_hub import hf_hub_download
+hf_hub_download(
+    repo_id='SerdarHelli/Segmentation-of-Teeth-in-Panoramic-X-ray-Image-Using-U-Net',
+    filename='dental_xray_seg.h5',
+    repo_type='space',
+    local_dir='backend/models/downloaded'
+)
+print('Model ready.')
+"
+```
+
+Place it at: `backend/models/downloaded/dental_xray_seg.h5`
+
+> Without this file, auto-scan falls back to zone-based bounding boxes (still functional, less precise).
+
+### 4. Set up environment variables
 
 Create `backend/.env`:
 
@@ -105,14 +127,14 @@ MOORCHEH_API_KEY=your_moorcheh_api_key    # optional, works without it
 DEMO_MODE=true                             # uses cached data for demo
 ```
 
-### 3. Run the backend
+### 5. Run the backend
 
 ```bash
 cd backend
 uvicorn main:app --reload --port 8000
 ```
 
-### 4. Run the frontend
+### 6. Run the frontend
 
 ```bash
 cd frontend

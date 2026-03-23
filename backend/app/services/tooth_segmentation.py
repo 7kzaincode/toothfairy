@@ -124,7 +124,13 @@ def _get_model():
 
     weights_path = _find_model_weights()
     if not weights_path:
-        logger.warning("Dental segmentation model not found")
+        logger.warning(
+            "Dental segmentation model not found. "
+            "Download dental_xray_seg.h5 from HuggingFace and place it at: "
+            "backend/models/downloaded/dental_xray_seg.h5\n"
+            "  huggingface-cli download SerdarHelli/Segmentation-of-Teeth-in-Panoramic-X-ray-Image-Using-U-Net "
+            "dental_xray_seg.h5 --repo-type space --local-dir backend/models/downloaded"
+        )
         return None
 
     logger.info(f"Loading dental U-Net from {weights_path}...")
