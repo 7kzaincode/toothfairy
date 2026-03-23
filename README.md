@@ -97,25 +97,15 @@ pip install -r requirements.txt
 
 ### 2. Download the segmentation model
 
-The U-Net model weights (~154 MB) are not included in the repo (excluded via `.gitignore`). Download them with:
+The U-Net model weights (~154 MB) are tracked via **Git LFS**. After cloning, run:
 
 ```bash
-pip install huggingface_hub
-python -c "
-from huggingface_hub import hf_hub_download
-hf_hub_download(
-    repo_id='SerdarHelli/Segmentation-of-Teeth-in-Panoramic-X-ray-Image-Using-U-Net',
-    filename='dental_xray_seg.h5',
-    repo_type='space',
-    local_dir='backend/models/downloaded'
-)
-print('Model ready.')
-"
+git lfs pull
 ```
 
-Place it at: `backend/models/downloaded/dental_xray_seg.h5`
+The weights will download automatically to their correct location.
 
-> Without this file, auto-scan falls back to zone-based bounding boxes (still functional, less precise).
+> GitHub provides 1 GB of LFS storage free — the model (154 MB) fits comfortably within that.
 
 ### 4. Set up environment variables
 
