@@ -47,3 +47,4 @@ __pycache__/
 venv/
 .venv/
 backend/.env
+*.h5
