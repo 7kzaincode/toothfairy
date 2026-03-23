@@ -233,8 +233,7 @@ export default function DentalXrayViewer({
     return (
       <div
         ref={wrapperRef}
-        className="flex-1 flex flex-col relative overflow-hidden bg-white"
-        style={{ minHeight: 480 }}
+        className="flex-1 flex flex-col relative bg-white min-h-0"
       >
         <canvas
           ref={canvasRef}
@@ -250,7 +249,7 @@ export default function DentalXrayViewer({
         />
 
         {/* Image area */}
-        <div className="flex-1 flex items-center justify-center relative min-h-0 p-6">
+        <div className="flex-1 flex items-center justify-center relative min-h-0 p-4" style={{ minHeight: 0 }}>
         {(onClose || (imageId && onAutoScan)) && (
           <div className="absolute top-3 right-3 z-20 flex items-start gap-2">
             {imageId && onAutoScan && (
@@ -347,8 +346,8 @@ export default function DentalXrayViewer({
               alt="Dental X-Ray"
               onLoad={handleImageLoad}
               onClick={handleImageClick}
-              className="max-w-full max-h-[90vh] rounded-xl cursor-crosshair"
-              style={{ display: "block" }}
+              className="max-w-full rounded-xl cursor-crosshair"
+              style={{ display: "block", maxHeight: autoScanResult ? "calc(100vh - 420px)" : "calc(100vh - 160px)" }}
             />
 
             {/* Click marker */}
@@ -402,55 +401,71 @@ export default function DentalXrayViewer({
 
         {/* Auto-scan findings panel — BELOW the image */}
         {autoScanResult && (
-          <div className="border-t border-ide-border bg-ide-bg px-5 py-4 overflow-y-auto" style={{ maxHeight: 280 }}>
-            <div className="flex items-center justify-between mb-3">
+          <div className="shrink-0 border-t border-ide-border bg-white">
+            {/* Stats bar */}
+            <div className="flex items-center justify-between px-5 py-3 border-b border-ide-border/60">
               <div className="flex items-center gap-3">
-                <h3 className="text-sm font-bold text-ide-text">Auto-Scan Results</h3>
-                <span className={`text-[10px] font-mono px-2 py-0.5 rounded ${
+                <span className="text-[13px] font-bold text-ide-text">Auto-Scan Results</span>
+                <span className={`text-[11px] font-semibold px-2.5 py-1 rounded-lg border ${
                   autoScanResult.provenance === "unet" || autoScanResult.provenance === "live"
-                    ? "bg-log-success/15 text-log-success border border-log-success/30"
-                    : "bg-log-warn/15 text-log-warn border border-log-warn/30"
+                    ? "text-emerald-500 border-emerald-400"
+                    : "text-blue-500 border-blue-400"
                 }`}>
                   {autoScanResult.provenance === "unet" ? "U-NET" : autoScanResult.provenance === "live" ? "LIVE" : "GEMINI"}
                 </span>
-                <span className="text-xs text-ide-muted">{autoScanResult.inference_time_ms}ms</span>
+                <span className="text-[12px] text-ide-muted">{autoScanResult.inference_time_ms}ms</span>
               </div>
-              <div className="flex items-center gap-5 text-sm">
-                <span className="text-ide-text-2"><span className="font-bold text-ide-text text-base">{autoScanResult.segmented}</span> teeth</span>
-                <span className="text-log-warn"><span className="font-bold text-base">{autoScanResult.suspicious_teeth}</span> flagged</span>
-                <span className="text-log-error"><span className="font-bold text-base">{autoScanResult.findings.length}</span> findings</span>
+              <div className="flex items-center gap-5">
+                <span className="text-[13px] text-ide-muted"><span className="font-bold text-[15px] text-ide-text">{autoScanResult.segmented}</span> teeth</span>
+                <span className="text-[13px] text-ide-muted"><span className="font-bold text-[15px] text-amber-600">{autoScanResult.suspicious_teeth}</span> flagged</span>
+                <span className="text-[13px] text-ide-muted"><span className="font-bold text-[15px] text-red-500">{autoScanResult.findings.length}</span> findings</span>
               </div>
             </div>
 
+            {/* Cards grid */}
             {autoScanResult.findings.length > 0 && (
-              <div className="grid grid-cols-2 gap-2">
-                {autoScanResult.findings.map((finding, idx) => (
-                  <div key={idx} className="text-sm bg-ide-surface rounded-lg px-3 py-2.5 flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <span className="font-bold text-log-info">#{finding.tooth_number}</span>
-                      <span className="text-ide-border">·</span>
-                      <span className="text-ide-text-2">{finding.condition.replace(/_/g, " ")}</span>
-                      <span className="text-ide-border">·</span>
-                      <span className={`font-semibold ${
-                        finding.severity === "severe" ? "text-log-error" :
-                        finding.severity === "moderate" ? "text-log-warn" :
-                        "text-log-success"
-                      }`}>{finding.severity}</span>
+              <div className="overflow-y-auto" style={{ maxHeight: 240, scrollbarWidth: "none" }}>
+                <div className="grid grid-cols-2 gap-px bg-ide-border/40 p-0">
+                  {autoScanResult.findings.map((finding, idx) => (
+                    <div
+                      key={idx}
+                      className="bg-white px-4 py-3.5 hover:bg-[#fafafa] transition-colors cursor-pointer group"
+                      onClick={() => onTreatmentClick?.(finding.condition, finding.tooth_number)}
+                    >
+                      <div className="flex items-start justify-between mb-1.5">
+                        <span className="text-[13px] font-bold text-ide-text">#{finding.tooth_number}</span>
+                        <span className={`text-[10px] font-semibold uppercase tracking-wide ${
+                          finding.severity === "severe"
+                            ? "text-red-500"
+                            : finding.severity === "moderate"
+                            ? "text-orange-500"
+                            : "text-green-600"
+                        }`}>
+                          {finding.severity}
+                        </span>
+                      </div>
+                      <div className="text-[13px] font-semibold text-ide-text capitalize leading-snug">
+                        {finding.condition.replace(/_/g, " ")}
+                      </div>
+                      {finding.location_description && (
+                        <div className="text-[11px] text-ide-muted mt-0.5 truncate">
+                          {finding.location_description}
+                        </div>
+                      )}
+                      <div className="mt-2 flex items-center justify-between">
+                        <span className="text-[11px] font-mono text-ide-muted">{Math.round(finding.confidence * 100)}%</span>
+                        <span className="text-[11px] text-ide-muted opacity-0 group-hover:opacity-100 transition-opacity">
+                          View treatment →
+                        </span>
+                      </div>
                     </div>
-                    <span className={`text-xs font-mono font-semibold ${
-                      finding.confidence >= 0.7 ? "text-log-success" :
-                      finding.confidence >= 0.4 ? "text-log-warn" :
-                      "text-log-error"
-                    }`}>
-                      {Math.round(finding.confidence * 100)}%
-                    </span>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
             )}
 
             {autoScanResult.findings.length === 0 && (
-              <p className="text-sm text-ide-muted">No pathology detected — all teeth appear healthy.</p>
+              <div className="px-5 py-4 text-[13px] text-ide-muted">No pathology detected — all teeth appear healthy.</div>
             )}
           </div>
         )}

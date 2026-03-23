@@ -95,7 +95,7 @@ export default function ToothChart3D({
     <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column" }}>
       <div style={{ flex: 1, position: "relative" }}>
         <Canvas
-          camera={{ position: [-3, 21, 5], fov: 45 }}
+          camera={{ position: [0, 20, 4], fov: 80 }}
           gl={{ antialias: true }}
           style={{ position: "absolute", inset: 0, background: "#000000" }}
           onPointerMissed={handleCanvasMiss}
@@ -117,15 +117,16 @@ export default function ToothChart3D({
           <OrbitControls
             makeDefault
             target={[0, 20, 0]}
+            enableZoom={false}
             minDistance={4}
-            maxDistance={30}
+            maxDistance={4}
           />
 
           <CameraAnimator
             targetPos={zoomTarget}
             zoomDistance={5}
             resetView={resetView}
-            defaultCameraPos={new THREE.Vector3(-3, 21, 5)}
+            defaultCameraPos={new THREE.Vector3(0, 20, 4)}
             defaultTarget={new THREE.Vector3(0, 20, 0)}
             onResetComplete={() => setResetView(false)}
           />
