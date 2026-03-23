@@ -1,0 +1,43 @@
+{
+  "condition": "crown_defect",
+  "summary": "Crown defects include fractured cusps, cracked crowns, failed restorations, and significant structural compromise. Treatment depends on extent: minor defects may be repaired with composite bonding, while extensive damage requires full-coverage crown restoration. Porcelain-fused-to-metal and all-ceramic crowns have 10-year survival rates of 90-95%. If the defect extends subgingivally, crown lengthening surgery may be needed before restoration.",
+  "success_rate": 0.91,
+  "risk_factors": [
+    "Bruxism or clenching habits",
+    "Large existing restorations weakening remaining tooth structure",
+    "History of root canal treatment (reduced tooth flexibility)",
+    "Traumatic occlusion or bite discrepancies",
+    "Dietary habits (chewing ice, hard foods)"
+  ],
+  "alternatives": [
+    "Direct composite restoration for minor cuspal defects",
+    "Porcelain onlay for moderate structural loss (more conservative than full crown)",
+    "Post-and-core buildup with crown for endodontically treated teeth",
+    "Extraction and implant if tooth is non-restorable"
+  ],
+  "referral_summary": "General dentists perform most crown restorations. Referral to a prosthodontist is recommended for complex cases involving occlusal rehabilitation, aesthetic zone crowns, or when crown lengthening is needed. Endodontic evaluation may be required if pulp involvement is suspected.",
+  "patient_education": "A crown defect means part of your tooth's structure is damaged or weakened. Your dentist may recommend a crown, which is a custom-made cap that fits over your tooth to restore its shape, strength, and appearance. The procedure typically requires two visits — one to prepare the tooth and take impressions, and another to place the permanent crown. Modern crowns are tooth-colored and very durable.",
+  "pharmacy_medications": [
+    {
+      "drug_name": "Ibuprofen",
+      "brand_name": "Advil",
+      "din": "02242918",
+      "form": "Tablet 400mg",
+      "schedule": "OTC"
+    },
+    {
+      "drug_name": "Acetaminophen with Codeine",
+      "brand_name": "Tylenol No. 3",
+      "din": "02163926",
+      "form": "Tablet 300mg/30mg",
+      "schedule": "Prescription (Schedule I)"
+    },
+    {
+      "drug_name": "Amoxicillin",
+      "brand_name": "Amoxil",
+      "din": "02237682",
+      "form": "Capsule 500mg",
+      "schedule": "Prescription"
+    }
+  ]
+}

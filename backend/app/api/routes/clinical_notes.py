@@ -4,6 +4,7 @@ Endpoints for clinical notes analysis.
 """
 
 from fastapi import APIRouter, BackgroundTasks, HTTPException
+from datetime import datetime
 
 from app.core.config import settings
 from app.core.session_manager import session_manager
@@ -43,8 +44,8 @@ async def clinical_notes_action(
             background_tasks.add_task(
                 moorcheh_service.ingest_session,
                 patient_id=patient_state.identifiers.patient_id,
-                session_data=patient_state.model_dump(),
-                session_date=patient_state.last_updated_at,
+                session_data=patient_state.model_dump(mode="json"),
+                session_date=patient_state.last_updated_at.isoformat()[:10],
             )
     except ImportError:
         pass  # moorcheh_sdk not installed
@@ -53,7 +54,7 @@ async def clinical_notes_action(
 
 
 @router.post("/chat", response_model=ClinicalNotesChatResponse)
-async def clinical_notes_chat(request: ClinicalNotesChatRequest):
+async def clinical_notes_chat(request: ClinicalNotesChatRequest, background_tasks: BackgroundTasks):
     """Chat about clinical notes with AI."""
     patient_state = session_manager.get_session(request.session_id)
     if not patient_state:
@@ -103,6 +104,25 @@ async def clinical_notes_chat(request: ClinicalNotesChatRequest):
 
     try:
         reply = await llm_client.chat(request.message, context=context)
+
+        # Ingest chat exchange into Moorcheh for longitudinal memory
+        try:
+            from app.services.moorcheh_client import moorcheh_service
+            if moorcheh_service.is_available:
+                chat_text = (
+                    f"Chat exchange on {datetime.now().isoformat()[:10]}:\n"
+                    f"Dentist: {request.message}\n"
+                    f"AI Assistant: {reply}"
+                )
+                from moorcheh_sdk.types.document import Document
+                background_tasks.add_task(
+                    moorcheh_service.ingest_chat_message,
+                    patient_id=patient_state.identifiers.patient_id,
+                    chat_text=chat_text,
+                )
+        except ImportError:
+            pass
+
         return ClinicalNotesChatResponse(
             session_id=request.session_id,
             response=reply,

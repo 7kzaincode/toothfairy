@@ -23,5 +23,5 @@ class TreatmentActionResponse(BaseModel):
     referral_summary: Optional[str] = None
     patient_education: Optional[str] = None
     pharmacy_results: Optional[list[dict]] = None
-    provenance: str = "cached"
+    provenance: str = "gemini+mcp"
     inference_time_ms: Optional[int] = None

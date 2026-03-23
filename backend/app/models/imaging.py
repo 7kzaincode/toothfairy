@@ -22,7 +22,7 @@ class ImagingActionResponse(BaseModel):
     findings: Optional[list[ToothFinding]] = None
     measurements: Optional[dict] = None
     narrative: Optional[str] = None
-    provenance: str = "cached"
+    provenance: str = "live"
     image_url: Optional[str] = None
     inference_time_ms: Optional[int] = None
 

@@ -1,0 +1,43 @@
+{
+  "condition": "gingivitis",
+  "summary": "Gingivitis is reversible inflammation of the gingival tissue caused by bacterial plaque accumulation. Treatment involves professional scaling and prophylaxis to remove plaque and calculus, followed by improved home care. Mild cases resolve within 2-3 weeks of consistent oral hygiene. Moderate to severe cases may require multiple scaling sessions and adjunctive antimicrobial therapy. Without treatment, gingivitis can progress to periodontitis with irreversible bone loss.",
+  "success_rate": 0.95,
+  "risk_factors": [
+    "Inadequate oral hygiene and irregular dental visits",
+    "Smoking and tobacco use",
+    "Hormonal changes (pregnancy, puberty)",
+    "Diabetes and immunocompromised conditions",
+    "Medications causing gingival hyperplasia (e.g. phenytoin, cyclosporine)"
+  ],
+  "alternatives": [
+    "Scaling and root planing (deep cleaning for subgingival calculus)",
+    "Locally delivered antimicrobials (chlorhexidine chip placement)",
+    "Systemic antibiotics for aggressive or refractory cases",
+    "Laser-assisted periodontal therapy"
+  ],
+  "referral_summary": "Mild gingivitis is managed by general dentists with prophylaxis and hygiene instruction. Referral to a periodontist is recommended for cases unresponsive to initial therapy or showing early signs of periodontitis progression.",
+  "patient_education": "Gingivitis means your gums are inflamed from plaque buildup. You may notice redness, swelling, or bleeding when you brush. The good news is it's completely reversible with proper care. Brush twice daily with a soft-bristled toothbrush, floss every day, and use an antiseptic mouthwash. A professional cleaning will remove hardened plaque you can't reach at home.",
+  "pharmacy_medications": [
+    {
+      "drug_name": "Chlorhexidine Gluconate",
+      "brand_name": "Peridex",
+      "din": "02241893",
+      "form": "Oral Rinse 0.12%",
+      "schedule": "Prescription"
+    },
+    {
+      "drug_name": "Metronidazole",
+      "brand_name": "Flagyl",
+      "din": "02230474",
+      "form": "Tablet 250mg",
+      "schedule": "Prescription"
+    },
+    {
+      "drug_name": "Ibuprofen",
+      "brand_name": "Advil",
+      "din": "02242918",
+      "form": "Tablet 400mg",
+      "schedule": "OTC"
+    }
+  ]
+}

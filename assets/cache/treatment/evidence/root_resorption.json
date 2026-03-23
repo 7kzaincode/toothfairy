@@ -1,0 +1,43 @@
+{
+  "condition": "root_resorption",
+  "summary": "Root resorption is the progressive loss of root structure through inflammatory or replacement mechanisms. External inflammatory resorption is often caused by trauma, orthodontic forces, or periapical infection and may be arrested by treating the underlying cause. Internal resorption originates from the pulp and requires prompt endodontic intervention. Mild cases are monitored radiographically, while advanced resorption compromising tooth stability may necessitate extraction.",
+  "success_rate": 0.78,
+  "risk_factors": [
+    "History of dental trauma (luxation, avulsion, replantation)",
+    "Orthodontic treatment with excessive forces",
+    "Chronic periapical infection or abscess",
+    "Impacted teeth exerting pressure on adjacent roots",
+    "Idiopathic or genetic predisposition"
+  ],
+  "alternatives": [
+    "Root canal therapy to arrest internal resorption",
+    "Calcium hydroxide intracanal dressing for inflammatory resorption",
+    "MTA (mineral trioxide aggregate) repair of resorptive defect",
+    "Extraction with implant if root integrity is severely compromised"
+  ],
+  "referral_summary": "Endodontist referral is recommended for internal resorption and complex inflammatory resorption cases. Periodic radiographic monitoring by general dentist for mild external resorption. Oral surgery referral if extraction and replacement therapy is needed.",
+  "patient_education": "Root resorption means the root of your tooth is slowly being broken down by your body. This can happen after an injury, during orthodontic treatment, or due to infection. In many cases, treating the underlying cause can stop the process. Your dentist will monitor it with regular X-rays to track any changes. If caught early, root canal treatment can often save the tooth.",
+  "pharmacy_medications": [
+    {
+      "drug_name": "Calcium Hydroxide",
+      "brand_name": "Calasept",
+      "din": "02248115",
+      "form": "Intracanal Paste",
+      "schedule": "Professional Use"
+    },
+    {
+      "drug_name": "Ibuprofen",
+      "brand_name": "Advil",
+      "din": "02242918",
+      "form": "Tablet 400mg",
+      "schedule": "OTC"
+    },
+    {
+      "drug_name": "Amoxicillin/Clavulanate",
+      "brand_name": "Clavulin",
+      "din": "02243520",
+      "form": "Tablet 875mg/125mg",
+      "schedule": "Prescription"
+    }
+  ]
+}
