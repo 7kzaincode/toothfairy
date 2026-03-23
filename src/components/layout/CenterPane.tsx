@@ -4,6 +4,8 @@ import { useRef } from "react";
 import dynamic from "next/dynamic";
 import type { PatientState, ClinicalNotesOutput } from "@/types/patient-state";
 import type { TreatmentActionResponse, ImagingActionResponse, AutoScanResponse } from "@/types/api";
+import type { PatientProfile } from "@/lib/api/client";
+import { ENDPOINTS } from "@/lib/api/endpoints";
 import Image from "next/image";
 import ClinicalNotesViewer from "@/components/viewers/ClinicalNotesViewer";
 import TreatmentTable from "@/components/viewers/TreatmentTable";
@@ -34,6 +36,8 @@ interface CenterPaneProps {
   onTabChange: (tab: ViewerTab) => void;
   patientState: PatientState | null;
   sessionId: string | null;
+  profile?: PatientProfile | null;
+  onOpenCommandPalette?: () => void;
   onImagingClick?: (imageId: string, x: number, y: number) => void;
   onTextHighlight?: (text: string) => void;
   onTreatmentClick?: (condition: string, toothNumber?: number) => void;
@@ -59,6 +63,9 @@ export default function CenterPane({
   activeTab,
   onTabChange,
   patientState,
+  sessionId,
+  profile,
+  onOpenCommandPalette,
   onImagingClick,
   onTextHighlight,
   onTreatmentClick,
@@ -80,10 +87,90 @@ export default function CenterPane({
   processing,
 }: CenterPaneProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const examDate = patientState?.created_at
+    ? new Date(patientState.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
+    : new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+
   return (
-    <div className="flex-1 min-w-0 flex flex-col bg-ide-panel">
+    <div className="flex-1 min-w-0 flex flex-col bg-white">
+
+      {/* Patient Header — inspired by Freed */}
+      <div className="h-12 flex items-center px-5 border-b border-ide-border shrink-0 gap-3 bg-white">
+        <div className="flex items-center gap-2 min-w-0">
+          <span className="text-[16px] font-semibold text-ide-text truncate">
+            {profile?.name ?? "Select a patient"}
+          </span>
+          {profile && (
+            <span className="text-[12px] text-ide-muted border border-ide-border rounded-full px-2 py-0.5 shrink-0">
+              Dental Exam
+            </span>
+          )}
+        </div>
+
+        <div className="flex-1" />
+
+        {/* Command palette trigger */}
+        <button
+          onClick={onOpenCommandPalette}
+          className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-ide-border text-ide-muted hover:text-ide-text hover:bg-ide-surface transition-colors text-[12px] shrink-0"
+        >
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
+          </svg>
+          <span>Search</span>
+          <span className="flex items-center gap-0.5">
+            <kbd className="text-[10px] bg-white border border-ide-border rounded px-1 shadow-[0_1px_0_rgba(0,0,0,0.07)]">⌘</kbd>
+            <kbd className="text-[10px] bg-white border border-ide-border rounded px-1 shadow-[0_1px_0_rgba(0,0,0,0.07)]">K</kbd>
+          </span>
+        </button>
+
+        {profile && (
+          <span className="text-[12px] text-ide-muted shrink-0">Saved {examDate}</span>
+        )}
+
+        {/* Export Report */}
+        {sessionId && profile && (
+          <a
+            href={ENDPOINTS.SESSION_REPORT(sessionId)}
+            download
+            className="flex items-center gap-1.5 border border-ide-border text-ide-text text-[12px] font-medium py-1.5 px-3 rounded-lg transition-all hover:bg-ide-surface active:scale-[0.98] shrink-0"
+          >
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+              <polyline points="7 10 12 15 17 10" />
+              <line x1="12" y1="15" x2="12" y2="3" />
+            </svg>
+            Export Report
+          </a>
+        )}
+
+        {/* Auto Scan */}
+        {imageId && onAutoScan && (
+          <button
+            onClick={() => onAutoScan(imageId)}
+            disabled={processing}
+            className="flex items-center gap-1.5 bg-ide-text text-white text-[12px] font-semibold py-1.5 px-3 rounded-lg transition-all hover:opacity-90 active:scale-[0.98] disabled:opacity-50 shrink-0"
+          >
+            {processing ? (
+              <>
+                <div className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                Scanning...
+              </>
+            ) : (
+              <>
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <polygon points="5 3 19 12 5 21 5 3" />
+                </svg>
+                Auto Scan
+              </>
+            )}
+          </button>
+        )}
+      </div>
+
       {/* Tab Bar */}
-      <div className="h-9 flex items-stretch border-b border-ide-border bg-ide-bg px-2 shrink-0">
+      <div className="h-9 flex items-stretch border-b border-ide-border bg-white px-2 shrink-0">
         {TABS.map((tab) => (
           <button
             key={tab.key}
@@ -217,7 +304,6 @@ function TreatmentView({
 }) {
   const protocols = clinicalNotesOutput?.protocols;
 
-  // If we have a treatment result, show evidence detail with back button
   if (treatmentResult) {
     return (
       <div className="flex flex-col h-full overflow-auto scrollbar-ide">
@@ -263,29 +349,21 @@ function TreatmentView({
 
           {treatmentResult.evidence_summary && (
             <div>
-              <div className="text-[10px] font-semibold uppercase tracking-[0.05em] text-ide-muted mb-1">
-                Evidence Summary
-              </div>
-              <p className="text-xs text-ide-text-2 leading-relaxed">
-                {treatmentResult.evidence_summary}
-              </p>
+              <div className="text-[10px] font-semibold uppercase tracking-[0.05em] text-ide-muted mb-1">Evidence Summary</div>
+              <p className="text-xs text-ide-text-2 leading-relaxed">{treatmentResult.evidence_summary}</p>
             </div>
           )}
 
           {treatmentResult.success_rate && (
             <div className="flex items-center gap-2">
               <span className="text-[10px] uppercase text-ide-muted">Success Rate</span>
-              <span className="text-xs font-mono text-log-success">
-                {treatmentResult.success_rate}
-              </span>
+              <span className="text-xs font-mono text-log-success">{treatmentResult.success_rate}</span>
             </div>
           )}
 
           {treatmentResult.risk_factors && treatmentResult.risk_factors.length > 0 && (
             <div>
-              <div className="text-[10px] font-semibold uppercase tracking-[0.05em] text-ide-muted mb-1">
-                Risk Factors
-              </div>
+              <div className="text-[10px] font-semibold uppercase tracking-[0.05em] text-ide-muted mb-1">Risk Factors</div>
               <ul className="text-xs text-ide-text-2 space-y-0.5">
                 {treatmentResult.risk_factors.map((r, i) => (
                   <li key={i} className="flex items-start gap-1">
@@ -299,9 +377,7 @@ function TreatmentView({
 
           {treatmentResult.alternatives && treatmentResult.alternatives.length > 0 && (
             <div>
-              <div className="text-[10px] font-semibold uppercase tracking-[0.05em] text-ide-muted mb-1">
-                Alternatives
-              </div>
+              <div className="text-[10px] font-semibold uppercase tracking-[0.05em] text-ide-muted mb-1">Alternatives</div>
               <ul className="text-xs text-ide-text-2 space-y-0.5">
                 {treatmentResult.alternatives.map((a, i) => (
                   <li key={i} className="flex items-start gap-1">
@@ -338,7 +414,6 @@ function TreatmentView({
     );
   }
 
-  // Default: show protocols table
   if (!protocols?.length) {
     return (
       <div className="flex-1 flex flex-col items-center justify-center h-full text-center p-8">

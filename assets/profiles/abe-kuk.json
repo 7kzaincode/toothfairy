@@ -339,6 +339,72 @@
       "image_type": "panoramic",
       "date": "2026-03-15",
       "notes": ""
+    },
+    {
+      "image_id": "xray-8d199263",
+      "image_type": "panoramic",
+      "date": "2026-03-23",
+      "notes": ""
+    },
+    {
+      "image_id": "xray-c0deeb04",
+      "image_type": "panoramic",
+      "date": "2026-03-23",
+      "notes": ""
+    },
+    {
+      "image_id": "xray-f962266e",
+      "image_type": "panoramic",
+      "date": "2026-03-23",
+      "notes": ""
+    },
+    {
+      "image_id": "xray-9096dbc8",
+      "image_type": "panoramic",
+      "date": "2026-03-23",
+      "notes": ""
+    },
+    {
+      "image_id": "xray-debb7551",
+      "image_type": "panoramic",
+      "date": "2026-03-23",
+      "notes": ""
+    },
+    {
+      "image_id": "xray-f03c04c6",
+      "image_type": "panoramic",
+      "date": "2026-03-23",
+      "notes": ""
+    },
+    {
+      "image_id": "xray-f308820e",
+      "image_type": "panoramic",
+      "date": "2026-03-23",
+      "notes": ""
+    },
+    {
+      "image_id": "xray-5cf46548",
+      "image_type": "panoramic",
+      "date": "2026-03-23",
+      "notes": ""
+    },
+    {
+      "image_id": "xray-4e4d7598",
+      "image_type": "panoramic",
+      "date": "2026-03-23",
+      "notes": ""
+    },
+    {
+      "image_id": "xray-26c7aba1",
+      "image_type": "panoramic",
+      "date": "2026-03-23",
+      "notes": ""
+    },
+    {
+      "image_id": "xray-44d4786b",
+      "image_type": "panoramic",
+      "date": "2026-03-23",
+      "notes": ""
     }
   ],
   "known_conditions": {},

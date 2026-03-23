@@ -91,6 +91,33 @@ async def get_patient_state(session_id: str):
     return patient_state
 
 
+@router.get("/{session_id}/report")
+async def download_report(session_id: str):
+    """Generate and stream a PDF diagnostic report for the session."""
+    from fastapi.responses import StreamingResponse
+    import io
+
+    patient_state = session_manager.get_session(session_id)
+    if not patient_state:
+        raise HTTPException(status_code=404, detail=f"Session {session_id} not found")
+
+    profile = profile_manager.get_profile(patient_state.identifiers.patient_id)
+
+    from app.services.pdf_report import generate_report
+    pdf_bytes = generate_report(patient_state, profile=profile)
+
+    patient_name = (profile.get("name", patient_state.identifiers.patient_id) if profile
+                    else patient_state.identifiers.patient_id)
+    safe_name = patient_name.replace(" ", "_")
+    filename  = f"dental_report_{safe_name}.pdf"
+
+    return StreamingResponse(
+        io.BytesIO(pdf_bytes),
+        media_type="application/pdf",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
+
+
 @router.delete("/{session_id}", response_model=DeleteSessionResponse)
 async def delete_session(session_id: str):
     if not session_manager.session_exists(session_id):
