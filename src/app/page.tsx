@@ -5,20 +5,25 @@ import { usePatientState } from "@/hooks/usePatientState";
 import { useCopilot } from "@/hooks/useCopilot";
 import { useSSE } from "@/hooks/useSSE";
 import { apiClient } from "@/lib/api/client";
+import type { ProfileListItem } from "@/lib/api/client";
 import LeftPane from "@/components/layout/LeftPane";
 import CenterPane from "@/components/layout/CenterPane";
 import RightPane from "@/components/layout/RightPane";
 import ResizeHandle from "@/components/layout/ResizeHandle";
 import LandingPopup from "@/components/layout/LandingPopup";
+import CommandPalette from "@/components/layout/CommandPalette";
 import type { ViewerTab } from "@/components/layout/CenterPane";
 
 export default function Home() {
   const [activeTab, setActiveTab] = useState<ViewerTab>("xray");
-  const { sessionId, patientState, profile, createSession, refreshState, switchProfile } = usePatientState();
+  const { sessionId, patientState, profile, createSession, refreshState, switchProfile, clearProfile } = usePatientState();
   const [hasUploaded, setHasUploaded] = useState(false);
   const [showLanding, setShowLanding] = useState(true);
   const [uploadedImageId, setUploadedImageId] = useState<string | null>(null);
   const [uploadedImageUrl, setUploadedImageUrl] = useState<string | null>(null);
+  const [cmdOpen, setCmdOpen] = useState(false);
+  const [profiles, setProfiles] = useState<ProfileListItem[]>([]);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Collapse state for sidebars
   const [leftCollapsed, setLeftCollapsed] = useState(false);
@@ -56,6 +61,23 @@ export default function Home() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [profile?.clinical_notes, sessionId]);
+
+  // Load profiles for command palette
+  useEffect(() => {
+    apiClient.listProfiles().then((res) => setProfiles(res.profiles)).catch(() => {});
+  }, []);
+
+  // Global ⌘K to open command palette
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === "k") {
+        e.preventDefault();
+        setCmdOpen((v) => !v);
+      }
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, []);
 
   const handleToothSelect = (toothNumber: number) => {
     const finding = displayState?.tooth_chart[toothNumber];
@@ -113,6 +135,14 @@ export default function Home() {
   };
 
   const handleProfileSelect = async (patientId: string) => {
+    if (profile?.patient_id === patientId) {
+      // Clicking the already-selected patient deselects them
+      setUploadedImageId(null);
+      setUploadedImageUrl(null);
+      setHasUploaded(false);
+      clearProfile();
+      return;
+    }
     // Reset upload state when switching profiles
     setUploadedImageId(null);
     setUploadedImageUrl(null);
@@ -129,6 +159,27 @@ export default function Home() {
           }}
         />
       )}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept=".dcm,.jpg,.jpeg,.png,.tiff,.tif"
+        onChange={(e) => { const f = e.target.files?.[0]; if (f) { handleFileUpload(f); if (fileInputRef.current) fileInputRef.current.value = ""; } }}
+        className="hidden"
+      />
+      <CommandPalette
+        open={cmdOpen}
+        onClose={() => setCmdOpen(false)}
+        profiles={profiles}
+        activeTab={activeTab}
+        onTabChange={setActiveTab}
+        onProfileSelect={handleProfileSelect}
+        onUploadImage={() => fileInputRef.current?.click()}
+        onToggleLeft={() => setLeftCollapsed((v) => !v)}
+        onToggleRight={() => setRightCollapsed((v) => !v)}
+        hasImage={!!uploadedImageId}
+        onAutoScan={uploadedImageId ? () => handleAutoScan(uploadedImageId) : undefined}
+        sessionId={sessionId}
+      />
       <LeftPane
         patientState={displayState}
         profile={profile}
@@ -149,7 +200,9 @@ export default function Home() {
         activeTab={activeTab}
         onTabChange={setActiveTab}
         patientState={displayState}
+        profile={profile}
         sessionId={sessionId || displayState?.identifiers.session_id || null}
+        onOpenCommandPalette={() => setCmdOpen(true)}
         onToothSelect={handleToothSelect}
         onTextHighlight={handleTextHighlight}
         onTreatmentClick={handleTreatmentClick}

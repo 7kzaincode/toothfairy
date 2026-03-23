@@ -59,6 +59,12 @@ export function usePatientState() {
     await createSession(patientId);
   }, [createSession]);
 
+  const clearProfile = useCallback(() => {
+    setPatientState(null);
+    setProfile(null);
+    setSessionId(null);
+  }, []);
+
   return {
     sessionId,
     patientState,
@@ -68,5 +74,6 @@ export function usePatientState() {
     refreshState,
     setPatientState,
     switchProfile,
+    clearProfile,
   };
 }

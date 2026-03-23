@@ -11,6 +11,7 @@ export const ENDPOINTS = {
   SESSION_GET: (id: string) => `${BASE}/api/session/${id}`,
   SESSION_STATE: (id: string) => `${BASE}/api/session/${id}/state`,
   SESSION_DELETE: (id: string) => `${BASE}/api/session/${id}`,
+  SESSION_REPORT: (id: string) => `${BASE}/api/session/${id}/report`,
 
   // Imaging
   IMAGING_ACTION: `${BASE}/api/imaging/action`,

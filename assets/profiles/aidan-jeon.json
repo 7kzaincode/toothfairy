@@ -65,6 +65,12 @@
       "image_type": "panoramic",
       "date": "2026-03-15",
       "notes": ""
+    },
+    {
+      "image_id": "xray-0f1183be",
+      "image_type": "panoramic",
+      "date": "2026-03-23",
+      "notes": ""
     }
   ],
   "known_conditions": {},
