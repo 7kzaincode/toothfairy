@@ -31,8 +31,8 @@ async def treatment_action(request: TreatmentActionRequest, background_tasks: Ba
             background_tasks.add_task(
                 moorcheh_service.ingest_session,
                 patient_id=patient_state.identifiers.patient_id,
-                session_data=patient_state.model_dump(),
-                session_date=patient_state.last_updated_at,
+                session_data=patient_state.model_dump(mode="json"),
+                session_date=patient_state.last_updated_at.isoformat()[:10],
             )
     except ImportError:
         pass

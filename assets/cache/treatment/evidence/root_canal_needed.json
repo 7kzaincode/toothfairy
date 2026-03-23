@@ -16,5 +16,28 @@
     "Extraction and removable partial denture (cost-effective option)"
   ],
   "referral_summary": "Refer to endodontist for: retreatment cases, calcified canals, teeth with complex anatomy (3+ canals in premolars, C-shaped canals), teeth requiring post removal, or when procedural complications occur (separated instrument, perforation).",
-  "patient_education": "Root canal treatment saves a badly damaged or infected tooth. The dentist removes the nerve and infected tissue inside the tooth, cleans and shapes the canals, then fills and seals them. Despite its reputation, modern root canal treatment is no more uncomfortable than getting a filling — the area is fully numbed. After treatment, a crown is usually placed to protect the tooth. With proper care, a root-canal-treated tooth can last a lifetime. Take prescribed antibiotics and pain medication as directed."
+  "patient_education": "Root canal treatment saves a badly damaged or infected tooth. The dentist removes the nerve and infected tissue inside the tooth, cleans and shapes the canals, then fills and seals them. Despite its reputation, modern root canal treatment is no more uncomfortable than getting a filling \u2014 the area is fully numbed. After treatment, a crown is usually placed to protect the tooth. With proper care, a root-canal-treated tooth can last a lifetime. Take prescribed antibiotics and pain medication as directed.",
+  "pharmacy_medications": [
+    {
+      "drug_name": "Amoxicillin",
+      "brand_name": "Amoxil",
+      "din": "02237682",
+      "form": "Capsule 500mg",
+      "schedule": "Prescription"
+    },
+    {
+      "drug_name": "Naproxen Sodium",
+      "brand_name": "Aleve",
+      "din": "02242455",
+      "form": "Tablet 220mg",
+      "schedule": "OTC"
+    },
+    {
+      "drug_name": "Sodium Hypochlorite",
+      "brand_name": "EndoSure",
+      "din": "02198754",
+      "form": "Solution 5.25%",
+      "schedule": "Professional Use"
+    }
+  ]
 }

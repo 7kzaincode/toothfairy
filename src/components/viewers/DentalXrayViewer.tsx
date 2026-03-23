@@ -338,63 +338,65 @@ export default function DentalXrayViewer({
           </div>
         )}
 
-        <div className="relative bg-[#f0f0f0] rounded-2xl p-4 shadow-sm" style={{ maxWidth: "95%", maxHeight: "95%" }}>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            ref={imgRef}
-            src={imageUrl}
-            alt="Dental X-Ray"
-            onLoad={handleImageLoad}
-            onClick={handleImageClick}
-            className="max-w-full max-h-[80vh] rounded-xl cursor-crosshair"
-            style={{ display: "block" }}
-          />
-
-          {/* Click marker */}
-          {clickMarker && (
-            <div
-              className="absolute pointer-events-none"
-              style={{
-                left: clickMarker.x - 12,
-                top: clickMarker.y - 12,
-                width: 24,
-                height: 24,
-              }}
-            >
-              <div className={`w-6 h-6 rounded-full border-2 ${analyzing ? "border-blue-400 animate-ping" : "border-teal-400"}`} />
-              <div className={`absolute inset-0 w-6 h-6 rounded-full border-2 ${analyzing ? "border-blue-400" : "border-teal-400"}`} />
-            </div>
-          )}
-
-          {/* Segmentation overlay (single tooth) */}
-          {segmentationOverlay && segmentationOverlay.length >= 3 && imgSize.width > 0 && (
-            <SegmentationOverlay
-              contourPoints={segmentationOverlay}
-              width={imgSize.width}
-              height={imgSize.height}
-              viewBoxWidth={imgNaturalSize.width || imgSize.width}
-              viewBoxHeight={imgNaturalSize.height || imgSize.height}
+        <div className="bg-[#f0f0f0] rounded-2xl p-2 shadow-sm" style={{ maxWidth: "98%", maxHeight: "98%" }}>
+          <div className="relative inline-block">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              ref={imgRef}
+              src={imageUrl}
+              alt="Dental X-Ray"
+              onLoad={handleImageLoad}
+              onClick={handleImageClick}
+              className="max-w-full max-h-[90vh] rounded-xl cursor-crosshair"
+              style={{ display: "block" }}
             />
-          )}
 
-          {/* Auto-scan segments (all teeth) */}
-          {showScanResults && autoScanResult && autoScanResult.segments && imgSize.width > 0 && autoScanResult.segments.map((seg) => (
-            <SegmentationOverlay
-              key={seg.tooth_number}
-              contourPoints={seg.contour_points}
-              width={imgSize.width}
-              height={imgSize.height}
-              viewBoxWidth={imgNaturalSize.width || imgSize.width}
-              viewBoxHeight={imgNaturalSize.height || imgSize.height}
-            />
-          ))}
+            {/* Click marker */}
+            {clickMarker && (
+              <div
+                className="absolute pointer-events-none"
+                style={{
+                  left: clickMarker.x - 12,
+                  top: clickMarker.y - 12,
+                  width: 24,
+                  height: 24,
+                }}
+              >
+                <div className={`w-6 h-6 rounded-full border-2 ${analyzing ? "border-blue-400 animate-ping" : "border-teal-400"}`} />
+                <div className={`absolute inset-0 w-6 h-6 rounded-full border-2 ${analyzing ? "border-blue-400" : "border-teal-400"}`} />
+              </div>
+            )}
 
-          {/* Instruction hint */}
-          {!analyzing && !autoScanResult && !(showToothResult && imagingResult) && (
-            <div className="absolute bottom-3 left-1/2 -translate-x-1/2 text-[10px] text-white/40 bg-black/50 px-3 py-1 rounded-full">
-              Click on a tooth to analyze
-            </div>
-          )}
+            {/* Segmentation overlay (single tooth) */}
+            {segmentationOverlay && segmentationOverlay.length >= 3 && imgSize.width > 0 && (
+              <SegmentationOverlay
+                contourPoints={segmentationOverlay}
+                width={imgSize.width}
+                height={imgSize.height}
+                viewBoxWidth={imgNaturalSize.width || imgSize.width}
+                viewBoxHeight={imgNaturalSize.height || imgSize.height}
+              />
+            )}
+
+            {/* Auto-scan segments (all teeth) */}
+            {showScanResults && autoScanResult && autoScanResult.segments && imgSize.width > 0 && autoScanResult.segments.map((seg) => (
+              <SegmentationOverlay
+                key={seg.tooth_number}
+                contourPoints={seg.contour_points}
+                width={imgSize.width}
+                height={imgSize.height}
+                viewBoxWidth={imgNaturalSize.width || imgSize.width}
+                viewBoxHeight={imgNaturalSize.height || imgSize.height}
+              />
+            ))}
+
+            {/* Instruction hint */}
+            {!analyzing && !autoScanResult && !(showToothResult && imagingResult) && (
+              <div className="absolute bottom-3 left-1/2 -translate-x-1/2 text-[10px] text-white/40 bg-black/50 px-3 py-1 rounded-full">
+                Click on a tooth to analyze
+              </div>
+            )}
+          </div>
         </div>
         </div>{/* end image area */}
 
@@ -407,11 +409,9 @@ export default function DentalXrayViewer({
                 <span className={`text-[10px] font-mono px-2 py-0.5 rounded ${
                   autoScanResult.provenance === "unet" || autoScanResult.provenance === "live"
                     ? "bg-log-success/15 text-log-success border border-log-success/30"
-                    : autoScanResult.provenance === "cached"
-                    ? "bg-log-info/15 text-log-info border border-log-info/30"
                     : "bg-log-warn/15 text-log-warn border border-log-warn/30"
                 }`}>
-                  {autoScanResult.provenance === "unet" ? "U-NET" : autoScanResult.provenance === "live" ? "LIVE" : autoScanResult.provenance === "cached" ? "CACHED" : "FALLBACK"}
+                  {autoScanResult.provenance === "unet" ? "U-NET" : autoScanResult.provenance === "live" ? "LIVE" : "GEMINI"}
                 </span>
                 <span className="text-xs text-ide-muted">{autoScanResult.inference_time_ms}ms</span>
               </div>
@@ -466,11 +466,9 @@ export default function DentalXrayViewer({
                 <span className={`text-[9px] font-mono px-1.5 py-0.5 rounded ${
                   imagingResult.provenance === "unet" || imagingResult.provenance === "live"
                     ? "bg-log-success/15 text-log-success border border-log-success/30"
-                    : imagingResult.provenance === "cached"
-                    ? "bg-log-info/15 text-log-info border border-log-info/30"
                     : "bg-log-warn/15 text-log-warn border border-log-warn/30"
                 }`}>
-                  {imagingResult.provenance === "unet" ? "U-NET" : imagingResult.provenance === "live" ? "LIVE" : imagingResult.provenance === "cached" ? "CACHED" : "FALLBACK"}
+                  {imagingResult.provenance === "unet" ? "U-NET" : imagingResult.provenance === "live" ? "LIVE" : "GEMINI"}
                 </span>
               </div>
               <button

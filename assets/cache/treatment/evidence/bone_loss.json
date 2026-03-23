@@ -16,5 +16,28 @@
     "Systemic or local antibiotic adjunct therapy (minocycline microspheres)"
   ],
   "referral_summary": "Refer to periodontist for: pockets >6mm not responding to SRP, vertical bone defects requiring regenerative surgery, furcation involvement grade II-III, or patients with systemic conditions complicating periodontal management.",
-  "patient_education": "Bone loss around your teeth is caused by gum disease — a bacterial infection that gradually destroys the bone supporting your teeth. Treatment starts with deep cleaning below the gumline to remove bacteria and tartar. You'll need to maintain excellent home care: brush twice daily, floss every day, and use any prescribed mouth rinse. Regular professional cleanings every 3-4 months are essential to prevent further bone loss. If caught early, the bone can stabilize; in advanced cases, surgery may help regenerate lost bone."
+  "patient_education": "Bone loss around your teeth is caused by gum disease \u2014 a bacterial infection that gradually destroys the bone supporting your teeth. Treatment starts with deep cleaning below the gumline to remove bacteria and tartar. You'll need to maintain excellent home care: brush twice daily, floss every day, and use any prescribed mouth rinse. Regular professional cleanings every 3-4 months are essential to prevent further bone loss. If caught early, the bone can stabilize; in advanced cases, surgery may help regenerate lost bone.",
+  "pharmacy_medications": [
+    {
+      "drug_name": "Doxycycline Hyclate",
+      "brand_name": "Periostat",
+      "din": "02244677",
+      "form": "Tablet 20mg",
+      "schedule": "Prescription"
+    },
+    {
+      "drug_name": "Chlorhexidine Gluconate",
+      "brand_name": "Peridex",
+      "din": "02241893",
+      "form": "Oral Rinse 0.12%",
+      "schedule": "Prescription"
+    },
+    {
+      "drug_name": "Minocycline HCl",
+      "brand_name": "Arestin",
+      "din": "02248106",
+      "form": "Microspheres 1mg",
+      "schedule": "Prescription"
+    }
+  ]
 }

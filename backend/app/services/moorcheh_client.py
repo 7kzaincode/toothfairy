@@ -5,13 +5,15 @@ Stores and retrieves historical patient data (past diagnoses, session notes)
 so the clinical notes copilot can reference prior visits.
 
 Namespace strategy: one namespace per patient, named by patient_id
-(e.g. "sarah-chen", "john-doe"). This keeps data isolated per patient
+(e.g. "abe-kuk", "aidan-jeon"). This keeps data isolated per patient
 and avoids metadata filtering at query time.
 """
 
 import logging
 import re
+import json
 from typing import Optional
+from pathlib import Path
 
 from moorcheh_sdk import MoorchehClient
 from moorcheh_sdk.types.document import Document
@@ -23,14 +25,9 @@ logger = logging.getLogger(__name__)
 
 
 def _patient_namespace(patient_id: str) -> str:
-    """Convert a patient_id into a valid Moorcheh namespace name.
-
-    E.g. "patient-sarah-chen" -> "sarah-chen", "patient_001" -> "patient-001"
-    """
+    """Convert a patient_id into a valid Moorcheh namespace name."""
     name = patient_id.lower().strip()
-    # Strip common prefixes
     name = re.sub(r"^patient[-_]?", "", name)
-    # Replace underscores/spaces with hyphens, remove invalid chars
     name = re.sub(r"[_\s]+", "-", name)
     name = re.sub(r"[^a-z0-9\-]", "", name)
     return name or patient_id
@@ -55,8 +52,84 @@ class MoorchehService:
         try:
             self.client.namespaces.create(namespace_name=namespace, type="text")
         except Exception:
-            # Namespace likely already exists
             pass
+
+    def seed_patient_profiles(self) -> None:
+        """Seed Moorcheh namespaces with patient profile data on startup."""
+        if not self._available:
+            return
+
+        profiles_dir = settings.ASSETS_ROOT_DIR / "profiles"
+        if not profiles_dir.exists():
+            return
+
+        for profile_path in profiles_dir.glob("*.json"):
+            try:
+                with open(profile_path) as f:
+                    profile = json.load(f)
+
+                patient_id = profile.get("patient_id", profile_path.stem)
+                namespace = _patient_namespace(patient_id)
+                self._ensure_namespace(namespace)
+
+                documents = []
+
+                # Document 1: Patient profile
+                name = profile.get("name", patient_id)
+                age = profile.get("age", "unknown")
+                gender = profile.get("gender", "unknown")
+                allergies = ", ".join(profile.get("allergies", [])) or "None"
+                insurance = profile.get("insurance", "unknown")
+                last_visit = profile.get("last_visit", "unknown")
+
+                profile_text = (
+                    f"Patient Profile: {name}\n"
+                    f"Age: {age}, Gender: {gender}\n"
+                    f"Allergies: {allergies}\n"
+                    f"Insurance: {insurance}\n"
+                    f"Last Visit: {last_visit}"
+                )
+                documents.append(Document(
+                    id=f"{patient_id}_profile",
+                    text=profile_text,
+                    metadata={"patient_id": patient_id, "type": "profile", "date": last_visit},
+                ))
+
+                # Document 2: Dental history / previous procedures
+                dental_history = profile.get("dental_history", {})
+                procedures = dental_history.get("previous_procedures", [])
+                if procedures:
+                    proc_lines = []
+                    for proc in procedures:
+                        tooth = proc.get("tooth", "")
+                        procedure = proc.get("procedure", "")
+                        date = proc.get("date", "")
+                        tooth_str = f" (Tooth #{tooth})" if tooth else ""
+                        proc_lines.append(f"- {procedure}{tooth_str} on {date}")
+                    documents.append(Document(
+                        id=f"{patient_id}_dental_history",
+                        text=f"Dental History for {name}:\n" + "\n".join(proc_lines),
+                        metadata={"patient_id": patient_id, "type": "dental_history", "date": last_visit},
+                    ))
+
+                # Document 3: Clinical notes from profile
+                notes = profile.get("clinical_notes", "") or profile.get("notes", "")
+                if notes:
+                    documents.append(Document(
+                        id=f"{patient_id}_clinical_notes",
+                        text=f"Clinical Notes for {name}:\n{notes}",
+                        metadata={"patient_id": patient_id, "type": "clinical_notes", "date": last_visit},
+                    ))
+
+                if documents:
+                    self.client.upload_documents(
+                        namespace_name=namespace,
+                        documents=documents,
+                    )
+                    logger.info(f"Seeded {len(documents)} document(s) into namespace '{namespace}'")
+
+            except Exception as e:
+                logger.error(f"Failed to seed profile {profile_path.name}: {e}")
 
     async def ingest_session(
         self,
@@ -74,6 +147,18 @@ class MoorchehService:
         try:
             self._ensure_namespace(namespace)
             documents = self._session_to_documents(patient_id, session_data, session_date)
+
+            # Also ingest raw clinical notes text if available
+            artifact = session_data.get("clinical_notes_artifact", {})
+            if artifact:
+                notes_text = artifact.get("notes_text", "") if isinstance(artifact, dict) else getattr(artifact, "notes_text", "")
+                if notes_text:
+                    documents.append(Document(
+                        id=f"{patient_id}_{session_date}_raw_notes",
+                        text=f"Clinical notes from session on {session_date}:\n{notes_text}",
+                        metadata={"patient_id": patient_id, "date": session_date, "type": "raw_clinical_notes"},
+                    ))
+
             if documents:
                 self.client.upload_documents(
                     namespace_name=namespace,
@@ -84,13 +169,39 @@ class MoorchehService:
                     f"(session date: {session_date})"
                 )
         except Exception as e:
-            logger.error(f"Moorcheh ingestion failed for {namespace}: {e}")
+            logger.error(f"Moorcheh ingestion failed for {namespace}: {e}", exc_info=True)
+
+    async def ingest_chat_message(
+        self,
+        patient_id: str,
+        chat_text: str,
+    ) -> None:
+        """Store a chat exchange into the patient's namespace."""
+        if not self._available:
+            return
+
+        namespace = _patient_namespace(patient_id)
+        try:
+            self._ensure_namespace(namespace)
+            from datetime import datetime
+            doc_id = f"{patient_id}_chat_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+            self.client.upload_documents(
+                namespace_name=namespace,
+                documents=[Document(
+                    id=doc_id,
+                    text=chat_text,
+                    metadata={"patient_id": patient_id, "type": "chat_exchange", "date": datetime.now().isoformat()[:10]},
+                )],
+            )
+            logger.info(f"Ingested chat exchange into namespace '{namespace}'")
+        except Exception as e:
+            logger.error(f"Moorcheh chat ingestion failed for {namespace}: {e}")
 
     async def retrieve_history(
         self,
         patient_id: str,
         query: str,
-        top_k: int = 3,
+        top_k: int = 5,
     ) -> str:
         """Search the patient's namespace for historical records matching the query."""
         if not self._available:
@@ -99,11 +210,10 @@ class MoorchehService:
         namespace = _patient_namespace(patient_id)
 
         try:
-            response = self.client.search(
+            response = self.client.similarity_search.query(
                 namespaces=[namespace],
                 query=query,
                 top_k=top_k,
-                threshold=0.1,
             )
 
             results = response.get("results", []) if isinstance(response, dict) else getattr(response, "results", [])
@@ -114,10 +224,14 @@ class MoorchehService:
             history_parts = []
             for result in results:
                 metadata = result.get("metadata", {}) if isinstance(result, dict) else getattr(result, "metadata", {})
+                # Handle nested metadata structure
+                if "metadata" in metadata:
+                    metadata = metadata["metadata"]
                 date = metadata.get("date", "unknown date")
+                doc_type = metadata.get("type", "")
                 text = result.get("text", "") if isinstance(result, dict) else getattr(result, "text", "")
                 if text:
-                    history_parts.append(f"[Visit — {date}]\n{text}")
+                    history_parts.append(f"[{doc_type} — {date}]\n{text}")
 
             return "\n\n".join(history_parts)
 
@@ -195,3 +309,10 @@ class MoorchehService:
 
 # Singleton instance
 moorcheh_service = MoorchehService(api_key=settings.MOORCHEH_API_KEY)
+
+# Seed patient profiles on import
+if moorcheh_service.is_available:
+    try:
+        moorcheh_service.seed_patient_profiles()
+    except Exception as e:
+        logger.error(f"Failed to seed patient profiles: {e}")

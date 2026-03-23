@@ -103,8 +103,8 @@ async def imaging_action(request: ImagingActionRequest, background_tasks: Backgr
             background_tasks.add_task(
                 moorcheh_service.ingest_session,
                 patient_id=patient_state.identifiers.patient_id,
-                session_data=patient_state.model_dump(),
-                session_date=patient_state.last_updated_at,
+                session_data=patient_state.model_dump(mode="json"),
+                session_date=patient_state.last_updated_at.isoformat()[:10],
             )
     except ImportError:
         pass
@@ -163,7 +163,7 @@ async def auto_scan_xray(
                 moorcheh_service.ingest_session,
                 patient_id=session.identifiers.patient_id,
                 session_data=session.model_dump(),
-                session_date=session.last_updated_at,
+                session_date=session.last_updated_at.isoformat()[:10],
             )
     except ImportError:
         pass

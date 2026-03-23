@@ -1,0 +1,43 @@
+{
+  "condition": "missing",
+  "summary": "Missing teeth require replacement to prevent adjacent tooth migration, opposing tooth supra-eruption, and occlusal instability. Treatment options include dental implants (95-98% 10-year survival), fixed bridges (90% 10-year survival), and removable partial dentures. Single implant-supported crowns are the gold standard for individual missing teeth. Treatment planning should consider bone volume, occlusion, and patient preferences.",
+  "success_rate": 0.96,
+  "risk_factors": [
+    "Insufficient alveolar bone for implant placement",
+    "Uncontrolled diabetes or smoking (impairs osseointegration)",
+    "Adjacent tooth condition and periodontal status",
+    "Bruxism or parafunctional habits",
+    "Patient's systemic health and medications (bisphosphonates)"
+  ],
+  "alternatives": [
+    "Endosseous dental implant with single crown (gold standard)",
+    "Fixed dental bridge using adjacent teeth as abutments",
+    "Removable partial denture (cost-effective, non-invasive)",
+    "No treatment with monitoring (third molars or non-functional teeth)"
+  ],
+  "referral_summary": "Implant placement is typically performed by oral surgeons or periodontists. Bone grafting may be needed if ridge resorption has occurred. Prosthodontists manage complex full-arch rehabilitation cases. Third molar absence generally requires no intervention.",
+  "patient_education": "A missing tooth can cause neighboring teeth to shift over time, which may affect your bite and jaw alignment. There are several replacement options available. A dental implant is a titanium post placed in the jawbone that acts as an artificial root, topped with a natural-looking crown. A bridge uses the teeth on either side to support a replacement tooth. Your dentist will recommend the best option based on your specific situation.",
+  "pharmacy_medications": [
+    {
+      "drug_name": "Amoxicillin",
+      "brand_name": "Amoxil",
+      "din": "02237682",
+      "form": "Capsule 500mg",
+      "schedule": "Prescription"
+    },
+    {
+      "drug_name": "Ibuprofen",
+      "brand_name": "Advil",
+      "din": "02242918",
+      "form": "Tablet 400mg",
+      "schedule": "OTC"
+    },
+    {
+      "drug_name": "Dexamethasone",
+      "brand_name": "Decadron",
+      "din": "02247695",
+      "form": "Tablet 4mg",
+      "schedule": "Prescription"
+    }
+  ]
+}
