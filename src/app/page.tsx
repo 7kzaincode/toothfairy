@@ -79,12 +79,8 @@ export default function Home() {
     return () => window.removeEventListener("keydown", handler);
   }, []);
 
-  const handleToothSelect = (toothNumber: number) => {
-    const finding = displayState?.tooth_chart[toothNumber];
-    if (finding) {
-      copilot.triggerTreatment(finding.condition, toothNumber);
-      setActiveTab("treatment");
-    }
+  const handleToothSelect = (_toothNumber: number) => {
+    // Just select the tooth on the 3D model — the popup handles navigation to treatment
   };
 
   const handleFileUpload = async (file: File) => {
@@ -121,7 +117,10 @@ export default function Home() {
     setActiveTab("treatment");
   };
 
+  const [focusToothFDI, setFocusToothFDI] = useState<number | null>(null);
+
   const handleViewOnModel = (toothNumber: number) => {
+    setFocusToothFDI(toothNumber);
     setActiveTab("tooth-chart");
   };
 
@@ -231,6 +230,7 @@ export default function Home() {
         profileNotes={profile?.clinical_notes || null}
         onClearTreatment={copilot.clearTreatmentResult}
         processing={copilot.processing}
+        focusToothFDI={focusToothFDI}
       />
       {!rightCollapsed && <ResizeHandle direction="horizontal" onResize={handleRightResize} />}
       <RightPane

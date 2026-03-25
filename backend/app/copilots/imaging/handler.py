@@ -252,9 +252,69 @@ class ImagingHandler:
                 tooth_contours = extract_all_tooth_contours(image_bytes, image_id)
                 provenance = "unet"
 
-                for i, tc in enumerate(tooth_contours):
+                # Get image dimensions for spatial FDI assignment
+                from PIL import Image as PILImage
+                import io as _io
+                _img = PILImage.open(_io.BytesIO(image_bytes))
+                img_w, img_h = _img.size
+
+                # Assign FDI numbers by spatial position:
+                # Split into upper (y < midpoint) and lower jaw
+                # Then split each into right (x < midpoint) and left quadrants
+                # Sort by x within each quadrant and assign FDI numbers
+                mid_y = img_h / 2
+                mid_x = img_w / 2
+
+                upper_right = []  # FDI 18→11 (image left, top)
+                upper_left = []   # FDI 21→28 (image right, top)
+                lower_right = []  # FDI 48→41 (image left, bottom)
+                lower_left = []   # FDI 31→38 (image right, bottom)
+
+                for tc in tooth_contours:
+                    cx, cy = tc["center"]
+                    is_upper = cy < mid_y
+                    is_right = cx < mid_x  # patient's right = image left
+                    if is_upper and is_right:
+                        upper_right.append(tc)
+                    elif is_upper and not is_right:
+                        upper_left.append(tc)
+                    elif not is_upper and is_right:
+                        lower_right.append(tc)
+                    else:
+                        lower_left.append(tc)
+
+                # Sort each quadrant by x position
+                upper_right.sort(key=lambda t: t["center"][0])       # left→right on image
+                upper_left.sort(key=lambda t: t["center"][0])
+                lower_right.sort(key=lambda t: t["center"][0])
+                lower_left.sort(key=lambda t: t["center"][0])
+
+                # FDI sequences for each quadrant
+                # Upper right: 18,17,16,15,14,13,12,11 (rightmost molar to central incisor)
+                # Upper left: 21,22,23,24,25,26,27,28
+                # Lower right: 48,47,46,45,44,43,42,41
+                # Lower left: 31,32,33,34,35,36,37,38
+                def _assign_fdi(teeth: list, fdi_start: int, fdi_end: int) -> list[tuple]:
+                    step = 1 if fdi_end >= fdi_start else -1
+                    # Limit to 8 teeth per quadrant — keep the 8 largest by area
+                    if len(teeth) > 8:
+                        teeth = sorted(teeth, key=lambda t: t["area"], reverse=True)[:8]
+                        teeth = sorted(teeth, key=lambda t: t["center"][0])
+                    results = []
+                    for i, tc in enumerate(teeth):
+                        fdi = fdi_start + step * i
+                        results.append((tc, fdi))
+                    return results
+
+                assigned = []
+                assigned += _assign_fdi(upper_right, 18, 11)
+                assigned += _assign_fdi(upper_left, 21, 28)
+                assigned += _assign_fdi(lower_right, 48, 41)
+                assigned += _assign_fdi(lower_left, 31, 38)
+
+                for tc, fdi in assigned:
                     all_segments.append({
-                        "tooth_number": i + 1,  # CCA label as identifier
+                        "tooth_number": fdi,
                         "contour_points": tc["contour_points"],
                         "confidence": 0.85,
                         "area_pixels": tc["area"],

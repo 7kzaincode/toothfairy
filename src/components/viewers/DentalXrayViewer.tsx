@@ -15,6 +15,7 @@ interface DentalXrayViewerProps {
   onAutoScan?: (imageId: string) => void;
   autoScanResult?: AutoScanResponse | null;
   onTreatmentClick?: (condition: string, toothNumber?: number) => void;
+  onViewOnModel?: (toothNumber: number) => void;
 }
 
 export default function DentalXrayViewer({
@@ -28,6 +29,7 @@ export default function DentalXrayViewer({
   autoScanResult,
   onTreatmentClick,
   onClose,
+  onViewOnModel,
 }: DentalXrayViewerProps) {
   const wrapperRef = useRef<HTMLDivElement>(null);
   const cardRef = useRef<HTMLDivElement>(null);
@@ -198,6 +200,8 @@ export default function DentalXrayViewer({
     const y = (e.clientY - rect.top) / rect.height;
     setClickMarker({ x: e.clientX - rect.left, y: e.clientY - rect.top });
     setAnalyzing(true);
+    // Exclusivity: single-tooth scan clears auto-scan
+    setShowScanResults(false);
     onToothClick?.(imageId, x, y);
   };
 
@@ -289,6 +293,9 @@ export default function DentalXrayViewer({
                   onClick={() => {
                     setScanning(true);
                     setShowScanResults(true);
+                    // Exclusivity: auto-scan clears single-tooth result
+                    setShowToothResult(false);
+                    setClickMarker(null);
                     onAutoScan(imageId);
                   }}
                   disabled={scanning}
@@ -386,6 +393,9 @@ export default function DentalXrayViewer({
                 height={imgSize.height}
                 viewBoxWidth={imgNaturalSize.width || imgSize.width}
                 viewBoxHeight={imgNaturalSize.height || imgSize.height}
+                toothLabel={`#${seg.tooth_number}`}
+                interactive={true}
+                onClick={() => onViewOnModel?.(seg.tooth_number)}
               />
             ))}
 
@@ -430,7 +440,7 @@ export default function DentalXrayViewer({
                     <div
                       key={idx}
                       className="bg-white px-4 py-3.5 hover:bg-[#fafafa] transition-colors cursor-pointer group"
-                      onClick={() => onTreatmentClick?.(finding.condition, finding.tooth_number)}
+                      onClick={() => onViewOnModel?.(finding.tooth_number)}
                     >
                       <div className="flex items-start justify-between mb-1.5">
                         <span className="text-[13px] font-bold text-ide-text">#{finding.tooth_number}</span>
@@ -454,9 +464,19 @@ export default function DentalXrayViewer({
                       )}
                       <div className="mt-2 flex items-center justify-between">
                         <span className="text-[11px] font-mono text-ide-muted">{Math.round(finding.confidence * 100)}%</span>
-                        <span className="text-[11px] text-ide-muted opacity-0 group-hover:opacity-100 transition-opacity">
-                          View treatment →
-                        </span>
+                        <div className="flex items-center gap-3 opacity-0 group-hover:opacity-100 transition-opacity">
+                          {onTreatmentClick && (
+                            <button
+                              onClick={(e) => { e.stopPropagation(); onTreatmentClick(finding.condition, finding.tooth_number); }}
+                              className="text-[11px] text-ide-accent hover:text-ide-text transition-colors"
+                            >
+                              Treatment →
+                            </button>
+                          )}
+                          <span className="text-[11px] text-ide-muted">
+                            View on 3D →
+                          </span>
+                        </div>
                       </div>
                     </div>
                   ))}

@@ -17,11 +17,15 @@ const CONDITION_COLORS: Record<string, string> = {
   fracture: "#FF9F4A",
   gingivitis: "#F4C152",
   missing: "#6B7280",
+  crown_defect: "#4C9AFF",
+  root_resorption: "#FF9F4A",
 };
 
 interface ToothChart3DProps {
   toothChart: Record<number, ToothFinding>;
   onToothSelect?: (toothNumber: number) => void;
+  onViewTreatment?: (condition: string, toothNumber: number) => void;
+  focusToothFDI?: number | null;
 }
 
 // FDI (11-48) → Universal (1-32) mapping
@@ -41,14 +45,27 @@ for (const [fdi, uni] of Object.entries(FDI_TO_UNIVERSAL)) {
 export default function ToothChart3D({
   toothChart,
   onToothSelect,
+  onViewTreatment,
+  focusToothFDI,
 }: ToothChart3DProps) {
   const [selectedTooth, setSelectedTooth] = useState<number | null>(null);
   const [zoomTarget, setZoomTarget] = useState<THREE.Vector3 | null>(null);
   const [mounted, setMounted] = useState(false);
+  const [resetView, setResetView] = useState(false);
 
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  // Auto-select tooth when navigating from X-ray (convert FDI → Universal)
+  useEffect(() => {
+    if (focusToothFDI) {
+      const universal = FDI_TO_UNIVERSAL[focusToothFDI];
+      if (universal) {
+        setSelectedTooth(universal);
+      }
+    }
+  }, [focusToothFDI]);
 
   // Build Universal-numbered color map from FDI-numbered toothChart
   const toothColors = useMemo(() => {
@@ -66,12 +83,9 @@ export default function ToothChart3D({
   const handleToothSelect = (universalNum: number, worldPos: THREE.Vector3) => {
     setSelectedTooth(universalNum);
     setZoomTarget(worldPos.clone());
-    // Convert Universal → FDI for the rest of the app
     const fdiNum = UNIVERSAL_TO_FDI[universalNum] || universalNum;
     onToothSelect?.(fdiNum);
   };
-
-  const [resetView, setResetView] = useState(false);
 
   const handleCanvasMiss = () => {
     setSelectedTooth(null);
@@ -95,7 +109,7 @@ export default function ToothChart3D({
     <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column" }}>
       <div style={{ flex: 1, position: "relative" }}>
         <Canvas
-          camera={{ position: [0, 20, 4], fov: 80 }}
+          camera={{ position: [-2.2, 20.3, 1.5], fov: 60 }}
           gl={{ antialias: true }}
           style={{ position: "absolute", inset: 0, background: "#000000" }}
           onPointerMissed={handleCanvasMiss}
@@ -118,44 +132,76 @@ export default function ToothChart3D({
             makeDefault
             target={[0, 20, 0]}
             enableZoom={false}
-            minDistance={4}
-            maxDistance={4}
           />
 
           <CameraAnimator
             targetPos={zoomTarget}
-            zoomDistance={5}
+            zoomDistance={3}
             resetView={resetView}
-            defaultCameraPos={new THREE.Vector3(0, 20, 4)}
+            defaultCameraPos={new THREE.Vector3(-2.2, 20.3, 1.5)}
             defaultTarget={new THREE.Vector3(0, 20, 0)}
             onResetComplete={() => setResetView(false)}
           />
         </Canvas>
 
         {selectedTooth && (
-          <div className="absolute top-3 left-3 bg-ide-surface/90 backdrop-blur-sm border border-ide-border rounded-md px-3 py-2">
-            <div className="text-[10px] font-semibold uppercase tracking-wider text-ide-muted mb-0.5">
-              Selected Tooth
+          <div className="absolute top-3 left-3 bg-ide-surface/95 backdrop-blur-sm border border-ide-border rounded-lg px-4 py-3 shadow-lg" style={{ minWidth: 200 }}>
+            <div className="flex items-center justify-between mb-1">
+              <div className="text-[10px] font-semibold uppercase tracking-wider text-ide-muted">
+                Tooth #{UNIVERSAL_TO_FDI[selectedTooth] || selectedTooth}
+              </div>
+              <button
+                onClick={handleCanvasMiss}
+                className="text-ide-muted hover:text-ide-text transition-colors"
+              >
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <line x1="18" y1="6" x2="6" y2="18" />
+                  <line x1="6" y1="6" x2="18" y2="18" />
+                </svg>
+              </button>
             </div>
-            <div className="text-sm font-mono text-ide-text">
-              #{UNIVERSAL_TO_FDI[selectedTooth] || selectedTooth}
-            </div>
-            {selectedFinding && (
-              <div className="mt-1">
-                <span
-                  className="text-[10px] font-medium px-1.5 py-0.5 rounded"
-                  style={{
-                    color: CONDITION_COLORS[selectedFinding.condition],
-                    background: `${CONDITION_COLORS[selectedFinding.condition]}20`,
-                  }}
-                >
-                  {selectedFinding.condition.replace(/_/g, " ")}
-                </span>
-                <div className="text-[10px] text-ide-muted mt-1">
-                  {selectedFinding.severity} &bull;{" "}
+            {selectedFinding ? (
+              <div>
+                <div className="flex items-center gap-2 mt-1">
+                  <span
+                    className="text-[11px] font-semibold px-2 py-0.5 rounded capitalize"
+                    style={{
+                      color: CONDITION_COLORS[selectedFinding.condition],
+                      background: `${CONDITION_COLORS[selectedFinding.condition]}20`,
+                    }}
+                  >
+                    {selectedFinding.condition.replace(/_/g, " ")}
+                  </span>
+                  <span className={`text-[10px] font-medium ${
+                    selectedFinding.severity === "severe" ? "text-red-500" :
+                    selectedFinding.severity === "moderate" ? "text-orange-500" :
+                    "text-green-600"
+                  }`}>
+                    {selectedFinding.severity}
+                  </span>
+                </div>
+                <div className="text-[10px] text-ide-muted mt-1.5">
                   {(selectedFinding.confidence * 100).toFixed(0)}% confidence
                 </div>
+                {selectedFinding.location_description && (
+                  <div className="text-[10px] text-ide-muted mt-0.5 leading-snug">
+                    {selectedFinding.location_description}
+                  </div>
+                )}
+                {onViewTreatment && (
+                  <button
+                    onClick={() => {
+                      const fdi = UNIVERSAL_TO_FDI[selectedTooth] || selectedTooth;
+                      onViewTreatment(selectedFinding.condition, fdi);
+                    }}
+                    className="mt-2 w-full text-[11px] font-medium text-white bg-ide-accent hover:bg-ide-accent/90 px-3 py-1.5 rounded transition-colors"
+                  >
+                    See Treatment →
+                  </button>
+                )}
               </div>
+            ) : (
+              <div className="text-[11px] text-ide-muted mt-1">No findings — tooth appears healthy</div>
             )}
           </div>
         )}

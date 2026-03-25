@@ -57,6 +57,7 @@ interface CenterPaneProps {
   treatmentResult?: TreatmentActionResponse | null;
   profileNotes?: string | null;
   processing?: boolean;
+  focusToothFDI?: number | null;
 }
 
 export default function CenterPane({
@@ -85,6 +86,7 @@ export default function CenterPane({
   treatmentResult,
   profileNotes,
   processing,
+  focusToothFDI,
 }: CenterPaneProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -207,7 +209,7 @@ export default function CenterPane({
 
         {activeTab === "tooth-chart" && (
           <div className="absolute inset-0">
-            <ToothChart3D toothChart={patientState?.tooth_chart ?? {}} onToothSelect={onToothSelect} />
+            <ToothChart3D toothChart={patientState?.tooth_chart ?? {}} onToothSelect={onToothSelect} onViewTreatment={onTreatmentClick} focusToothFDI={focusToothFDI} />
           </div>
         )}
 
@@ -238,6 +240,7 @@ export default function CenterPane({
                 onAutoScan={onAutoScan}
                 autoScanResult={autoScanResult}
                 onTreatmentClick={onTreatmentClick}
+                onViewOnModel={onViewOnModel}
               />
             </div>
           ) : (
